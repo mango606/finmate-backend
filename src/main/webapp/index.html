@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 제테크 금융 서비스</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .status {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+        .status-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .status-item h3 {
+            margin: 0 0 5px 0;
+            color: #007bff;
+        }
+        .api-links {
+            margin: 30px 0;
+        }
+        .api-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 25px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .api-link:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🏦 FinMate</h1>
+    <p class="subtitle">제테크 금융 서비스 백엔드 API</p>
+
+    <div class="status">
+        <div class="status-item">
+            <h3>서버 상태</h3>
+            <p id="server-status">🟢 정상 운영</p>
+        </div>
+        <div class="status-item">
+            <h3>데이터베이스</h3>
+            <p id="db-status">🔵 연결 대기</p>
+        </div>
+        <div class="status-item">
+            <h3>API 버전</h3>
+            <p>v1.0.0</p>
+        </div>
+    </div>
+
+    <div class="api-links">
+        <a href="/swagger-ui.html" class="api-link">📖 API 문서</a>
+        <a href="/api/member/checkUserId/test" class="api-link">🧪 API 테스트</a>
+    </div>
+
+    <div class="info">
+        <h3>📋 개발 정보</h3>
+        <p><strong>프로젝트:</strong> FinMate Backend</p>
+        <p><strong>패키지:</strong> com.example.finmate</p>
+        <p><strong>기술 스택:</strong> Spring Legacy 5.x, MyBatis, MySQL, JWT</p>
+        <p><strong>개발자:</strong> 회원 관리 담당</p>
+        <p><strong>주요 기능:</strong> 로그인/로그아웃/회원가입</p>
+    </div>
+
+    <div class="info">
+        <h3>🔧 개발 환경 설정</h3>
+        <p><strong>서버 포트:</strong> 8080 (Gretty)</p>
+        <p><strong>데이터베이스:</strong> MySQL (localhost:3306/finmate_db)</p>
+        <p><strong>프로파일 이미지:</strong> c:/upload/avatar/</p>
+        <p><strong>빌드 도구:</strong> Gradle 8.x</p>
+    </div>
+</div>
+
+<script>
+    fetch('/api/member/checkUserId/test')
+        .then(response => {
+            if (response.ok) {
+                document.getElementById('db-status').innerHTML = '🟢 연결됨';
+            } else {
+                document.getElementById('db-status').innerHTML = '🔴 연결 실패';
+            }
+        })
+        .catch(error => {
+            document.getElementById('db-status').innerHTML = '🔴 연결 실패';
+            console.error('API 테스트 실패:', error);
+        });
+</script>
+</body>
+</html>
