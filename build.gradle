@@ -105,9 +105,8 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 }
 
-// 톰캣 대신 사용
 gretty {
-    servletContainer = 'tomcat9'
+    servletContainer = 'jetty11'
     contextPath = ''
     httpPort = 8080
     httpsPort = 8443
