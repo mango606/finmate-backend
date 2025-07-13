@@ -1,0 +1,5 @@
+rootProject.name = "finmate-backend"
+
+gradle.startParameter.excludedTaskNames.addAll([":buildEnvironment", ":components", ":dependencies",
+                                                ":dependencyInsight", ":dependentComponents", ":help",
+                                                ":projects", ":properties", ":tasks"])
