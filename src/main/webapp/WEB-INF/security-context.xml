@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/security
+                                 http://www.springframework.org/schema/security/spring-security.xsd
+                                 http://www.springframework.org/schema/beans
+                                 https://www.springframework.org/schema/beans/spring-beans.xsd
+                                 http://www.springframework.org/schema/context
+                                 https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 보안 관련 컴포넌트 스캔 -->
+    <context:component-scan base-package="com.example.finmate.security"/>
+
+    <!-- BCrypt 패스워드 인코더 -->
+    <beans:bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <!-- JWT 관련 빈들 -->
+    <beans:bean id="jwtProcessor" class="com.example.finmate.security.util.JwtProcessor"/>
+    <beans:bean id="jwtAuthenticationFilter" class="com.example.finmate.security.filter.JwtAuthenticationFilter"/>
+
+    <!-- 커스텀 UserDetailsService -->
+    <beans:bean id="customUserDetailsService" class="com.example.finmate.security.service.CustomUserDetailsService"/>
+
+    <!-- 인증 성공/실패 핸들러 -->
+    <beans:bean id="loginSuccessHandler" class="com.example.finmate.security.handler.LoginSuccessHandler"/>
+    <beans:bean id="loginFailureHandler" class="com.example.finmate.security.handler.LoginFailureHandler"/>
+
+    <!-- 인증 매니저 -->
+    <authentication-manager id="authenticationManager">
+        <authentication-provider user-service-ref="customUserDetailsService">
+            <password-encoder ref="passwordEncoder"/>
+        </authentication-provider>
+    </authentication-manager>
+
+    <!-- JWT 로그인 필터 -->
+    <beans:bean id="jwtUsernamePasswordAuthenticationFilter"
+                class="com.example.finmate.security.filter.JwtUsernamePasswordAuthenticationFilter">
+        <beans:constructor-arg ref="authenticationManager"/>
+        <beans:constructor-arg ref="loginSuccessHandler"/>
+        <beans:constructor-arg ref="loginFailureHandler"/>
+    </beans:bean>
+
+    <!-- HTTP 보안 설정 -->
+    <http auto-config="false" use-expressions="true" create-session="stateless"
+          authentication-manager-ref="authenticationManager">
+
+        <!-- CSRF 비활성화 (JWT 사용) -->
+        <csrf disabled="true"/>
+
+        <!-- CORS 설정 -->
+        <cors configuration-source-ref="corsConfigurationSource"/>
+
+        <!-- 정적 리소스 허용 -->
+        <intercept-url pattern="/resources/**" access="permitAll"/>
+        <intercept-url pattern="/css/**" access="permitAll"/>
+        <intercept-url pattern="/js/**" access="permitAll"/>
+        <intercept-url pattern="/images/**" access="permitAll"/>
+        <intercept-url pattern="/favicon.ico" access="permitAll"/>
+
+        <!-- Swagger 허용 -->
+        <intercept-url pattern="/swagger-ui.html" access="permitAll"/>
+        <intercept-url pattern="/swagger-ui/**" access="permitAll"/>
+        <intercept-url pattern="/v2/api-docs" access="permitAll"/>
+        <intercept-url pattern="/webjars/**" access="permitAll"/>
+
+        <!-- 인증 불필요 API -->
+        <intercept-url pattern="/api/auth/login" access="permitAll"/>
+        <intercept-url pattern="/api/member/join" access="permitAll"/>
+        <intercept-url pattern="/api/member/checkUserId/**" access="permitAll"/>
+        <intercept-url pattern="/api/member/checkEmail" access="permitAll"/>
+        <intercept-url pattern="/index.html" access="permitAll"/>
+        <intercept-url pattern="/" access="permitAll"/>
+
+        <!-- 회원 관련 API - 인증 필요 -->
+        <intercept-url pattern="/api/member/**" access="hasRole('USER')"/>
+
+        <!-- 관리자 API -->
+        <intercept-url pattern="/api/admin/**" access="hasRole('ADMIN')"/>
+
+        <!-- 나머지 모든 요청 - 인증 필요 -->
+        <intercept-url pattern="/api/**" access="hasRole('USER')"/>
+
+        <!-- 커스텀 필터 추가 -->
+        <custom-filter ref="jwtUsernamePasswordAuthenticationFilter" position="FORM_LOGIN_FILTER"/>
+        <custom-filter ref="jwtAuthenticationFilter" before="BASIC_AUTH_FILTER"/>
+
+        <!-- 예외 처리 -->
+        <access-denied-handler ref="customAccessDeniedHandler"/>
+        <authentication-entry-point ref="customAuthenticationEntryPoint"/>
+
+    </http>
+
+    <!-- CORS 설정 -->
+    <beans:bean id="corsConfigurationSource" class="org.springframework.web.cors.CorsConfigurationSource">
+        <beans:property name="corsConfigurations">
+            <beans:map>
+                <beans:entry key="/**">
+                    <beans:bean class="org.springframework.web.cors.CorsConfiguration">
+                        <beans:property name="allowedOrigins" value="http://localhost:3000,http://localhost:8080"/>
+                        <beans:property name="allowedMethods" value="GET,POST,PUT,DELETE,OPTIONS"/>
+                        <beans:property name="allowedHeaders" value="*"/>
+                        <beans:property name="allowCredentials" value="true"/>
+                        <beans:property name="maxAge" value="3600"/>
+                    </beans:bean>
+                </beans:entry>
+            </beans:map>
+        </beans:property>
+    </beans:bean>
+
+    <!-- 접근 거부 핸들러 -->
+    <beans:bean id="customAccessDeniedHandler" class="com.example.finmate.security.handler.CustomAccessDeniedHandler"/>
+
+    <!-- 인증 진입점 -->
+    <beans:bean id="customAuthenticationEntryPoint" class="com.example.finmate.security.handler.CustomAuthenticationEntryPoint"/>
+
+</beans:beans>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xsi:schemaLocation="http://www.springframework.org/schema/mvc
+                                 https://www.springframework.org/schema/mvc/spring-mvc.xsd
+                                 http://www.springframework.org/schema/beans
+                                 https://www.springframework.org/schema/beans/spring-beans.xsd
+                                 http://www.springframework.org/schema/context
+                                 https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 어노테이션 기반 핸들러 매핑 및 어댑터 등록 -->
+    <annotation-driven>
+        <message-converters>
+            <!-- JSON 메시지 컨버터 -->
+            <beans:bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <beans:property name="objectMapper">
+                    <beans:bean class="com.fasterxml.jackson.databind.ObjectMapper">
+                        <beans:property name="dateFormat">
+                            <beans:bean class="java.text.SimpleDateFormat">
+                                <beans:constructor-arg value="yyyy-MM-dd HH:mm:ss"/>
+                            </beans:bean>
+                        </beans:property>
+                    </beans:bean>
+                </beans:property>
+            </beans:bean>
+        </message-converters>
+    </annotation-driven>
+
+    <!-- 정적 리소스 핸들링 -->
+    <resources mapping="/resources/**" location="/resources/"/>
+    <resources mapping="/css/**" location="/resources/css/"/>
+    <resources mapping="/js/**" location="/resources/js/"/>
+    <resources mapping="/images/**" location="/resources/images/"/>
+
+    <!-- Swagger UI 리소스 -->
+    <resources mapping="swagger-ui.html" location="classpath:/META-INF/resources/"/>
+    <resources mapping="/webjars/**" location="classpath:/META-INF/resources/webjars/"/>
+
+    <!-- JSP 뷰 리졸버 -->
+    <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <beans:property name="prefix" value="/WEB-INF/views/"/>
+        <beans:property name="suffix" value=".jsp"/>
+    </beans:bean>
+
+    <!-- 컨트롤러 스캔 -->
+    <context:component-scan base-package="com.example.finmate" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"/>
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestControllerAdvice"/>
+    </context:component-scan>
+
+    <!-- 파일 업로드 설정 -->
+    <beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <beans:property name="maxUploadSize" value="52428800"/> <!-- 50MB -->
+        <beans:property name="maxUploadSizePerFile" value="10485760"/> <!-- 10MB per file -->
+        <beans:property name="maxInMemorySize" value="1048576"/> <!-- 1MB -->
+        <beans:property name="defaultEncoding" value="UTF-8"/>
+    </beans:bean>
+
+    <!-- 예외 핸들러 -->
+    <beans:bean class="com.example.finmate.common.exception.GlobalExceptionHandler"/>
+
+    <!-- Swagger 설정 -->
+    <beans:bean class="com.example.finmate.config.SwaggerConfig"/>
+
+</beans:beans>

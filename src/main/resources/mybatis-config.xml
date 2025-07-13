@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <settings>
+        <!-- 언더스코어를 카멜케이스로 자동 매핑 -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+
+        <!-- NULL 값 처리 -->
+        <setting name="callSettersOnNulls" value="true"/>
+
+        <!-- 지연 로딩 설정 -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <setting name="aggressiveLazyLoading" value="false"/>
+
+        <!-- 캐시 설정 -->
+        <setting name="cacheEnabled" value="true"/>
+
+        <!-- SQL 로그 설정 -->
+        <setting name="logImpl" value="LOG4J2"/>
+    </settings>
+
+    <typeAliases>
+        <!-- 보안 관련 도메인 -->
+        <package name="com.example.finmate.security.account.domain"/>
+
+        <!-- 회원 관련 도메인 -->
+        <package name="com.example.finmate.member.domain"/>
+
+        <!-- 추가될 도메인들 -->
+        <package name="com.example.finmate.finance.domain"/>
+        <package name="com.example.finmate.investment.domain"/>
+    </typeAliases>
+
+</configuration>
