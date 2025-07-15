@@ -53,8 +53,8 @@ class MemberControllerTest {
 
         validJoinDTO = new MemberJoinDTO();
         validJoinDTO.setUserId("testuser");
-        validJoinDTO.setUserPassword("Test123!@#");
-        validJoinDTO.setPasswordConfirm("Test123!@#");
+        validJoinDTO.setUserPassword("Test123!"); // 수정된 패스워드 (영문자+숫자+특수문자)
+        validJoinDTO.setPasswordConfirm("Test123!");
         validJoinDTO.setUserName("테스트사용자");
         validJoinDTO.setUserEmail("test@example.com");
         validJoinDTO.setUserPhone("010-1234-5678");
