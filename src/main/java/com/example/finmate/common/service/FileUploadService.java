@@ -2,7 +2,7 @@ package com.example.finmate.common.service;
 
 import com.example.finmate.common.util.StringUtils;
 import com.example.finmate.common.util.UploadFiles;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-@Log4j2
+@Slf4j
 @Service
 public class FileUploadService {
 

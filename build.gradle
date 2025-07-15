@@ -27,13 +27,10 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-    // Jakarta EE 8 API
-    compileOnly 'jakarta.platform:jakarta.jakartaee-api:8.0.0'
-
-    // 서블릿 API
-    implementation 'jakarta.servlet:jakarta.servlet-api:4.0.4'
-    implementation 'jakarta.servlet.jsp:jakarta.servlet.jsp.jstl-api:1.2.7'
-    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:1.2.6'
+    // 서블릿 API (간소화)
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    compileOnly 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.3'
+    implementation 'javax.servlet:jstl:1.2'
 
     // 스프링 프레임워크
     implementation("org.springframework:spring-context:${springVersion}") {

@@ -1,10 +1,10 @@
 package com.example.finmate.common.util;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.http.HttpServletRequest;
 
-@Log4j2
+@Slf4j
 public class IPUtils {
 
     private static final String[] IP_HEADER_CANDIDATES = {

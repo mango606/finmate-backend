@@ -1,13 +1,13 @@
 package com.example.finmate.common.util;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.FileCopyUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
 
-@Log4j2
+@Slf4j
 public class UploadFiles {
 
     // 이미지 파일 다운로드 (프로필 이미지 등)
