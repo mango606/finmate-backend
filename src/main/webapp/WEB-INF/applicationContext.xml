@@ -4,6 +4,8 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
        xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                            https://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/context
@@ -11,13 +13,17 @@
                            http://mybatis.org/schema/mybatis-spring
                            http://mybatis.org/schema/mybatis-spring.xsd
                            http://www.springframework.org/schema/tx
-                           http://www.springframework.org/schema/tx/spring-tx.xsd">
+                           http://www.springframework.org/schema/tx/spring-tx.xsd
+                           http://www.springframework.org/schema/task
+                           http://www.springframework.org/schema/task/spring-task.xsd
+                           http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd">
 
     <!-- 어노테이션 기반 설정 활성화 -->
     <context:annotation-config />
 
     <!-- 프로퍼티 파일 로드 -->
-    <context:property-placeholder location="classpath:application.properties"/>
+    <context:property-placeholder location="classpath:application.properties" ignore-unresolvable="true"/>
 
     <!-- 컴포넌트 스캔 (컨트롤러 제외) -->
     <context:component-scan base-package="com.example.finmate">
@@ -27,6 +33,12 @@
         <context:exclude-filter type="annotation" expression="org.springframework.web.bind.annotation.RestControllerAdvice"/>
     </context:component-scan>
 
+    <!-- AOP 활성화 -->
+    <aop:aspectj-autoproxy/>
+
+    <!-- 스케줄링 활성화 -->
+    <task:annotation-driven/>
+
     <!-- 데이터베이스 설정 -->
     <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
         <property name="driverClassName" value="${jdbc.driver}"/>
@@ -34,10 +46,12 @@
         <property name="username" value="${jdbc.username}"/>
         <property name="password" value="${jdbc.password}"/>
         <!-- HikariCP 설정 -->
-        <property name="maximumPoolSize" value="20"/>
-        <property name="minimumIdle" value="5"/>
-        <property name="idleTimeout" value="300000"/>
-        <property name="connectionTimeout" value="20000"/>
+        <property name="maximumPoolSize" value="${hikari.maximumPoolSize}"/>
+        <property name="minimumIdle" value="${hikari.minimumIdle}"/>
+        <property name="idleTimeout" value="${hikari.idleTimeout}"/>
+        <property name="connectionTimeout" value="${hikari.connectionTimeout}"/>
+        <property name="leakDetectionThreshold" value="60000"/>
+        <property name="connectionTestQuery" value="SELECT 1"/>
     </bean>
 
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
@@ -61,5 +75,31 @@
 
     <!-- 트랜잭션 어노테이션 활성화 -->
     <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!-- 파일 업로드 디렉토리 생성 -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingBean">
+        <property name="targetClass" value="java.io.File"/>
+        <property name="targetMethod" value="mkdirs"/>
+        <property name="arguments">
+            <list>
+                <bean class="java.io.File">
+                    <constructor-arg value="${file.upload.path}"/>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 아바타 업로드 디렉토리 생성 -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingBean">
+        <property name="targetClass" value="java.io.File"/>
+        <property name="targetMethod" value="mkdirs"/>
+        <property name="arguments">
+            <list>
+                <bean class="java.io.File">
+                    <constructor-arg value="${file.upload.avatar.path}"/>
+                </bean>
+            </list>
+        </property>
+    </bean>
 
 </beans>

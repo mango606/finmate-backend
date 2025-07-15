@@ -28,11 +28,11 @@
 
     <!-- CORS 필터 -->
     <filter>
-        <filter-name>CORS</filter-name>
+        <filter-name>corsFilter</filter-name>
         <filter-class>com.example.finmate.common.filter.CORSFilter</filter-class>
     </filter>
     <filter-mapping>
-        <filter-name>CORS</filter-name>
+        <filter-name>corsFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
@@ -76,6 +76,17 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
+    <!-- 에러 페이지 설정 -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.html</location>
+    </error-page>
+
+    <error-page>
+        <error-code>500</error-code>
+        <location>/index.html</location>
+    </error-page>
+
     <!-- 기본 페이지 설정 -->
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
@@ -84,6 +95,16 @@
     <!-- 세션 타임아웃 (30분) -->
     <session-config>
         <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>false</secure>
+        </cookie-config>
     </session-config>
+
+    <!-- MIME 타입 설정 -->
+    <mime-mapping>
+        <extension>json</extension>
+        <mime-type>application/json</mime-type>
+    </mime-mapping>
 
 </web-app>

@@ -28,12 +28,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LoginSuccessHandler loginSuccessHandler;
     private final LoginFailureHandler loginFailureHandler;
-    private final CustomAccessDeniedHandler accessDeniedHandler;
-    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -49,7 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
     }
 
     @Override
@@ -75,9 +75,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/resources/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 // Swagger 허용
                 .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v2/api-docs", "/webjars/**").permitAll()
+                .antMatchers("/swagger-resources/**", "/configuration/ui", "/configuration/security").permitAll()
                 // 인증 불필요 API
                 .antMatchers("/api/auth/login", "/api/member/join").permitAll()
                 .antMatchers("/api/member/checkUserId/**", "/api/member/checkEmail").permitAll()
+                .antMatchers("/api/member/health", "/api/health/**").permitAll()
                 .antMatchers("/", "/index.html").permitAll()
                 // 회원 관련 API - 인증 필요
                 .antMatchers("/api/member/**").hasRole("USER")
@@ -91,18 +93,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 // 예외 처리
                 .exceptionHandling()
-                .accessDeniedHandler(accessDeniedHandler)
-                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(customAccessDeniedHandler)
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
 
                 .and()
 
                 // JWT 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAt(jwtUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(createJwtUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
-    public JwtUsernamePasswordAuthenticationFilter jwtUsernamePasswordAuthenticationFilter() throws Exception {
+    public JwtUsernamePasswordAuthenticationFilter createJwtUsernamePasswordAuthenticationFilter() throws Exception {
         return new JwtUsernamePasswordAuthenticationFilter(
                 authenticationManagerBean(),
                 loginSuccessHandler,
