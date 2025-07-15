@@ -2,7 +2,7 @@ package com.example.finmate.common.aspect;
 
 import com.example.finmate.common.util.IPUtils;
 import com.example.finmate.common.util.SecurityUtils;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -12,7 +12,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 
-@Log4j2
+@Slf4j
 @Aspect
 @Component
 public class LoggingAspect {

@@ -1,13 +1,13 @@
 package com.example.finmate.security.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-@Log4j2
+@Slf4j
 public class JsonResponse {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

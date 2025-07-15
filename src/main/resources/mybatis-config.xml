@@ -18,8 +18,8 @@
         <!-- 캐시 설정 -->
         <setting name="cacheEnabled" value="true"/>
 
-        <!-- SQL 로그 설정 -->
-        <setting name="logImpl" value="LOG4J2"/>
+        <!-- SQL 로그 설정 (SLF4J 사용) -->
+        <setting name="logImpl" value="SLF4J"/>
     </settings>
 
     <typeAliases>

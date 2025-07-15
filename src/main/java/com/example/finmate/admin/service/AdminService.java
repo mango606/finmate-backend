@@ -2,7 +2,7 @@ package com.example.finmate.admin.service;
 
 import com.example.finmate.member.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-@Log4j2
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminService {

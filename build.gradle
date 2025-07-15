@@ -32,13 +32,13 @@ dependencies {
 
     // 서블릿 API
     implementation 'jakarta.servlet:jakarta.servlet-api:4.0.4'
-    implementation 'jakarta.servlet.jsp:jakarta.servlet.jsp-api:2.3.3'
-    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:1.2.7'
+    implementation 'jakarta.servlet.jsp:jakarta.servlet.jsp.jstl-api:1.2.7'
     implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:1.2.6'
 
     // 스프링 프레임워크
-    implementation("org.springframework:spring-context:${springVersion}")
-            { exclude group: 'commons-logging', module: 'commons-logging' }
+    implementation("org.springframework:spring-context:${springVersion}") {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
     implementation "org.springframework:spring-webmvc:${springVersion}"
     implementation 'javax.inject:javax.inject:1'
 
@@ -46,10 +46,13 @@ dependencies {
     implementation 'org.aspectj:aspectjrt:1.9.20'
     implementation 'org.aspectj:aspectjweaver:1.9.20'
 
-    // Log4j2
-    implementation 'org.apache.logging.log4j:log4j-api:2.18.0'
-    implementation 'org.apache.logging.log4j:log4j-core:2.18.0'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.18.0'
+    // SLF4J + Logback
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'ch.qos.logback:logback-classic:1.2.12'
+    implementation 'ch.qos.logback:logback-core:1.2.12'
+    implementation 'org.slf4j:jcl-over-slf4j:1.7.36'
+
+    // SQL 로깅
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4:1.16'
 
     // Swagger
@@ -103,6 +106,8 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    testImplementation('org.mockito:mockito-core:4.11.0')
+    testImplementation('org.mockito:mockito-junit-jupiter:4.11.0')
 }
 
 gretty {

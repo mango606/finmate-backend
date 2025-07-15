@@ -2,7 +2,7 @@ package com.example.finmate.common.scheduler;
 
 import com.example.finmate.common.service.CacheService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Log4j2
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ScheduledTasks {

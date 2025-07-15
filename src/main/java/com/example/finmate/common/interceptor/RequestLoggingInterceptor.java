@@ -1,14 +1,14 @@
 package com.example.finmate.common.interceptor;
 
 import com.example.finmate.common.util.IPUtils;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@Log4j2
+@Slf4j
 @Component
 public class RequestLoggingInterceptor implements HandlerInterceptor {
 
