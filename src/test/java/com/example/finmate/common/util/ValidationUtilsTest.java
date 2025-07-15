@@ -60,9 +60,10 @@ class ValidationUtilsTest {
     @DisplayName("비밀번호 유효성 검사")
     void isValidPassword() {
         // 유효한 비밀번호
-        assertTrue(ValidationUtils.isValidPassword("Test123!@#"));
+        assertTrue(ValidationUtils.isValidPassword("Test123!"));
         assertTrue(ValidationUtils.isValidPassword("MyPass123$"));
         assertTrue(ValidationUtils.isValidPassword("Secure*123"));
+        assertTrue(ValidationUtils.isValidPassword("Valid1@"));
 
         // 유효하지 않은 비밀번호
         assertFalse(ValidationUtils.isValidPassword("test123!")); // 대문자 없음
@@ -70,6 +71,7 @@ class ValidationUtilsTest {
         assertFalse(ValidationUtils.isValidPassword("TestPass!")); // 숫자 없음
         assertFalse(ValidationUtils.isValidPassword("Test123")); // 특수문자 없음
         assertFalse(ValidationUtils.isValidPassword("Test1!")); // 너무 짧음
+        assertFalse(ValidationUtils.isValidPassword("Test123!@#$%^&*()Test123!@#$%^&*()")); // 너무 김
         assertFalse(ValidationUtils.isValidPassword(null));
     }
 

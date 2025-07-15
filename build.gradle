@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'war'
-    id 'org.gretty' version '4.0.3'
+    id 'application'
     id 'idea'
 }
 
@@ -17,6 +17,7 @@ ext {
     springVersion = '5.3.37'
     springSecurityVersion = '5.8.13'
     lombokVersion = '1.18.30'
+    jettyVersion = '9.4.53.v20231009'
 }
 
 sourceCompatibility = '17'
@@ -26,15 +27,18 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-configurations {
-    providedCompile
-}
-
 dependencies {
     // 서블릿 API
-    providedCompile 'javax.servlet:javax.servlet-api:4.0.1'
-    providedCompile 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.3'
+    implementation 'javax.servlet:javax.servlet-api:4.0.1'
+    implementation 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.3'
     implementation 'javax.servlet:jstl:1.2'
+
+    // 내장 Jetty 서버 (개발용)
+    implementation "org.eclipse.jetty:jetty-server:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-webapp:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-annotations:${jettyVersion}"
+    implementation "org.eclipse.jetty:jetty-plus:${jettyVersion}"
 
     // 스프링 프레임워크 (Spring Legacy)
     implementation("org.springframework:spring-context:${springVersion}") {
@@ -118,35 +122,65 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     testImplementation('org.mockito:mockito-core:4.11.0')
     testImplementation('org.mockito:mockito-junit-jupiter:4.11.0')
+
+    // Spring Test 관련
+    testImplementation('org.springframework:spring-test:5.3.37')
+    testImplementation('org.springframework.security:spring-security-test:5.8.13')
+
+    // MockMvc 및 JSON 테스트를 위한 의존성
+    testImplementation('org.hamcrest:hamcrest:2.2')
+    testImplementation('org.hamcrest:hamcrest-library:2.2')
+    testImplementation('com.jayway.jsonpath:json-path:2.8.0')
+    testImplementation('com.jayway.jsonpath:json-path-assert:2.8.0')
+}
+
+// Application 플러그인 설정
+application {
+    mainClass = 'com.example.finmate.JettyLauncher'
 }
 
 // WAR 배포 설정
 war {
     archiveFileName = 'finmate-backend.war'
-    webInf {
-        from 'src/main/webapp/WEB-INF'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // 웹 리소스 복사
+    from('src/main/webapp') {
+        exclude 'WEB-INF/classes/**'
+        exclude 'WEB-INF/lib/**'
     }
 }
 
-// Gretty 설정
-gretty {
-    servletContainer = 'tomcat9'
-    contextPath = ''
-    httpPort = 8080
-    httpsPort = 8443
+// 개발용 실행 태스크
+task runServer(type: JavaExec) {
+    group = 'application'
+    description = 'FinMate 서버 실행'
+    mainClass = 'com.example.finmate.JettyLauncher'
+    classpath = sourceSets.main.runtimeClasspath
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'user.timezone', 'Asia/Seoul'
+    jvmArgs = ['-Xmx1024m', '-Xms512m']
 
-    // 핫 리로드 설정
-    fastReload = true
-    recompileOnSourceChange = true
-    reloadOnClassChange = true
-    reloadOnConfigChange = true
-    reloadOnLibChange = true
+    doFirst {
+        println "🚀 FinMate 서버를 시작합니다..."
+        println "📍 URL: http://localhost:8080"
+        println "📖 API 문서: http://localhost:8080/swagger-ui.html"
+    }
+}
 
-    // JVM 옵션
-    jvmArgs = [
-            '-Dfile.encoding=UTF-8',
-            '-Duser.timezone=Asia/Seoul'
-    ]
+// 테스트 없이 빌드하는 태스크
+task buildNoTest {
+    group = 'build'
+    description = '테스트 없이 빌드'
+    dependsOn 'clean', 'compileJava', 'processResources', 'classes'
+}
+
+// 테스트 없이 서버 실행
+task runServerNoTest {
+    group = 'application'
+    description = '테스트 없이 서버 실행'
+    dependsOn 'buildNoTest'
+    finalizedBy 'runServer'
 }
 
 // 테스트 설정
@@ -154,5 +188,62 @@ test {
     useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+// 컴파일 옵션
+compileJava {
+    options.compilerArgs += ['-parameters']
+}
+
+// 직접 실행 태스크 (의존성 포함)
+task runJetty(type: JavaExec) {
+    group = 'application'
+    description = 'Jetty 서버 직접 실행'
+    mainClass = 'com.example.finmate.JettyLauncher'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.output
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'user.timezone', 'Asia/Seoul'
+    jvmArgs = ['-Xmx1024m', '-Xms512m']
+
+    doFirst {
+        println "🚀 Jetty 서버를 시작합니다..."
+        println "📍 URL: http://localhost:8080"
+    }
+}
+
+// Fat JAR 생성 (모든 의존성 포함)
+task fatJar(type: Jar) {
+    group = 'build'
+    description = '모든 의존성을 포함한 실행 가능한 JAR 생성'
+    archiveFileName = 'finmate-server.jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes(
+                'Main-Class': 'com.example.finmate.JettyLauncher',
+                'Implementation-Title': 'FinMate Server',
+                'Implementation-Version': project.version
+        )
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    with jar
+}
+
+// Fat JAR 실행 태스크
+task runFatJar(type: Exec) {
+    group = 'application'
+    description = 'Fat JAR로 서버 실행'
+    dependsOn fatJar
+
+    commandLine 'java', '-jar', 'build/libs/finmate-server.jar'
+
+    doFirst {
+        println "🚀 Fat JAR로 서버를 시작합니다..."
     }
 }
