@@ -14,7 +14,9 @@
     <context:component-scan base-package="com.example.finmate.security"/>
 
     <!-- BCrypt 패스워드 인코더 -->
-    <beans:bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+    <beans:bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
+        <beans:constructor-arg value="10"/>
+    </beans:bean>
 
     <!-- JWT 관련 빈들 -->
     <beans:bean id="jwtProcessor" class="com.example.finmate.security.util.JwtProcessor"/>
@@ -26,6 +28,12 @@
     <!-- 인증 성공/실패 핸들러 -->
     <beans:bean id="loginSuccessHandler" class="com.example.finmate.security.handler.LoginSuccessHandler"/>
     <beans:bean id="loginFailureHandler" class="com.example.finmate.security.handler.LoginFailureHandler"/>
+
+    <!-- 접근 거부 핸들러 -->
+    <beans:bean id="customAccessDeniedHandler" class="com.example.finmate.security.handler.CustomAccessDeniedHandler"/>
+
+    <!-- 인증 진입점 -->
+    <beans:bean id="customAuthenticationEntryPoint" class="com.example.finmate.security.handler.CustomAuthenticationEntryPoint"/>
 
     <!-- 인증 매니저 -->
     <authentication-manager id="authenticationManager">
@@ -42,6 +50,40 @@
         <beans:constructor-arg ref="loginFailureHandler"/>
     </beans:bean>
 
+    <!-- CORS 설정 -->
+    <beans:bean id="corsConfigurationSource" class="org.springframework.web.cors.UrlBasedCorsConfigurationSource">
+        <beans:property name="corsConfigurations">
+            <beans:map>
+                <beans:entry key="/**">
+                    <beans:bean class="org.springframework.web.cors.CorsConfiguration">
+                        <beans:property name="allowedOriginPatterns">
+                            <beans:list>
+                                <beans:value>http://localhost:*</beans:value>
+                                <beans:value>http://127.0.0.1:*</beans:value>
+                            </beans:list>
+                        </beans:property>
+                        <beans:property name="allowedMethods">
+                            <beans:list>
+                                <beans:value>GET</beans:value>
+                                <beans:value>POST</beans:value>
+                                <beans:value>PUT</beans:value>
+                                <beans:value>DELETE</beans:value>
+                                <beans:value>OPTIONS</beans:value>
+                            </beans:list>
+                        </beans:property>
+                        <beans:property name="allowedHeaders">
+                            <beans:list>
+                                <beans:value>*</beans:value>
+                            </beans:list>
+                        </beans:property>
+                        <beans:property name="allowCredentials" value="true"/>
+                        <beans:property name="maxAge" value="3600"/>
+                    </beans:bean>
+                </beans:entry>
+            </beans:map>
+        </beans:property>
+    </beans:bean>
+
     <!-- HTTP 보안 설정 -->
     <http auto-config="false" use-expressions="true" create-session="stateless"
           authentication-manager-ref="authenticationManager">
@@ -49,8 +91,15 @@
         <!-- CSRF 비활성화 (JWT 사용) -->
         <csrf disabled="true"/>
 
-        <!-- CORS 설정 -->
+        <!-- CORS 설정 적용 -->
         <cors configuration-source-ref="corsConfigurationSource"/>
+
+        <!-- 헤더 보안 설정 -->
+        <headers>
+            <frame-options policy="DENY"/>
+            <content-type-options/>
+            <xss-protection/>
+        </headers>
 
         <!-- 정적 리소스 허용 -->
         <intercept-url pattern="/resources/**" access="permitAll"/>
@@ -58,18 +107,21 @@
         <intercept-url pattern="/js/**" access="permitAll"/>
         <intercept-url pattern="/images/**" access="permitAll"/>
         <intercept-url pattern="/favicon.ico" access="permitAll"/>
+        <intercept-url pattern="/upload/**" access="permitAll"/>
 
         <!-- Swagger 허용 -->
         <intercept-url pattern="/swagger-ui.html" access="permitAll"/>
         <intercept-url pattern="/swagger-ui/**" access="permitAll"/>
         <intercept-url pattern="/v2/api-docs" access="permitAll"/>
         <intercept-url pattern="/webjars/**" access="permitAll"/>
+        <intercept-url pattern="/swagger-resources/**" access="permitAll"/>
 
         <!-- 인증 불필요 API -->
         <intercept-url pattern="/api/auth/login" access="permitAll"/>
         <intercept-url pattern="/api/member/join" access="permitAll"/>
         <intercept-url pattern="/api/member/checkUserId/**" access="permitAll"/>
         <intercept-url pattern="/api/member/checkEmail" access="permitAll"/>
+        <intercept-url pattern="/api/member/health" access="permitAll"/>
         <intercept-url pattern="/index.html" access="permitAll"/>
         <intercept-url pattern="/" access="permitAll"/>
 
@@ -90,29 +142,17 @@
         <access-denied-handler ref="customAccessDeniedHandler"/>
         <authentication-entry-point ref="customAuthenticationEntryPoint"/>
 
+        <!-- 로그아웃 설정 -->
+        <logout logout-url="/api/auth/logout"
+                success-handler-ref="customLogoutSuccessHandler"
+                invalidate-session="false"/>
+
     </http>
 
-    <!-- CORS 설정 -->
-    <beans:bean id="corsConfigurationSource" class="org.springframework.web.cors.CorsConfigurationSource">
-        <beans:property name="corsConfigurations">
-            <beans:map>
-                <beans:entry key="/**">
-                    <beans:bean class="org.springframework.web.cors.CorsConfiguration">
-                        <beans:property name="allowedOrigins" value="http://localhost:3000,http://localhost:8080"/>
-                        <beans:property name="allowedMethods" value="GET,POST,PUT,DELETE,OPTIONS"/>
-                        <beans:property name="allowedHeaders" value="*"/>
-                        <beans:property name="allowCredentials" value="true"/>
-                        <beans:property name="maxAge" value="3600"/>
-                    </beans:bean>
-                </beans:entry>
-            </beans:map>
-        </beans:property>
-    </beans:bean>
+    <!-- 로그아웃 성공 핸들러 -->
+    <beans:bean id="customLogoutSuccessHandler" class="com.example.finmate.security.handler.CustomLogoutSuccessHandler"/>
 
-    <!-- 접근 거부 핸들러 -->
-    <beans:bean id="customAccessDeniedHandler" class="com.example.finmate.security.handler.CustomAccessDeniedHandler"/>
-
-    <!-- 인증 진입점 -->
-    <beans:bean id="customAuthenticationEntryPoint" class="com.example.finmate.security.handler.CustomAuthenticationEntryPoint"/>
+    <!-- 메서드 보안 활성화 -->
+    <global-method-security pre-post-annotations="enabled"/>
 
 </beans:beans>
