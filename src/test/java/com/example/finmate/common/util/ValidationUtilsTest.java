@@ -60,10 +60,10 @@ class ValidationUtilsTest {
     @DisplayName("비밀번호 유효성 검사")
     void isValidPassword() {
         // 유효한 비밀번호
-        assertTrue(ValidationUtils.isValidPassword("Test123!"));
-        assertTrue(ValidationUtils.isValidPassword("MyPass123$"));
-        assertTrue(ValidationUtils.isValidPassword("Secure*123"));
-        assertTrue(ValidationUtils.isValidPassword("Valid1@"));
+        assertTrue(ValidationUtils.isValidPassword("Test123!")); // 영문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("MyPass123$")); // 영문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("Secure*123")); // 영문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("Valid1@A")); // 영문자+숫자+특수문자 (8자)
 
         // 유효하지 않은 비밀번호
         assertFalse(ValidationUtils.isValidPassword("test123!")); // 대문자 없음

@@ -19,11 +19,6 @@ public class ValidationUtils {
             "^[a-zA-Z0-9_]{4,20}$"
     );
 
-    // 비밀번호 정규식 (대소문자, 숫자, 특수문자 포함)
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
-    );
-
     // 이메일 유효성 검사
     public static boolean isValidEmail(String email) {
         return email != null && EMAIL_PATTERN.matcher(email).matches();
@@ -41,7 +36,18 @@ public class ValidationUtils {
 
     // 비밀번호 유효성 검사
     public static boolean isValidPassword(String password) {
-        return password != null && PASSWORD_PATTERN.matcher(password).matches();
+        if (password == null || password.length() < 8 || password.length() > 20) {
+            return false;
+        }
+
+        // 각 조건 체크
+        boolean hasLowerCase = password.matches(".*[a-z].*");     // 소문자 포함
+        boolean hasUpperCase = password.matches(".*[A-Z].*");     // 대문자 포함
+        boolean hasDigit = password.matches(".*\\d.*");           // 숫자 포함
+        boolean hasSpecial = password.matches(".*[@$!%*?&].*");   // 특수문자 포함
+
+        // 모든 조건을 만족해야 함 (대소문자, 숫자, 특수문자)
+        return hasLowerCase && hasUpperCase && hasDigit && hasSpecial;
     }
 
     // 문자열 길이 검사
