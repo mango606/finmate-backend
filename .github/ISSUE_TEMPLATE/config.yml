@@ -5,5 +5,5 @@ blank_issues_enabled: false
 contact_links:
   - name: "🤔 아이디어나 단순 질문"
     # GitHub Discussions 기능을 활성화하고 연결하면 좋습니다.
-    url: "https://github.com/your-github-username/your-repo/discussions"
+    url: "https://github.com/mango606/finmate-backend/discussions"
     about: "정식 작업이 아닌 아이디어나 간단한 질문은 Discussions에 남겨주세요."
