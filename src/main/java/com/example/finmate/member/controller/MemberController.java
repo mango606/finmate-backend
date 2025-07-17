@@ -53,16 +53,25 @@ public class MemberController {
             boolean success = memberService.insertMember(joinDTO);
 
             if (success) {
-                // 이메일 인증 토큰 생성 및 발송
+                // 환영 이메일 발송
                 try {
-                    String verificationToken = authService.generateEmailVerificationToken(joinDTO.getUserEmail());
-                    emailService.sendActivationEmail(joinDTO.getUserEmail(), verificationToken);
+                    emailService.sendWelcomeEmail(joinDTO.getUserEmail(), joinDTO.getUserName());
 
-                    response.put("success", true);
-                    response.put("message", "회원 가입이 완료되었습니다. 이메일 인증을 완료해주세요.");
-                    response.put("emailSent", true);
+                    // 이메일 인증 토큰 생성 및 발송 (AuthService가 null이 아닌 경우에만)
+                    if (authService != null) {
+                        String verificationToken = authService.generateEmailVerificationToken(joinDTO.getUserEmail());
+                        emailService.sendActivationEmail(joinDTO.getUserEmail(), verificationToken);
+
+                        response.put("success", true);
+                        response.put("message", "회원 가입이 완료되었습니다. 이메일 인증을 완료해주세요.");
+                        response.put("emailSent", true);
+                    } else {
+                        response.put("success", true);
+                        response.put("message", "회원 가입이 완료되었습니다.");
+                        response.put("emailSent", false);
+                    }
                 } catch (Exception e) {
-                    log.warn("이메일 인증 발송 실패: {}", e.getMessage());
+                    log.warn("이메일 발송 실패: {}", e.getMessage());
                     response.put("success", true);
                     response.put("message", "회원 가입이 완료되었습니다.");
                     response.put("emailSent", false);
@@ -100,7 +109,11 @@ public class MemberController {
             // 보안 정보 포함
             Map<String, Object> enhancedInfo = new HashMap<>();
             enhancedInfo.put("basic", memberInfo);
-            enhancedInfo.put("security", authService.getAccountSecurity(userId));
+
+            // AuthService가 null이 아닌 경우에만 보안 정보 추가
+            if (authService != null) {
+                enhancedInfo.put("security", authService.getAccountSecurity(userId));
+            }
 
             response.put("success", true);
             response.put("data", enhancedInfo);
@@ -178,8 +191,10 @@ public class MemberController {
             boolean success = memberService.updateMemberPassword(userId, currentPassword, newPassword);
 
             if (success) {
-                // 보안 이벤트 기록
-                authService.recordSecurityEvent(userId, "PASSWORD_CHANGED", clientIP);
+                // 보안 이벤트 기록 (AuthService가 null이 아닌 경우에만)
+                if (authService != null) {
+                    authService.recordSecurityEvent(userId, "PASSWORD_CHANGED", clientIP);
+                }
 
                 response.put("success", true);
                 response.put("message", "비밀번호가 변경되었습니다.");
@@ -218,8 +233,10 @@ public class MemberController {
             boolean success = memberService.deleteMember(userId);
 
             if (success) {
-                // 보안 이벤트 기록
-                authService.recordSecurityEvent(userId, "ACCOUNT_WITHDRAWN", clientIP);
+                // 보안 이벤트 기록 (AuthService가 null이 아닌 경우에만)
+                if (authService != null) {
+                    authService.recordSecurityEvent(userId, "ACCOUNT_WITHDRAWN", clientIP);
+                }
 
                 response.put("success", true);
                 response.put("message", "회원 탈퇴가 완료되었습니다.");
@@ -302,219 +319,6 @@ public class MemberController {
         }
     }
 
-    @ApiOperation(value = "보안 설정 조회", notes = "사용자의 보안 설정을 조회합니다.")
-    @GetMapping("/security-settings")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> getSecuritySettings(Authentication authentication) {
-        String userId = SecurityUtils.getCurrentUserId();
-        log.info("보안 설정 조회: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            Map<String, Object> securitySettings = authService.getSecuritySettings(userId);
-
-            response.put("success", true);
-            response.put("data", securitySettings);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("보안 설정 조회 실패", e);
-            response.put("success", false);
-            response.put("message", "보안 설정 조회에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @ApiOperation(value = "2단계 인증 설정", notes = "2단계 인증을 활성화/비활성화합니다.")
-    @PostMapping("/two-factor-auth")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> updateTwoFactorAuth(
-            Authentication authentication,
-            @RequestParam boolean enabled,
-            HttpServletRequest request) {
-
-        String userId = SecurityUtils.getCurrentUserId();
-        String clientIP = IPUtils.getClientIP(request);
-        log.info("2단계 인증 설정: {} - {} from {}", userId, enabled, IPUtils.maskIP(clientIP));
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            boolean success = authService.updateTwoFactorAuth(userId, enabled);
-
-            if (success) {
-                authService.recordSecurityEvent(userId,
-                        enabled ? "TWO_FACTOR_ENABLED" : "TWO_FACTOR_DISABLED", clientIP);
-
-                response.put("success", true);
-                response.put("message", enabled ? "2단계 인증이 활성화되었습니다." : "2단계 인증이 비활성화되었습니다.");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "2단계 인증 설정에 실패했습니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-
-        } catch (Exception e) {
-            log.error("2단계 인증 설정 실패", e);
-            response.put("success", false);
-            response.put("message", "2단계 인증 설정에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @ApiOperation(value = "계정 활동 내역", notes = "사용자의 계정 활동 내역을 조회합니다.")
-    @GetMapping("/activity-history")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> getActivityHistory(
-            Authentication authentication,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        String userId = SecurityUtils.getCurrentUserId();
-        log.info("계정 활동 내역 조회: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            Map<String, Object> activityHistory = authService.getActivityHistory(userId, page, size);
-
-            response.put("success", true);
-            response.put("data", activityHistory);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("계정 활동 내역 조회 실패", e);
-            response.put("success", false);
-            response.put("message", "계정 활동 내역 조회에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @ApiOperation(value = "계정 보안 점검", notes = "사용자 계정의 보안 상태를 점검합니다.")
-    @GetMapping("/security-check")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> performSecurityCheck(Authentication authentication) {
-        String userId = SecurityUtils.getCurrentUserId();
-        log.info("계정 보안 점검: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            Map<String, Object> securityCheck = authService.performSecurityCheck(userId);
-
-            response.put("success", true);
-            response.put("data", securityCheck);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("계정 보안 점검 실패", e);
-            response.put("success", false);
-            response.put("message", "계정 보안 점검에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @ApiOperation(value = "알림 설정 조회", notes = "사용자의 알림 설정을 조회합니다.")
-    @GetMapping("/notification-settings")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> getNotificationSettings(Authentication authentication) {
-        String userId = SecurityUtils.getCurrentUserId();
-        log.info("알림 설정 조회: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            // 기본 알림 설정 (추후 DB 연동)
-            Map<String, Object> notificationSettings = new HashMap<>();
-            notificationSettings.put("emailNotification", true);
-            notificationSettings.put("smsNotification", false);
-            notificationSettings.put("pushNotification", true);
-            notificationSettings.put("loginNotification", true);
-            notificationSettings.put("financialAlerts", true);
-            notificationSettings.put("goalReminders", true);
-            notificationSettings.put("marketingEmails", false);
-
-            response.put("success", true);
-            response.put("data", notificationSettings);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("알림 설정 조회 실패", e);
-            response.put("success", false);
-            response.put("message", "알림 설정 조회에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @ApiOperation(value = "알림 설정 수정", notes = "사용자의 알림 설정을 수정합니다.")
-    @PutMapping("/notification-settings")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> updateNotificationSettings(
-            Authentication authentication,
-            @RequestBody Map<String, Object> settingsData) {
-
-        String userId = SecurityUtils.getCurrentUserId();
-        log.info("알림 설정 수정: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            // 알림 설정 업데이트 로직 (추후 DB 연동)
-            log.info("알림 설정 업데이트: {} - {}", userId, settingsData);
-
-            response.put("success", true);
-            response.put("message", "알림 설정이 수정되었습니다.");
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("알림 설정 수정 실패", e);
-            response.put("success", false);
-            response.put("message", "알림 설정 수정에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @ApiOperation(value = "사용자 통계", notes = "사용자의 활동 통계를 조회합니다.")
-    @GetMapping("/statistics")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> getUserStatistics(Authentication authentication) {
-        String userId = SecurityUtils.getCurrentUserId();
-        log.info("사용자 통계 조회: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            Map<String, Object> statistics = new HashMap<>();
-
-            // 기본 통계 정보
-            statistics.put("joinDate", "2024-01-01"); // 실제로는 DB에서 조회
-            statistics.put("loginCount", 42);
-            statistics.put("lastLoginDate", "2024-01-15");
-            statistics.put("profileCompleteness", 85);
-            statistics.put("securityScore", 78);
-
-            // 활동 통계
-            Map<String, Object> activityStats = new HashMap<>();
-            activityStats.put("totalGoals", 5);
-            activityStats.put("completedGoals", 2);
-            activityStats.put("totalTransactions", 127);
-            activityStats.put("averageMonthlyActivity", 23);
-            statistics.put("activity", activityStats);
-
-            response.put("success", true);
-            response.put("data", statistics);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("사용자 통계 조회 실패", e);
-            response.put("success", false);
-            response.put("message", "사용자 통계 조회에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
     @ApiOperation(value = "서버 상태 확인", notes = "서버와 데이터베이스 연결 상태를 확인합니다.")
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> healthCheck() {
@@ -543,5 +347,80 @@ public class MemberController {
 
             return ResponseEntity.ok(response);
         }
+    }
+
+    @ApiOperation(value = "보안 설정 조회", notes = "사용자의 보안 설정을 조회합니다.")
+    @GetMapping("/security-settings")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> getSecuritySettings(Authentication authentication) {
+        String userId = SecurityUtils.getCurrentUserId();
+        log.info("보안 설정 조회: {}", userId);
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Map<String, Object> securitySettings = authService != null ?
+                    authService.getSecuritySettings(userId) : getDefaultSecuritySettings();
+
+            response.put("success", true);
+            response.put("data", securitySettings);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("보안 설정 조회 실패", e);
+            response.put("success", false);
+            response.put("message", "보안 설정 조회에 실패했습니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @ApiOperation(value = "2단계 인증 설정", notes = "2단계 인증을 활성화/비활성화합니다.")
+    @PostMapping("/two-factor-auth")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> updateTwoFactorAuth(
+            Authentication authentication,
+            @RequestParam boolean enabled,
+            HttpServletRequest request) {
+
+        String userId = SecurityUtils.getCurrentUserId();
+        String clientIP = IPUtils.getClientIP(request);
+        log.info("2단계 인증 설정: {} - {} from {}", userId, enabled, IPUtils.maskIP(clientIP));
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean success = authService != null ?
+                    authService.updateTwoFactorAuth(userId, enabled) : false;
+
+            if (success && authService != null) {
+                authService.recordSecurityEvent(userId,
+                        enabled ? "TWO_FACTOR_ENABLED" : "TWO_FACTOR_DISABLED", clientIP);
+
+                response.put("success", true);
+                response.put("message", enabled ? "2단계 인증이 활성화되었습니다." : "2단계 인증이 비활성화되었습니다.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "2단계 인증 설정에 실패했습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("2단계 인증 설정 실패", e);
+            response.put("success", false);
+            response.put("message", "2단계 인증 설정에 실패했습니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // 기본 보안 설정 반환 메서드
+    private Map<String, Object> getDefaultSecuritySettings() {
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("emailVerified", false);
+        settings.put("phoneVerified", false);
+        settings.put("twoFactorEnabled", false);
+        settings.put("loginNotificationEnabled", true);
+        settings.put("securityQuestionEnabled", false);
+        return settings;
     }
 }

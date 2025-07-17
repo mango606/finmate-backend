@@ -19,6 +19,11 @@ public class ValidationUtils {
             "^[a-zA-Z0-9_]{4,20}$"
     );
 
+    // 비밀번호 정규식 (영문자 + 숫자 또는 특수문자)
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[a-zA-Z])(?=.*[\\d@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
+    );
+
     // 이메일 유효성 검사
     public static boolean isValidEmail(String email) {
         return email != null && EMAIL_PATTERN.matcher(email).matches();
@@ -40,13 +45,23 @@ public class ValidationUtils {
             return false;
         }
 
+        // 영문자와 숫자+특수문자 중 하나 이상 포함 확인
+        return PASSWORD_PATTERN.matcher(password).matches();
+    }
+
+    // 강력한 비밀번호 유효성 검사 (모든 요소 포함)
+    public static boolean isStrongPassword(String password) {
+        if (password == null || password.length() < 8 || password.length() > 20) {
+            return false;
+        }
+
         // 각 조건 체크
         boolean hasLowerCase = password.matches(".*[a-z].*");     // 소문자 포함
         boolean hasUpperCase = password.matches(".*[A-Z].*");     // 대문자 포함
         boolean hasDigit = password.matches(".*\\d.*");           // 숫자 포함
         boolean hasSpecial = password.matches(".*[@$!%*?&].*");   // 특수문자 포함
 
-        // 모든 조건을 만족해야 함 (대소문자, 숫자, 특수문자)
+        // 모든 조건을 만족해야 함
         return hasLowerCase && hasUpperCase && hasDigit && hasSpecial;
     }
 
@@ -94,5 +109,37 @@ public class ValidationUtils {
     public static boolean isEnglish(String str) {
         if (str == null || str.isEmpty()) return false;
         return str.matches("^[a-zA-Z\\s]+$");
+    }
+
+    // 비밀번호 강도 체크 (점수 기반)
+    public static int getPasswordStrength(String password) {
+        if (password == null) return 0;
+
+        int score = 0;
+
+        // 길이 점수
+        if (password.length() >= 8) score += 25;
+        if (password.length() >= 12) score += 25;
+
+        // 문자 종류 점수
+        if (password.matches(".*[a-z].*")) score += 10;
+        if (password.matches(".*[A-Z].*")) score += 10;
+        if (password.matches(".*\\d.*")) score += 10;
+        if (password.matches(".*[@$!%*?&].*")) score += 10;
+
+        // 복잡성 점수
+        if (password.matches(".*[a-zA-Z].*") && password.matches(".*\\d.*")) score += 10;
+
+        return Math.min(score, 100);
+    }
+
+    // 비밀번호 강도 등급 반환
+    public static String getPasswordStrengthGrade(String password) {
+        int strength = getPasswordStrength(password);
+
+        if (strength >= 80) return "STRONG";
+        if (strength >= 60) return "MEDIUM";
+        if (strength >= 40) return "WEAK";
+        return "VERY_WEAK";
     }
 }

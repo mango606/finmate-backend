@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DisplayName("유효성 검사 유틸리티 테스트")
+@DisplayName("수정된 유효성 검사 유틸리티 테스트")
 class ValidationUtilsTest {
 
     @Test
@@ -57,22 +57,67 @@ class ValidationUtilsTest {
     }
 
     @Test
-    @DisplayName("비밀번호 유효성 검사")
+    @DisplayName("비밀번호 유효성 검사 - 수정된 패턴")
     void isValidPassword() {
-        // 유효한 비밀번호
-        assertTrue(ValidationUtils.isValidPassword("Test123!")); // 영문자+숫자+특수문자
-        assertTrue(ValidationUtils.isValidPassword("MyPass123$")); // 영문자+숫자+특수문자
-        assertTrue(ValidationUtils.isValidPassword("Secure*123")); // 영문자+숫자+특수문자
-        assertTrue(ValidationUtils.isValidPassword("Valid1@A")); // 영문자+숫자+특수문자 (8자)
+        // 유효한 비밀번호 (영문자 + 숫자 또는 특수문자)
+        assertTrue(ValidationUtils.isValidPassword("Test123!")); // 대소문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("test123!")); // 소문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("TEST123!")); // 대문자+숫자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("Test123")); // 대소문자+숫자
+        assertTrue(ValidationUtils.isValidPassword("test123")); // 소문자+숫자
+        assertTrue(ValidationUtils.isValidPassword("TEST123")); // 대문자+숫자
+        assertTrue(ValidationUtils.isValidPassword("TestPass!")); // 대소문자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("testpass!")); // 소문자+특수문자
+        assertTrue(ValidationUtils.isValidPassword("TESTPASS!")); // 대문자+특수문자
 
         // 유효하지 않은 비밀번호
-        assertFalse(ValidationUtils.isValidPassword("test123!")); // 대문자 없음
-        assertFalse(ValidationUtils.isValidPassword("TEST123!")); // 소문자 없음
-        assertFalse(ValidationUtils.isValidPassword("TestPass!")); // 숫자 없음
-        assertFalse(ValidationUtils.isValidPassword("Test123")); // 특수문자 없음
+        assertFalse(ValidationUtils.isValidPassword("TestPass")); // 영문자만
+        assertFalse(ValidationUtils.isValidPassword("123456789")); // 숫자만
+        assertFalse(ValidationUtils.isValidPassword("!@#$%^&*")); // 특수문자만
         assertFalse(ValidationUtils.isValidPassword("Test1!")); // 너무 짧음
         assertFalse(ValidationUtils.isValidPassword("Test123!@#$%^&*()Test123!@#$%^&*()")); // 너무 김
         assertFalse(ValidationUtils.isValidPassword(null));
+    }
+
+    @Test
+    @DisplayName("강력한 비밀번호 유효성 검사")
+    void isStrongPassword() {
+        // 강력한 비밀번호 (모든 요소 포함)
+        assertTrue(ValidationUtils.isStrongPassword("Test123!")); // 대소문자+숫자+특수문자
+        assertTrue(ValidationUtils.isStrongPassword("MyPass123$")); // 대소문자+숫자+특수문자
+        assertTrue(ValidationUtils.isStrongPassword("Secure*123")); // 대소문자+숫자+특수문자
+
+        // 약한 비밀번호
+        assertFalse(ValidationUtils.isStrongPassword("test123!")); // 대문자 없음
+        assertFalse(ValidationUtils.isStrongPassword("TEST123!")); // 소문자 없음
+        assertFalse(ValidationUtils.isStrongPassword("TestPass!")); // 숫자 없음
+        assertFalse(ValidationUtils.isStrongPassword("Test123")); // 특수문자 없음
+    }
+
+    @Test
+    @DisplayName("비밀번호 강도 점수 테스트")
+    void getPasswordStrength() {
+        // 강한 비밀번호
+        assertTrue(ValidationUtils.getPasswordStrength("Test123!@#") >= 80);
+
+        // 중간 비밀번호
+        int mediumScore = ValidationUtils.getPasswordStrength("Test123");
+        assertTrue(mediumScore >= 40 && mediumScore < 80);
+
+        // 약한 비밀번호
+        assertTrue(ValidationUtils.getPasswordStrength("test123") < 60);
+
+        // 매우 약한 비밀번호
+        assertTrue(ValidationUtils.getPasswordStrength("test") < 40);
+    }
+
+    @Test
+    @DisplayName("비밀번호 강도 등급 테스트")
+    void getPasswordStrengthGrade() {
+        assertEquals("STRONG", ValidationUtils.getPasswordStrengthGrade("Test123!@#"));
+        assertEquals("MEDIUM", ValidationUtils.getPasswordStrengthGrade("Test123"));
+        assertEquals("WEAK", ValidationUtils.getPasswordStrengthGrade("test123"));
+        assertEquals("VERY_WEAK", ValidationUtils.getPasswordStrengthGrade("test"));
     }
 
     @Test
@@ -120,5 +165,11 @@ class ValidationUtilsTest {
         assertFalse(ValidationUtils.isInteger("abc"));
         assertFalse(ValidationUtils.isInteger(""));
         assertFalse(ValidationUtils.isInteger(null));
+    }
+
+    private static void assertEquals(String expected, String actual) {
+        if (!expected.equals(actual)) {
+            throw new AssertionError("Expected: " + expected + ", but was: " + actual);
+        }
     }
 }
