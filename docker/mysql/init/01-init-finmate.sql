@@ -4,6 +4,25 @@ SET character_set_client = utf8mb4;
 -- 데이터베이스 사용
 USE finmate_db;
 
+-- 기존 사용자 완전 삭제
+DROP USER IF EXISTS 'finmate'@'localhost';
+DROP USER IF EXISTS 'finmate'@'%';
+
+-- 새 사용자 생성 (모든 호스트에서 접근 가능)
+CREATE USER 'finmate'@'%' IDENTIFIED BY '1234';
+CREATE USER 'finmate'@'localhost' IDENTIFIED BY '1234';
+
+-- 비밀번호 플러그인 설정
+ALTER USER 'finmate'@'%' IDENTIFIED WITH mysql_native_password BY '1234';
+ALTER USER 'finmate'@'localhost' IDENTIFIED WITH mysql_native_password BY '1234';
+
+-- 모든 권한 부여
+GRANT ALL PRIVILEGES ON *.* TO 'finmate'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'finmate'@'localhost' WITH GRANT OPTION;
+
+-- 권한 새로고침
+FLUSH PRIVILEGES;
+
 -- 기존 테이블 삭제 (있을 경우)
 DROP TABLE IF EXISTS tbl_member_auth;
 DROP TABLE IF EXISTS tbl_member;
@@ -86,15 +105,27 @@ VALUES
     ('user02', '내 집 마련 자금', 300000000.00, 50000000.00, '2027-12-31', 'SAVING'),
     ('user03', '펀드 투자', 20000000.00, 8000000.00, '2025-12-31', 'INVESTMENT');
 
+-- 연결 테스트 테이블
+CREATE TABLE IF NOT EXISTS connection_test (
+                                               id INT PRIMARY KEY,
+                                               message VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+INSERT INTO connection_test (id, message) VALUES (1, 'finmate user connection OK')
+    ON DUPLICATE KEY UPDATE message = 'finmate user connection OK', created_at = CURRENT_TIMESTAMP;
+
+-- 권한 확인
+SELECT 'finmate 사용자 권한 확인' as info;
+SHOW GRANTS FOR 'finmate'@'%';
+SHOW GRANTS FOR 'finmate'@'localhost';
+
 -- 데이터 확인
 SELECT '=== 회원 정보 ===' as info;
 SELECT user_id, user_name, user_email, user_phone, is_active FROM tbl_member;
 
 SELECT '=== 권한 정보 ===' as info;
 SELECT user_id, auth FROM tbl_member_auth ORDER BY user_id, auth;
-
-SELECT '=== 금융 목표 정보 ===' as info;
-SELECT goal_id, user_id, goal_name, target_amount, current_amount, goal_type, goal_status FROM tbl_financial_goal;
 
 -- 완료 메시지
 SELECT 'FinMate 데이터베이스 초기화가 완료되었습니다!' as message;
