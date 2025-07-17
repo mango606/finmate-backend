@@ -1,0 +1,23 @@
+name: Lint Code Base
+
+on:
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  run-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # PR의 모든 히스토리를 가져와야 정확한 분석 가능
+          fetch-depth: 0
+
+      - name: Lint Code Base
+        uses: github/super-linter@v6
+        with:
+          # 'VALIDATE_ALL_CODEBASE: false'는 변경된 파일만 검사하여 속도를 높임
+          VALIDATE_ALL_CODEBASE: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
