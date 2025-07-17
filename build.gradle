@@ -152,15 +152,25 @@ war {
     }
 }
 
-// 개발용 실행 태스크
 task runServer(type: JavaExec) {
     group = 'application'
     description = 'FinMate 서버 실행'
     mainClass = 'com.example.finmate.JettyLauncher'
     classpath = sourceSets.main.runtimeClasspath
+
     systemProperty 'file.encoding', 'UTF-8'
     systemProperty 'user.timezone', 'Asia/Seoul'
-    jvmArgs = ['-Xmx1024m', '-Xms512m']
+    systemProperty 'console.encoding', 'UTF-8'
+    systemProperty 'java.awt.headless', 'true'
+
+    jvmArgs = [
+            '-Xmx1024m',
+            '-Xms512m',
+            '-Dfile.encoding=UTF-8',
+            '-Dconsole.encoding=UTF-8',
+            '-Duser.language=ko',
+            '-Duser.country=KR'
+    ]
 
     doFirst {
         println "🚀 FinMate 서버를 시작합니다..."

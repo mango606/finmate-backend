@@ -13,6 +13,12 @@
     <!-- 어노테이션 기반 핸들러 매핑 및 어댑터 등록 -->
     <annotation-driven>
         <message-converters>
+            <!-- String 메시지 컨버터 (UTF-8 설정) -->
+            <beans:bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                <beans:constructor-arg value="UTF-8"/>
+                <beans:property name="writeAcceptCharset" value="false"/>
+            </beans:bean>
+
             <!-- JSON 메시지 컨버터 -->
             <beans:bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
                 <beans:property name="objectMapper">
