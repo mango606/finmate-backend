@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.finmate.auth.mapper.AuthMapper">
+
+    <!-- 인증 토큰 삽입 -->
+    <insert id="insertAuthToken" parameterType="com.example.finmate.auth.domain.AuthTokenVO">
+        INSERT INTO tbl_auth_token (
+            user_id, token, token_type, expiry_time, is_used, created_date
+        ) VALUES (
+                     #{userId}, #{token}, #{tokenType}, #{expiryTime}, #{isUsed}, #{createdDate}
+                 )
+    </insert>
+
+    <!-- 토큰 조회 -->
+    <select id="getAuthToken" resultType="com.example.finmate.auth.domain.AuthTokenVO">
+        SELECT token_id, user_id, token, token_type, expiry_time, is_used, created_date, used_date
+        FROM tbl_auth_token
+        WHERE token = #{token}
+          AND token_type = #{tokenType}
+          AND expiry_time > NOW()
+        ORDER BY created_date DESC
+            LIMIT 1
+    </select>
+
+    <!-- 토큰 사용 처리 -->
+    <update id="markTokenAsUsed" parameterType="string">
+        UPDATE tbl_auth_token
+        SET is_used = true, used_date = NOW()
+        WHERE token = #{token}
+    </update>
+
+    <!-- 만료된 토큰 삭제 -->
+    <delete id="deleteExpiredTokens">
+        DELETE FROM tbl_auth_token
+        WHERE expiry_time &lt; NOW()
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+        <if test="tokenType != null">
+            AND token_type = #{tokenType}
+        </if>
+    </delete>
+
+    <!-- 로그인 이력 삽입 -->
+    <insert id="insertLoginHistory" parameterType="com.example.finmate.auth.domain.LoginHistoryVO">
+        INSERT INTO tbl_login_history (
+            user_id, ip_address, user_agent, login_success, failure_reason,
+            login_time, location, device_type
+        ) VALUES (
+                     #{userId}, #{ipAddress}, #{userAgent}, #{loginSuccess}, #{failureReason},
+                     #{loginTime}, #{location}, #{deviceType}
+                 )
+    </insert>
+
+    <!-- 로그인 이력 조회 -->
+    <select id="getLoginHistories" resultType="com.example.finmate.auth.domain.LoginHistoryVO">
+        SELECT history_id, user_id, ip_address, user_agent, login_success,
+               failure_reason, login_time, location, device_type
+        FROM tbl_login_history
+        WHERE user_id = #{userId}
+        ORDER BY login_time DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 로그인 이력 총 개수 -->
+    <select id="getLoginHistoryCount" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_login_history
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 계정 보안 정보 조회 -->
+    <select id="getAccountSecurity" parameterType="string" resultType="com.example.finmate.auth.domain.AccountSecurityVO">
+        SELECT user_id, email_verified, phone_verified, two_factor_enabled,
+               account_locked, login_fail_count, last_login_time, lock_time, lock_reason, update_date
+        FROM tbl_account_security
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 계정 보안 정보 삽입 -->
+    <insert id="insertAccountSecurity" parameterType="com.example.finmate.auth.domain.AccountSecurityVO">
+        INSERT INTO tbl_account_security (
+            user_id, email_verified, phone_verified, two_factor_enabled,
+            account_locked, login_fail_count, last_login_time, lock_time, lock_reason, update_date
+        ) VALUES (
+                     #{userId}, #{emailVerified}, #{phoneVerified}, #{twoFactorEnabled},
+                     #{accountLocked}, #{loginFailCount}, #{lastLoginTime}, #{lockTime}, #{lockReason}, NOW()
+                 )
+            ON DUPLICATE KEY UPDATE
+                                 email_verified = VALUES(email_verified),
+                                 phone_verified = VALUES(phone_verified),
+                                 two_factor_enabled = VALUES(two_factor_enabled),
+                                 account_locked = VALUES(account_locked),
+                                 login_fail_count = VALUES(login_fail_count),
+                                 last_login_time = VALUES(last_login_time),
+                                 lock_time = VALUES(lock_time),
+                                 lock_reason = VALUES(lock_reason),
+                                 update_date = NOW()
+    </insert>
+
+    <!-- 계정 보안 정보 업데이트 -->
+    <update id="updateAccountSecurity" parameterType="com.example.finmate.auth.domain.AccountSecurityVO">
+        UPDATE tbl_account_security
+        SET email_verified = #{emailVerified},
+            phone_verified = #{phoneVerified},
+            two_factor_enabled = #{twoFactorEnabled},
+            account_locked = #{accountLocked},
+            login_fail_count = #{loginFailCount},
+            last_login_time = #{lastLoginTime},
+            lock_time = #{lockTime},
+            lock_reason = #{lockReason},
+            update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 이메일 인증 상태 업데이트 -->
+    <update id="updateEmailVerificationStatus">
+        UPDATE tbl_account_security
+        SET email_verified = #{verified}, update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 전화번호 인증 상태 업데이트 -->
+    <update id="updatePhoneVerificationStatus">
+        UPDATE tbl_account_security
+        SET phone_verified = #{verified}, update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 2단계 인증 상태 업데이트 -->
+    <update id="updateTwoFactorStatus">
+        UPDATE tbl_account_security
+        SET two_factor_enabled = #{enabled}, update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 계정 잠금 상태 업데이트 -->
+    <update id="updateAccountLockStatus">
+        UPDATE tbl_account_security
+        SET account_locked = #{locked},
+            lock_time = CASE WHEN #{locked} = true THEN NOW() ELSE NULL END,
+            update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 마지막 로그인 시간 업데이트 -->
+    <update id="updateLastLoginTime">
+        UPDATE tbl_account_security
+        SET last_login_time = NOW(), update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 로그인 실패 횟수 증가 -->
+    <update id="incrementLoginFailCount" parameterType="string">
+        UPDATE tbl_account_security
+        SET login_fail_count = login_fail_count + 1, update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 로그인 실패 횟수 초기화 -->
+    <update id="resetLoginFailCount" parameterType="string">
+        UPDATE tbl_account_security
+        SET login_fail_count = 0, update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 로그인 실패 횟수 조회 -->
+    <select id="getLoginFailCount" parameterType="string" resultType="int">
+        SELECT COALESCE(login_fail_count, 0)
+        FROM tbl_account_security
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 로그인 통계 -->
+    <select id="getLoginStatistics" resultType="java.util.Map">
+        SELECT
+            DATE(login_time) as login_date,
+            COUNT(*) as total_attempts,
+            SUM(CASE WHEN login_success = true THEN 1 ELSE 0 END) as success_count,
+            SUM(CASE WHEN login_success = false THEN 1 ELSE 0 END) as failure_count
+        FROM tbl_login_history
+        WHERE user_id = #{userId}
+          AND login_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        GROUP BY DATE(login_time)
+        ORDER BY login_date DESC
+    </select>
+
+    <!-- 보안 이벤트 조회 -->
+    <select id="getSecurityEvents" resultType="java.util.Map">
+        SELECT
+            login_time as event_time,
+            CASE
+                WHEN login_success = true THEN 'LOGIN_SUCCESS'
+                ELSE CONCAT('LOGIN_FAILURE_', COALESCE(failure_reason, 'UNKNOWN'))
+                END as event_type,
+            ip_address,
+            user_agent
+        FROM tbl_login_history
+        WHERE user_id = #{userId}
+          AND login_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        ORDER BY login_time DESC
+            LIMIT 100
+    </select>
+
+</mapper>
