@@ -1,12 +1,19 @@
 package com.example.finmate.common.util;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SecurityUtils {
 
@@ -102,5 +109,46 @@ public class SecurityUtils {
         }
 
         return false;
+    }
+
+    // 현재 사용자 권한 목록 가져오기
+    public static List<String> getCurrentUserAuthorities() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
+    }
+
+    // 관리자 권한 확인
+    public static boolean isAdmin() {
+        return hasRole("ADMIN");
+    }
+
+    // 사용자 권한 확인
+    public static boolean isUser() {
+        return hasRole("USER");
+    }
+
+    // IP 주소 기반 접근 제한 확인
+    public static boolean isAllowedIP(String ipAddress) {
+        // 개발 환경에서는 모든 IP 허용
+        if ("development".equals(System.getProperty("app.environment"))) {
+            return true;
+        }
+
+        // 프로덕션 환경에서는 화이트리스트 IP만 허용
+        List<String> allowedIPs = Arrays.asList(
+                "127.0.0.1", "::1", "localhost"
+        );
+        return allowedIPs.contains(ipAddress);
+    }
+
+    // 세션 타임아웃 확인
+    public static boolean isSessionValid(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        return session != null && !session.isNew();
     }
 }

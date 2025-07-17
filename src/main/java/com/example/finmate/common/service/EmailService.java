@@ -45,7 +45,7 @@ public class EmailService {
     }
 
     // TODO: 실제 메일 발송
-    private boolean sendEmail(String to, String subject, String content) {
+    public boolean sendEmail(String to, String subject, String content) {
         if ("development".equals(environment)) {
             log.info("=== 메일 발송 시뮬레이션 ===");
             log.info("수신자: {}", to);
@@ -58,6 +58,40 @@ public class EmailService {
         // TODO: SMTP 설정을 통해 메일 발송
         // JavaMailSender 등을 사용하여 구현
         return true;
+    }
+
+    // 계정 잠금 알림 메일
+    public boolean sendAccountLockNotification(String userEmail, String userName) {
+        log.info("계정 잠금 알림 메일 발송: {}", userEmail);
+
+        String subject = appName + " 계정 잠금 알림";
+        String content = String.format(
+                "안녕하세요 %s님,\n\n" +
+                        "보안을 위해 계정이 일시적으로 잠금되었습니다.\n" +
+                        "잠금 해제를 원하시면 고객센터로 문의해주세요.\n\n" +
+                        "감사합니다.\n" +
+                        "%s 팀",
+                userName, appName
+        );
+
+        return sendEmail(userEmail, subject, content);
+    }
+
+    // 비밀번호 변경 알림 메일
+    public boolean sendPasswordChangeNotification(String userEmail, String userName) {
+        log.info("비밀번호 변경 알림 메일 발송: {}", userEmail);
+
+        String subject = appName + " 비밀번호 변경 알림";
+        String content = String.format(
+                "안녕하세요 %s님,\n\n" +
+                        "회원님의 비밀번호가 성공적으로 변경되었습니다.\n" +
+                        "만약 본인이 변경하지 않았다면 즉시 고객센터로 문의해주세요.\n\n" +
+                        "감사합니다.\n" +
+                        "%s 팀",
+                userName, appName
+        );
+
+        return sendEmail(userEmail, subject, content);
     }
 
     private String createWelcomeEmailContent(String userName) {
