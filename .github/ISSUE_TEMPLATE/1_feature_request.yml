@@ -1,0 +1,48 @@
+name: "기능 개발 (Feature Implementation)"
+description: "구현할 기능의 요구사항과 작업 목록을 정리합니다."
+title: "[FEAT] "
+labels: ["feature", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        새로 구현할 기능의 목표와 세부 작업 내용을 명확하게 정리합니다.
+
+  - type: textarea
+    id: feature-goal
+    attributes:
+      label: "1. 기능 목표 (Goal)"
+      description: "이 기능을 통해 달성하고자 하는 최종 목표를 한두 문장으로 설명해주세요."
+      placeholder: "예: 사용자가 자신의 프로필 이미지를 직접 업로드하고 변경할 수 있다."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "2. 완료 조건 (Acceptance Criteria)"
+      description: "어떤 조건이 충족되면 이 기능이 완성된 것으로 볼 수 있는지 구체적인 시나리오로 정의해주세요."
+      placeholder: |
+        - 사용자는 '내 정보' 페이지에서 프로필 이미지 변경 버튼을 볼 수 있다.
+        - 이미지 업로드 시 10MB 크기 제한이 적용된다.
+        - 업로드 성공 시, 페이지 새로고침 없이 프로필 이미지가 즉시 변경된다.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: todo-list
+    attributes:
+      label: "3. 세부 작업 목록 (To-Do List)"
+      description: "기능을 완성하기 위해 필요한 세부 개발 작업을 체크리스트로 작성해주세요."
+      options:
+        - label: "API: 프로필 이미지 업로드 API 엔드포인트 구현"
+        - label: "DB: 사용자 테이블에 이미지 URL 필드 추가"
+        - label: "TEST: 이미지 업로드 성공/실패 케이스 테스트 코드 작성"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "최종 확인"
+      options:
+        - label: "관련된 이슈가 없는 것을 확인했습니다."
+          required: true

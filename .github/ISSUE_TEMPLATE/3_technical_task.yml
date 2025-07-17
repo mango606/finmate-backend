@@ -1,0 +1,39 @@
+name: "기술적 작업 (Technical Task)"
+description: "리팩토링, 성능 개선 등 내부 기술 작업을 관리합니다."
+title: "[TASK] "
+labels: ["tech-debt", "chore"]
+body:
+  - type: markdown
+    attributes:
+      value: "기술적 작업의 목표와 계획을 구체적으로 정리합니다."
+
+  - type: textarea
+    id: task-goal
+    attributes:
+      label: "1. 작업 배경 및 목표"
+      description: "왜 이 작업이 필요한지(배경), 이 작업을 통해 무엇을 개선할 것인지(목표)를 설명해주세요."
+      placeholder: "예: 로그인 API의 응답 속도가 느려 성능 개선이 필요함. 목표는 응답 시간을 50% 단축하는 것."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "2. 완료 조건 (Acceptance Criteria)"
+      description: "어떤 상태가 되면 이 작업이 끝난 것으로 볼 수 있는지 명확한 기준을 제시해주세요."
+      placeholder: |
+        - 로그인 API의 평균 응답 시간이 200ms 이하로 측정된다.
+        - 관련 쿼리에 인덱스가 적용되었는지 확인된다.
+        - 부하 테스트 시에도 안정적인 성능을 보인다.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: todo-list
+    attributes:
+      label: "3. 세부 작업 목록 (To-Do List)"
+      description: "목표 달성을 위해 필요한 구체적인 작업들을 작성해주세요."
+      options:
+        - label: "DB: users 테이블의 email 필드에 인덱스 추가"
+        - label: "CODE: 불필요한 중복 쿼리 로직 리팩토링"
+        - label: "TEST: 성능 테스트 스크립트 작성 및 실행"

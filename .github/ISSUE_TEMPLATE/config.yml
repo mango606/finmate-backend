@@ -1,0 +1,9 @@
+# 사용자가 'New issue'를 눌렀을 때, 템플릿을 사용하지 않고 빈 이슈를 생성하는 것을 막습니다.
+blank_issues_enabled: false
+
+# 이슈가 아닌 다른 내용은 외부 링크로 안내할 수 있습니다.
+contact_links:
+  - name: "🤔 아이디어나 단순 질문"
+    # GitHub Discussions 기능을 활성화하고 연결하면 좋습니다.
+    url: "https://github.com/your-github-username/your-repo/discussions"
+    about: "정식 작업이 아닌 아이디어나 간단한 질문은 Discussions에 남겨주세요."
