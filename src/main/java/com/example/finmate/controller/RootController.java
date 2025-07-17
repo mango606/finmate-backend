@@ -67,6 +67,8 @@ public class RootController {
                 .body("Hello FinMate! 안녕하세요! 서버가 정상 동작 중입니다. 🚀");
     }
 
+
+
     private String getDefaultIndexHtml() {
         return """
 <!DOCTYPE html>
@@ -217,6 +219,14 @@ public class RootController {
         <p><strong>빌드 도구:</strong> Gradle 8.x</p>
         <p><strong>관리자 도구:</strong> <a href="http://localhost:8081" target="_blank">phpMyAdmin</a></p>
         <p><strong>파일 업로드:</strong> c:/upload/</p>
+    </div>
+
+    <div class="info">
+        <h3>🧪 테스트 엔드포인트</h3>
+        <p><strong>Hello:</strong> <a href="/hello" target="_blank">http://localhost:8080/hello</a></p>
+        <p><strong>Ping:</strong> <a href="/ping" target="_blank">http://localhost:8080/ping</a></p>
+        <p><strong>Health:</strong> <a href="/api/member/health" target="_blank">http://localhost:8080/api/member/health</a></p>
+        <p><strong>API 문서:</strong> <a href="/swagger-ui.html" target="_blank">http://localhost:8080/swagger-ui.html</a></p>
     </div>
 </div>
 

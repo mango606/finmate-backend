@@ -4,31 +4,203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinMate</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #007bff;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .test-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-link {
+            display: block;
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .test-link:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        .status.error {
+            border-left-color: #dc3545;
+        }
+        .console {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-<h1>FinMate 서버</h1>
-<p>서버가 정상 동작 중입니다.</p>
+<div class="container">
+    <h1>🏦 FinMate 서버</h1>
+    <p style="text-align: center; color: #666; font-size: 18px;">서버가 정상 동작 중입니다.</p>
 
-<h2>테스트 링크</h2>
-<ul>
-    <li><a href="/test/hello">Hello 테스트</a></li>
-    <li><a href="/test/ping">Ping 테스트</a></li>
-    <li><a href="/api/member/health">Health 체크</a></li>
-    <li><a href="/swagger-ui.html">API 문서</a></li>
-</ul>
+    <div id="server-status" class="status">
+        <strong>서버 상태:</strong> <span id="status-text">확인 중...</span>
+    </div>
+
+    <h2>🧪 테스트 링크</h2>
+    <div class="test-links">
+        <a href="/hello" class="test-link">👋 Hello 테스트</a>
+        <a href="/ping" class="test-link">🏓 Ping 테스트</a>
+        <a href="/api/member/health" class="test-link">❤️ Health 체크</a>
+        <a href="/swagger-ui.html" class="test-link">📖 API 문서</a>
+    </div>
+
+    <h2>📊 실시간 테스트 결과</h2>
+    <div id="console" class="console">
+        <div>FinMate 서버 테스트 시작...</div>
+    </div>
+
+    <h2>ℹ️ 서버 정보</h2>
+    <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff;">
+        <p><strong>포트:</strong> 8080</p>
+        <p><strong>데이터베이스:</strong> MySQL (localhost:3306/finmate_db)</p>
+        <p><strong>관리자 도구:</strong> <a href="http://localhost:8081" target="_blank">phpMyAdmin</a></p>
+        <p><strong>현재 시간:</strong> <span id="current-time"></span></p>
+    </div>
+</div>
 
 <script>
+    const console = document.getElementById('console');
+    const statusDiv = document.getElementById('server-status');
+    const statusText = document.getElementById('status-text');
+
+    function log(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#74c0fc';
+        console.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+        console.scrollTop = console.scrollHeight;
+    }
+
+    function updateStatus(message, isError = false) {
+        statusText.textContent = message;
+        statusDiv.className = isError ? 'status error' : 'status';
+    }
+
+    // 현재 시간 업데이트
+    function updateTime() {
+        document.getElementById('current-time').textContent = new Date().toLocaleString('ko-KR');
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
     // 서버 연결 테스트
-    fetch('/test/ping')
-        .then(response => response.json())
-        .then(data => {
-            console.log('서버 응답:', data);
-            document.body.innerHTML += '<p style="color: green;">✅ 서버 연결 성공!</p>';
-        })
-        .catch(error => {
-            console.error('연결 실패:', error);
-            document.body.innerHTML += '<p style="color: red;">❌ 서버 연결 실패</p>';
-        });
+    async function testEndpoint(url, name) {
+        try {
+            log(`${name} 테스트 시작...`);
+            const response = await fetch(url);
+
+            if (response.ok) {
+                const data = await response.json();
+                log(`✅ ${name} 성공: ${JSON.stringify(data)}`, 'success');
+                return true;
+            } else {
+                log(`❌ ${name} 실패: ${response.status} ${response.statusText}`, 'error');
+                return false;
+            }
+        } catch (error) {
+            log(`❌ ${name} 오류: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    // 텍스트 응답 테스트
+    async function testTextEndpoint(url, name) {
+        try {
+            log(`${name} 테스트 시작...`);
+            const response = await fetch(url);
+
+            if (response.ok) {
+                const text = await response.text();
+                log(`✅ ${name} 성공: ${text}`, 'success');
+                return true;
+            } else {
+                log(`❌ ${name} 실패: ${response.status} ${response.statusText}`, 'error');
+                return false;
+            }
+        } catch (error) {
+            log(`❌ ${name} 오류: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    // 전체 테스트 실행
+    async function runAllTests() {
+        log('=== 서버 테스트 시작 ===');
+
+        const tests = [
+            () => testEndpoint('/ping', 'Ping'),
+            () => testTextEndpoint('/hello', 'Hello'),
+            () => testEndpoint('/api/member/health', 'Health Check')
+        ];
+
+        let successCount = 0;
+
+        for (const test of tests) {
+            const success = await test();
+            if (success) successCount++;
+            await new Promise(resolve => setTimeout(resolve, 500)); // 0.5초 딜레이
+        }
+
+        log(`=== 테스트 완료: ${successCount}/${tests.length} 성공 ===`);
+
+        if (successCount === tests.length) {
+            updateStatus('🟢 모든 테스트 통과');
+        } else {
+            updateStatus(`⚠️ ${tests.length - successCount}개 테스트 실패`, true);
+        }
+    }
+
+    // 페이지 로드 시 테스트 실행
+    window.addEventListener('load', () => {
+        setTimeout(runAllTests, 1000);
+    });
 </script>
 </body>
 </html>
