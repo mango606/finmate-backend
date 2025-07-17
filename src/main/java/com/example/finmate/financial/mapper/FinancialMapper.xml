@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.finmate.financial.mapper.FinancialMapper">
+
+    <!-- 금융 프로필 조회 -->
+    <select id="getFinancialProfile" parameterType="string" resultType="com.example.finmate.financial.domain.FinancialProfileVO">
+        SELECT profile_id, user_id, income_range, job_type, monthly_income, monthly_expense,
+               total_assets, total_debt, risk_profile, investment_goal, investment_period,
+               emergency_fund, credit_score, reg_date, update_date
+        FROM tbl_financial_profile
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 금융 프로필 삽입 -->
+    <insert id="insertFinancialProfile" parameterType="com.example.finmate.financial.domain.FinancialProfileVO">
+        INSERT INTO tbl_financial_profile (
+            user_id, income_range, job_type, monthly_income, monthly_expense,
+            total_assets, total_debt, risk_profile, investment_goal, investment_period,
+            emergency_fund, credit_score, reg_date, update_date
+        ) VALUES (
+                     #{userId}, #{incomeRange}, #{jobType}, #{monthlyIncome}, #{monthlyExpense},
+                     #{totalAssets}, #{totalDebt}, #{riskProfile}, #{investmentGoal}, #{investmentPeriod},
+                     #{emergencyFund}, #{creditScore}, NOW(), NOW()
+                 )
+    </insert>
+
+    <!-- 금융 프로필 업데이트 -->
+    <update id="updateFinancialProfile" parameterType="com.example.finmate.financial.domain.FinancialProfileVO">
+        UPDATE tbl_financial_profile
+        SET income_range = #{incomeRange},
+            job_type = #{jobType},
+            monthly_income = #{monthlyIncome},
+            monthly_expense = #{monthlyExpense},
+            total_assets = #{totalAssets},
+            total_debt = #{totalDebt},
+            risk_profile = #{riskProfile},
+            investment_goal = #{investmentGoal},
+            investment_period = #{investmentPeriod},
+            emergency_fund = #{emergencyFund},
+            credit_score = #{creditScore},
+            update_date = NOW()
+        WHERE profile_id = #{profileId}
+    </update>
+
+    <!-- 금융 프로필 삭제 -->
+    <delete id="deleteFinancialProfile" parameterType="string">
+        DELETE FROM tbl_financial_profile
+        WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 금융 목표 목록 조회 -->
+    <select id="getFinancialGoals" resultType="com.example.finmate.financial.domain.FinancialGoalVO">
+        SELECT goal_id, user_id, goal_name, goal_type, target_amount, current_amount,
+        monthly_contribution, target_date, start_date, priority, status,
+        description, progress_percentage, expected_months, reg_date, update_date
+        FROM tbl_financial_goal
+        WHERE user_id = #{userId}
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY
+        CASE priority
+        WHEN 'HIGH' THEN 1
+        WHEN 'MEDIUM' THEN 2
+        WHEN 'LOW' THEN 3
+        END,
+        reg_date DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 금융 목표 총 개수 -->
+    <select id="getFinancialGoalsCount" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_financial_goal
+        WHERE user_id = #{userId}
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <!-- 특정 금융 목표 조회 -->
+    <select id="getFinancialGoal" parameterType="long" resultType="com.example.finmate.financial.domain.FinancialGoalVO">
+        SELECT goal_id, user_id, goal_name, goal_type, target_amount, current_amount,
+               monthly_contribution, target_date, start_date, priority, status,
+               description, progress_percentage, expected_months, reg_date, update_date
+        FROM tbl_financial_goal
+        WHERE goal_id = #{goalId}
+    </select>
+
+    <!-- 금융 목표 삽입 -->
+    <insert id="insertFinancialGoal" parameterType="com.example.finmate.financial.domain.FinancialGoalVO">
+        INSERT INTO tbl_financial_goal (
+            user_id, goal_name, goal_type, target_amount, current_amount,
+            monthly_contribution, target_date, start_date, priority, status,
+            description, expected_months, reg_date, update_date
+        ) VALUES (
+                     #{userId}, #{goalName}, #{goalType}, #{targetAmount}, #{currentAmount},
+                     #{monthlyContribution}, #{targetDate}, #{startDate}, #{priority}, #{status},
+                     #{description}, #{expectedMonths}, NOW(), NOW()
+                 )
+    </insert>
+
+    <!-- 금융 목표 업데이트 -->
+    <update id="updateFinancialGoal" parameterType="com.example.finmate.financial.domain.FinancialGoalVO">
+        UPDATE tbl_financial_goal
+        SET goal_name = #{goalName},
+            goal_type = #{goalType},
+            target_amount = #{targetAmount},
+            current_amount = #{currentAmount},
+            monthly_contribution = #{monthlyContribution},
+            target_date = #{targetDate},
+            start_date = #{startDate},
+            priority = #{priority},
+            status = #{status},
+            description = #{description},
+            expected_months = #{expectedMonths},
+            update_date = NOW()
+        WHERE goal_id = #{goalId}
+    </update>
+
+    <!-- 금융 목표 삭제 -->
+    <delete id="deleteFinancialGoal" parameterType="long">
+        DELETE FROM tbl_financial_goal
+        WHERE goal_id = #{goalId}
+    </delete>
+
+    <!-- 목표 금액 업데이트 -->
+    <update id="updateGoalAmount">
+        UPDATE tbl_financial_goal
+        SET current_amount = #{amount},
+            update_date = NOW()
+        WHERE goal_id = #{goalId}
+    </update>
+
+    <!-- 금융 거래 내역 조회 -->
+    <select id="getFinancialTransactions" resultType="com.example.finmate.financial.domain.FinancialTransactionVO">
+        SELECT transaction_id, user_id, transaction_type, category, amount, description,
+        transaction_date, payment_method, merchant, goal_id, tags, memo,
+        is_recurring, recurring_period, reg_date, update_date
+        FROM tbl_financial_transaction
+        WHERE user_id = #{userId}
+        <if test="type != null and type != ''">
+            AND transaction_type = #{type}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND transaction_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND transaction_date &lt;= #{endDate}
+        </if>
+        ORDER BY transaction_date DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 금융 거래 내역 총 개수 -->
+    <select id="getFinancialTransactionsCount" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_financial_transaction
+        WHERE user_id = #{userId}
+        <if test="type != null and type != ''">
+            AND transaction_type = #{type}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND transaction_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND transaction_date &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- 특정 금융 거래 조회 -->
+    <select id="getFinancialTransaction" parameterType="long" resultType="com.example.finmate.financial.domain.FinancialTransactionVO">
+        SELECT transaction_id, user_id, transaction_type, category, amount, description,
+               transaction_date, payment_method, merchant, goal_id, tags, memo,
+               is_recurring, recurring_period, reg_date, update_date
+        FROM tbl_financial_transaction
+        WHERE transaction_id = #{transactionId}
+    </select>
+
+    <!-- 금융 거래 삽입 -->
+    <insert id="insertFinancialTransaction" parameterType="com.example.finmate.financial.domain.FinancialTransactionVO">
+        INSERT INTO tbl_financial_transaction (
+            user_id, transaction_type, category, amount, description,
+            transaction_date, payment_method, merchant, goal_id, tags, memo,
+            is_recurring, recurring_period, reg_date, update_date
+        ) VALUES (
+                     #{userId}, #{transactionType}, #{category}, #{amount}, #{description},
+                     #{transactionDate}, #{paymentMethod}, #{merchant}, #{goalId}, #{tags}, #{memo},
+                     #{isRecurring}, #{recurringPeriod}, NOW(), NOW()
+                 )
+    </insert>
+
+    <!-- 금융 거래 업데이트 -->
+    <update id="updateFinancialTransaction" parameterType="com.example.finmate.financial.domain.FinancialTransactionVO">
+        UPDATE tbl_financial_transaction
+        SET transaction_type = #{transactionType},
+            category = #{category},
+            amount = #{amount},
+            description = #{description},
+            transaction_date = #{transactionDate},
+            payment_method = #{paymentMethod},
+            merchant = #{merchant},
+            goal_id = #{goalId},
+            tags = #{tags},
+            memo = #{memo},
+            is_recurring = #{isRecurring},
+            recurring_period = #{recurringPeriod},
+            update_date = NOW()
+        WHERE transaction_id = #{transactionId}
+    </update>
+
+    <!-- 금융 거래 삭제 -->
+    <delete id="deleteFinancialTransaction" parameterType="long">
+        DELETE FROM tbl_financial_transaction
+        WHERE transaction_id = #{transactionId}
+    </delete>
+
+    <!-- 월별 목표 진행률 조회 -->
+    <select id="getMonthlyGoalProgress" resultType="java.util.Map">
+        SELECT
+            YEAR(reg_date) as year,
+            MONTH(reg_date) as month,
+            COUNT(*) as total_goals,
+            AVG(progress_percentage) as avg_progress,
+            SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_goals
+        FROM tbl_financial_goal
+        WHERE user_id = #{userId}
+          AND reg_date >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
+        GROUP BY YEAR(reg_date), MONTH(reg_date)
+        ORDER BY year DESC, month DESC
+    </select>
+
+    <!-- 카테고리별 지출 통계 -->
+    <select id="getCategoryExpenseStats" resultType="java.util.Map">
+        SELECT
+            category,
+            COUNT(*) as transaction_count,
+            SUM(amount) as total_amount,
+            AVG(amount) as avg_amount
+        FROM tbl_financial_transaction
+        WHERE user_id = #{userId}
+          AND transaction_type = 'EXPENSE'
+          AND transaction_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY category
+        ORDER BY total_amount DESC
+    </select>
+
+    <!-- 자산 증감 추이 -->
+    <select id="getAssetTrend" resultType="java.util.Map">
+        SELECT
+            DATE_FORMAT(update_date, '%Y-%m') as month,
+            AVG(total_assets) as avg_assets,
+            AVG(total_debt) as avg_debt,
+            AVG(total_assets - total_debt) as net_worth
+        FROM tbl_financial_profile
+        WHERE user_id = #{userId}
+          AND update_date >= DATE_SUB(NOW(), INTERVAL #{months} MONTH)
+        GROUP BY DATE_FORMAT(update_date, '%Y-%m')
+        ORDER BY month DESC
+    </select>
+
+    <!-- 최근 목표 조회 (대시보드용) -->
+    <select id="getRecentGoals" resultType="com.example.finmate.financial.domain.FinancialGoalVO">
+        SELECT goal_id, user_id, goal_name, goal_type, target_amount, current_amount,
+               monthly_contribution, target_date, start_date, priority, status,
+               description, progress_percentage, expected_months, reg_date, update_date
+        FROM tbl_financial_goal
+        WHERE user_id = #{userId}
+          AND status = 'ACTIVE'
+        ORDER BY
+            CASE priority
+                WHEN 'HIGH' THEN 1
+                WHEN 'MEDIUM' THEN 2
+                WHEN 'LOW' THEN 3
+                END,
+            reg_date DESC
+            LIMIT #{limit}
+    </select>
+
+    <!-- 최근 거래 조회 (대시보드용) -->
+    <select id="getRecentTransactions" resultType="com.example.finmate.financial.domain.FinancialTransactionVO">
+        SELECT transaction_id, user_id, transaction_type, category, amount, description,
+               transaction_date, payment_method, merchant, goal_id, tags, memo,
+               is_recurring, recurring_period, reg_date, update_date
+        FROM tbl_financial_transaction
+        WHERE user_id = #{userId}
+        ORDER BY transaction_date DESC
+            LIMIT #{limit}
+    </select>
+
+    <!-- 금융 요약 정보 -->
+    <select id="getFinancialSummary" parameterType="string" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(*) FROM tbl_financial_goal WHERE user_id = #{userId} AND status = 'ACTIVE') as active_goals,
+            (SELECT COUNT(*) FROM tbl_financial_goal WHERE user_id = #{userId} AND status = 'COMPLETED') as completed_goals,
+            (SELECT SUM(target_amount) FROM tbl_financial_goal WHERE user_id = #{userId} AND status = 'ACTIVE') as total_target_amount,
+            (SELECT SUM(current_amount) FROM tbl_financial_goal WHERE user_id = #{userId} AND status = 'ACTIVE') as total_current_amount,
+            (SELECT AVG(progress_percentage) FROM tbl_financial_goal WHERE user_id = #{userId} AND status = 'ACTIVE') as avg_progress,
+            (SELECT SUM(amount) FROM tbl_financial_transaction WHERE user_id = #{userId} AND transaction_type = 'INCOME' AND transaction_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)) as monthly_income,
+            (SELECT SUM(amount) FROM tbl_financial_transaction WHERE user_id = #{userId} AND transaction_type = 'EXPENSE' AND transaction_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)) as monthly_expense
+    </select>
+
+</mapper>
