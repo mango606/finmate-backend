@@ -78,7 +78,8 @@ public class LoginController {
 
             log.warn("로그인 실패: {} from {} - {}", loginDTO.getUserId(), IPUtils.maskIP(clientIP), e.getMessage());
 
-            throw new AuthenticationFailedException("로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.");
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.", "AUTHENTICATION_FAILED"));
         }
     }
 
@@ -101,7 +102,7 @@ public class LoginController {
             statusInfo.put("tokenValid", false);
         }
 
-        return ResponseEntity.ok(ApiResponse.success(statusInfo));
+        return ResponseEntity.ok(ApiResponse.success("로그인 상태", statusInfo));
     }
 
     @ApiOperation(value = "토큰 갱신", notes = "유효한 토큰을 사용하여 새로운 토큰을 발급받습니다.")
