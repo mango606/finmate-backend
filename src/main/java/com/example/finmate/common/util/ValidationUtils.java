@@ -19,7 +19,7 @@ public class ValidationUtils {
             "^[a-zA-Z0-9_]{4,20}$"
     );
 
-    // 비밀번호 정규식 (영문자 + 숫자 또는 특수문자)
+    // 비밀번호 정규식 (영문자 + 숫자 또는 특수문자) - 수정된 패턴
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
             "^(?=.*[a-zA-Z])(?=.*[\\d@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
     );
@@ -39,7 +39,7 @@ public class ValidationUtils {
         return userId != null && USER_ID_PATTERN.matcher(userId).matches();
     }
 
-    // 비밀번호 유효성 검사
+    // 비밀번호 유효성 검사 (수정된 패턴 - 영문자 + 숫자 또는 특수문자)
     public static boolean isValidPassword(String password) {
         if (password == null || password.length() < 8 || password.length() > 20) {
             return false;
@@ -141,5 +141,49 @@ public class ValidationUtils {
         if (strength >= 60) return "MEDIUM";
         if (strength >= 40) return "WEAK";
         return "VERY_WEAK";
+    }
+
+    public static void validateMemberJoinData(String userId, String password, String userName, String email, String phone) {
+        // 사용자 ID 검증
+        if (!isValidUserId(userId)) {
+            throw new IllegalArgumentException("사용자 ID는 4-20자의 영문, 숫자, 언더스코어만 사용 가능합니다.");
+        }
+
+        // 비밀번호 검증
+        if (!isValidPassword(password)) {
+            throw new IllegalArgumentException("비밀번호는 8-20자이며 영문자와 숫자 또는 특수문자를 포함해야 합니다.");
+        }
+
+        // 이름 검증
+        if (!isValidLength(userName, 2, 10)) {
+            throw new IllegalArgumentException("사용자 이름은 2-10자 사이여야 합니다.");
+        }
+
+        // 이메일 검증
+        if (!isValidEmail(email)) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+
+        // 전화번호 검증 (선택사항)
+        if (phone != null && !phone.isEmpty() && !isValidPhone(phone)) {
+            throw new IllegalArgumentException("올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)");
+        }
+    }
+
+    public static void validateMemberUpdateData(String userName, String email, String phone) {
+        // 이름 검증
+        if (!isValidLength(userName, 2, 10)) {
+            throw new IllegalArgumentException("사용자 이름은 2-10자 사이여야 합니다.");
+        }
+
+        // 이메일 검증
+        if (!isValidEmail(email)) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+
+        // 전화번호 검증 (선택사항)
+        if (phone != null && !phone.isEmpty() && !isValidPhone(phone)) {
+            throw new IllegalArgumentException("올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)");
+        }
     }
 }
