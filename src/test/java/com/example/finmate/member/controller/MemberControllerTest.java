@@ -1,6 +1,9 @@
 package com.example.finmate.member.controller;
 
+import com.example.finmate.auth.service.AuthService;
 import com.example.finmate.common.exception.GlobalExceptionHandler;
+import com.example.finmate.common.service.EmailService;
+import com.example.finmate.common.service.FileUploadService;
 import com.example.finmate.member.dto.MemberJoinDTO;
 import com.example.finmate.member.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +39,15 @@ class MemberControllerTest {
     @Mock
     private MemberService memberService;
 
+    @Mock
+    private AuthService authService;
+
+    @Mock
+    private EmailService emailService;
+
+    @Mock
+    private FileUploadService fileUploadService;
+
     @InjectMocks
     private MemberController memberController;
 
@@ -67,6 +79,7 @@ class MemberControllerTest {
     void insertMember_Success() throws Exception {
         // given
         when(memberService.insertMember(any(MemberJoinDTO.class))).thenReturn(true);
+        when(authService.generateEmailVerificationToken(anyString())).thenReturn("verification-token");
 
         // when & then
         mockMvc.perform(post("/api/member/join")
@@ -76,7 +89,7 @@ class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.message", is("회원 가입이 완료되었습니다.")));
+                .andExpect(jsonPath("$.message", is("회원 가입이 완료되었습니다. 이메일 인증을 완료해주세요.")));
     }
 
     @Test
@@ -130,7 +143,7 @@ class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.isDuplicate", is(false)))
+                .andExpect(jsonPath("$.data.isDuplicate", is(false)))
                 .andExpect(jsonPath("$.message", is("사용 가능한 ID입니다.")));
     }
 
@@ -146,7 +159,7 @@ class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.isDuplicate", is(true)))
+                .andExpect(jsonPath("$.data.isDuplicate", is(true)))
                 .andExpect(jsonPath("$.message", is("이미 사용 중인 ID입니다.")));
     }
 
@@ -163,19 +176,23 @@ class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.isDuplicate", is(false)))
+                .andExpect(jsonPath("$.data.isDuplicate", is(false)))
                 .andExpect(jsonPath("$.message", is("사용 가능한 이메일입니다.")));
     }
 
     @Test
     @DisplayName("서버 상태 확인")
     void healthCheck() throws Exception {
+        // given
+        when(memberService.checkDatabaseConnection()).thenReturn(true);
+
+        // when & then
         mockMvc.perform(get("/api/member/health"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.status", is("OK")))
+                .andExpect(jsonPath("$.data.status", is("OK")))
                 .andExpect(jsonPath("$.message", is("FinMate 서버가 정상 동작 중입니다.")));
     }
 }
