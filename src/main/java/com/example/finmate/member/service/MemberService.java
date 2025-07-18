@@ -2,6 +2,8 @@ package com.example.finmate.member.service;
 
 import com.example.finmate.auth.domain.AccountSecurityVO;
 import com.example.finmate.auth.mapper.AuthMapper;
+import com.example.finmate.common.exception.DuplicateResourceException;
+import com.example.finmate.common.exception.MemberNotFoundException;
 import com.example.finmate.member.domain.MemberAuthVO;
 import com.example.finmate.member.domain.MemberVO;
 import com.example.finmate.member.dto.MemberInfoDTO;
@@ -38,14 +40,17 @@ public class MemberService {
         log.info("회원 가입 처리: {}", joinDTO.getUserId());
 
         try {
+            // 입력 데이터 유효성 검증
+            validateMemberJoinData(joinDTO);
+
             // 사용자 ID 중복 확인
             if (memberMapper.checkUserIdDuplicate(joinDTO.getUserId()) > 0) {
-                throw new IllegalArgumentException("이미 사용 중인 사용자 ID입니다.");
+                throw new DuplicateResourceException("이미 사용 중인 사용자 ID입니다.");
             }
 
             // 이메일 중복 확인
             if (memberMapper.checkUserEmailDuplicate(joinDTO.getUserEmail()) > 0) {
-                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+                throw new DuplicateResourceException("이미 사용 중인 이메일입니다.");
             }
 
             // 비밀번호 확인
@@ -84,9 +89,12 @@ public class MemberService {
             log.info("회원 가입 결과: {} - {}", joinDTO.getUserId(), success);
 
             return success;
+        } catch (DuplicateResourceException | IllegalArgumentException e) {
+            // 비즈니스 예외는 그대로 전파
+            throw e;
         } catch (Exception e) {
             log.error("회원 가입 실패: {}", joinDTO.getUserId(), e);
-            throw e;
+            throw new RuntimeException("회원 가입 처리 중 오류가 발생했습니다.", e);
         }
     }
 
@@ -97,7 +105,7 @@ public class MemberService {
         try {
             MemberVO member = memberMapper.getMemberByUserId(userId);
             if (member == null) {
-                throw new IllegalArgumentException("회원을 찾을 수 없습니다.");
+                throw new MemberNotFoundException("회원을 찾을 수 없습니다: " + userId);
             }
 
             List<MemberAuthVO> authList = memberMapper.getMemberAuthByUserId(userId);
@@ -116,6 +124,9 @@ public class MemberService {
             memberInfo.setAuthorities(authorities);
 
             return memberInfo;
+        } catch (MemberNotFoundException e) {
+            // 커스텀 예외는 그대로 전파
+            throw e;
         } catch (Exception e) {
             log.error("회원 정보 조회 실패: {}", userId, e);
             throw new RuntimeException("회원 정보 조회에 실패했습니다.", e);
@@ -131,13 +142,16 @@ public class MemberService {
             // 현재 회원 정보 확인
             MemberVO currentMember = memberMapper.getMemberByUserId(userId);
             if (currentMember == null) {
-                throw new IllegalArgumentException("회원을 찾을 수 없습니다.");
+                throw new MemberNotFoundException("회원을 찾을 수 없습니다: " + userId);
             }
+
+            // 입력 데이터 유효성 검증
+            validateMemberUpdateData(updateDTO);
 
             // 이메일 중복 확인 (본인 제외)
             MemberVO emailCheck = memberMapper.getMemberByUserEmail(updateDTO.getUserEmail());
             if (emailCheck != null && !emailCheck.getUserId().equals(userId)) {
-                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+                throw new DuplicateResourceException("이미 사용 중인 이메일입니다.");
             }
 
             MemberVO member = new MemberVO();
@@ -153,9 +167,12 @@ public class MemberService {
 
             log.info("회원 정보 수정 결과: {} - {}", userId, success);
             return success;
+        } catch (MemberNotFoundException | DuplicateResourceException e) {
+            // 커스텀 예외는 그대로 전파
+            throw e;
         } catch (Exception e) {
             log.error("회원 정보 수정 실패: {}", userId, e);
-            throw e;
+            throw new RuntimeException("회원 정보 수정에 실패했습니다.", e);
         }
     }
 
@@ -167,13 +184,16 @@ public class MemberService {
         try {
             MemberVO member = memberMapper.getMemberByUserId(userId);
             if (member == null) {
-                throw new IllegalArgumentException("회원을 찾을 수 없습니다.");
+                throw new MemberNotFoundException("회원을 찾을 수 없습니다: " + userId);
             }
 
             // 현재 비밀번호 확인
             if (!passwordEncoder.matches(currentPassword, member.getUserPassword())) {
                 throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
             }
+
+            // 새 비밀번호 유효성 검증
+            validatePassword(newPassword);
 
             // 새 비밀번호와 현재 비밀번호가 같은지 확인
             if (passwordEncoder.matches(newPassword, member.getUserPassword())) {
@@ -186,9 +206,12 @@ public class MemberService {
 
             log.info("비밀번호 변경 결과: {} - {}", userId, success);
             return success;
+        } catch (MemberNotFoundException | IllegalArgumentException e) {
+            // 커스텀 예외는 그대로 전파
+            throw e;
         } catch (Exception e) {
             log.error("비밀번호 변경 실패: {}", userId, e);
-            throw e;
+            throw new RuntimeException("비밀번호 변경에 실패했습니다.", e);
         }
     }
 
@@ -200,7 +223,7 @@ public class MemberService {
         try {
             MemberVO member = memberMapper.getMemberByUserId(userId);
             if (member == null) {
-                throw new IllegalArgumentException("회원을 찾을 수 없습니다.");
+                throw new MemberNotFoundException("회원을 찾을 수 없습니다: " + userId);
             }
 
             // 계정 비활성화 (실제 삭제가 아닌 소프트 삭제)
@@ -209,9 +232,12 @@ public class MemberService {
 
             log.info("회원 탈퇴 결과: {} - {}", userId, success);
             return success;
+        } catch (MemberNotFoundException e) {
+            // 커스텀 예외는 그대로 전파
+            throw e;
         } catch (Exception e) {
             log.error("회원 탈퇴 실패: {}", userId, e);
-            throw e;
+            throw new RuntimeException("회원 탈퇴에 실패했습니다.", e);
         }
     }
 
@@ -333,7 +359,7 @@ public class MemberService {
         try {
             MemberVO member = memberMapper.getMemberByUserId(userId);
             if (member == null) {
-                throw new IllegalArgumentException("회원을 찾을 수 없습니다.");
+                throw new MemberNotFoundException("회원을 찾을 수 없습니다: " + userId);
             }
 
             String encodedPassword = passwordEncoder.encode(tempPassword);
@@ -342,20 +368,30 @@ public class MemberService {
 
             log.info("관리자 비밀번호 재설정: {} - {}", userId, success);
             return success;
+        } catch (MemberNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.error("관리자 비밀번호 재설정 실패: {}", userId, e);
             throw new RuntimeException("비밀번호 재설정에 실패했습니다.", e);
         }
     }
 
-    // 회원 정보 유효성 검사
-    private void validateMemberInfo(MemberJoinDTO joinDTO) {
+    // 회원 가입 데이터 유효성 검증
+    private void validateMemberJoinData(MemberJoinDTO joinDTO) {
         if (joinDTO.getUserId().length() < 4 || joinDTO.getUserId().length() > 20) {
             throw new IllegalArgumentException("사용자 ID는 4-20자 사이여야 합니다.");
         }
 
+        if (!joinDTO.getUserId().matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("사용자 ID는 영문, 숫자, 언더스코어만 사용 가능합니다.");
+        }
+
         if (joinDTO.getUserPassword().length() < 8 || joinDTO.getUserPassword().length() > 20) {
             throw new IllegalArgumentException("비밀번호는 8-20자 사이여야 합니다.");
+        }
+
+        if (!joinDTO.getUserPassword().matches("^(?=.*[a-zA-Z])(?=.*[\\d@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$")) {
+            throw new IllegalArgumentException("비밀번호는 영문자와 숫자 또는 특수문자를 포함해야 합니다.");
         }
 
         if (joinDTO.getUserName().length() < 2 || joinDTO.getUserName().length() > 10) {
@@ -372,6 +408,36 @@ public class MemberService {
             if (!joinDTO.getUserPhone().matches("^01[0-9]-\\d{4}-\\d{4}$")) {
                 throw new IllegalArgumentException("올바른 전화번호 형식이 아닙니다.");
             }
+        }
+    }
+
+    // 회원 수정 데이터 유효성 검증
+    private void validateMemberUpdateData(MemberUpdateDTO updateDTO) {
+        if (updateDTO.getUserName().length() < 2 || updateDTO.getUserName().length() > 10) {
+            throw new IllegalArgumentException("사용자 이름은 2-10자 사이여야 합니다.");
+        }
+
+        // 이메일 형식 검증
+        if (!updateDTO.getUserEmail().matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+
+        // 전화번호 형식 검증 (선택사항)
+        if (updateDTO.getUserPhone() != null && !updateDTO.getUserPhone().isEmpty()) {
+            if (!updateDTO.getUserPhone().matches("^01[0-9]-\\d{4}-\\d{4}$")) {
+                throw new IllegalArgumentException("올바른 전화번호 형식이 아닙니다.");
+            }
+        }
+    }
+
+    // 비밀번호 유효성 검증
+    private void validatePassword(String password) {
+        if (password.length() < 8 || password.length() > 20) {
+            throw new IllegalArgumentException("비밀번호는 8-20자 사이여야 합니다.");
+        }
+
+        if (!password.matches("^(?=.*[a-zA-Z])(?=.*[\\d@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$")) {
+            throw new IllegalArgumentException("비밀번호는 영문자와 숫자 또는 특수문자를 포함해야 합니다.");
         }
     }
 }
