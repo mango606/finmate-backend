@@ -1,6 +1,9 @@
 package com.example.finmate.member.controller;
 
 import com.example.finmate.auth.service.AuthService;
+import com.example.finmate.common.dto.ApiResponse;
+import com.example.finmate.common.exception.DuplicateResourceException;
+import com.example.finmate.common.exception.MemberNotFoundException;
 import com.example.finmate.common.service.EmailService;
 import com.example.finmate.common.service.FileUploadService;
 import com.example.finmate.common.util.IPUtils;
@@ -40,68 +43,60 @@ public class MemberController {
 
     @ApiOperation(value = "회원 가입", notes = "새로운 회원을 등록하고 이메일 인증을 요청합니다.")
     @PostMapping("/join")
-    public ResponseEntity<Map<String, Object>> insertMember(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> insertMember(
             @Valid @RequestBody MemberJoinDTO joinDTO,
             HttpServletRequest request) {
 
         String clientIP = IPUtils.getClientIP(request);
         log.info("회원 가입 요청: {} from {}", joinDTO.getUserId(), IPUtils.maskIP(clientIP));
 
-        Map<String, Object> response = new HashMap<>();
-
         try {
             boolean success = memberService.insertMember(joinDTO);
 
-            if (success) {
-                // 환영 이메일 발송
-                try {
-                    emailService.sendWelcomeEmail(joinDTO.getUserEmail(), joinDTO.getUserName());
-
-                    // 이메일 인증 토큰 생성 및 발송 (AuthService가 null이 아닌 경우에만)
-                    if (authService != null) {
-                        String verificationToken = authService.generateEmailVerificationToken(joinDTO.getUserEmail());
-                        emailService.sendActivationEmail(joinDTO.getUserEmail(), verificationToken);
-
-                        response.put("success", true);
-                        response.put("message", "회원 가입이 완료되었습니다. 이메일 인증을 완료해주세요.");
-                        response.put("emailSent", true);
-                    } else {
-                        response.put("success", true);
-                        response.put("message", "회원 가입이 완료되었습니다.");
-                        response.put("emailSent", false);
-                    }
-                } catch (Exception e) {
-                    log.warn("이메일 발송 실패: {}", e.getMessage());
-                    response.put("success", true);
-                    response.put("message", "회원 가입이 완료되었습니다.");
-                    response.put("emailSent", false);
-                }
-
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "회원 가입에 실패했습니다.");
-                return ResponseEntity.badRequest().body(response);
+            if (!success) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("회원 가입에 실패했습니다.", "MEMBER_JOIN_FAILED"));
             }
 
+            // 환영 이메일 발송
+            Map<String, Object> result = new HashMap<>();
+            try {
+                emailService.sendWelcomeEmail(joinDTO.getUserEmail(), joinDTO.getUserName());
+
+                // 이메일 인증 토큰 생성 및 발송
+                if (authService != null) {
+                    String verificationToken = authService.generateEmailVerificationToken(joinDTO.getUserEmail());
+                    emailService.sendActivationEmail(joinDTO.getUserEmail(), verificationToken);
+                    result.put("emailSent", true);
+                } else {
+                    result.put("emailSent", false);
+                }
+            } catch (Exception e) {
+                log.warn("이메일 발송 실패: {}", e.getMessage());
+                result.put("emailSent", false);
+            }
+
+            return ResponseEntity.ok(ApiResponse.success("회원 가입이 완료되었습니다. 이메일 인증을 완료해주세요.", result));
+
+        } catch (DuplicateResourceException e) {
+            log.warn("회원 가입 실패 - 중복: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "DUPLICATE_RESOURCE"));
         } catch (IllegalArgumentException e) {
-            log.warn("회원 가입 실패: {}", e.getMessage());
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            log.warn("회원 가입 실패 - 유효성 검증: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "VALIDATION_ERROR"));
         }
     }
 
     @ApiOperation(value = "회원 정보 조회", notes = "로그인한 사용자의 정보를 조회합니다.")
     @GetMapping("/info")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> getMemberInfo(Authentication authentication) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMemberInfo(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         String userId = user.getUsername();
 
         log.info("회원 정보 조회: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
 
         try {
             MemberInfoDTO memberInfo = memberService.getMemberInfo(userId);
@@ -115,22 +110,19 @@ public class MemberController {
                 enhancedInfo.put("security", authService.getAccountSecurity(userId));
             }
 
-            response.put("success", true);
-            response.put("data", enhancedInfo);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(enhancedInfo));
 
-        } catch (IllegalArgumentException e) {
+        } catch (MemberNotFoundException e) {
             log.warn("회원 정보 조회 실패: {}", e.getMessage());
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "MEMBER_NOT_FOUND"));
         }
     }
 
     @ApiOperation(value = "회원 정보 수정", notes = "로그인한 사용자의 정보를 수정합니다.")
     @PutMapping("/info")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> updateMember(
+    public ResponseEntity<ApiResponse<Void>> updateMember(
             Authentication authentication,
             @Valid @RequestBody MemberUpdateDTO updateDTO) {
 
@@ -139,33 +131,31 @@ public class MemberController {
 
         log.info("회원 정보 수정: {}", userId);
 
-        Map<String, Object> response = new HashMap<>();
-
         try {
             boolean success = memberService.updateMember(userId, updateDTO);
 
             if (success) {
-                response.put("success", true);
-                response.put("message", "회원 정보가 수정되었습니다.");
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(ApiResponse.success("회원 정보가 수정되었습니다.", null));
             } else {
-                response.put("success", false);
-                response.put("message", "회원 정보 수정에 실패했습니다.");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("회원 정보 수정에 실패했습니다.", "UPDATE_FAILED"));
             }
 
+        } catch (DuplicateResourceException e) {
+            log.warn("회원 정보 수정 실패 - 중복: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "DUPLICATE_RESOURCE"));
         } catch (IllegalArgumentException e) {
-            log.warn("회원 정보 수정 실패: {}", e.getMessage());
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            log.warn("회원 정보 수정 실패 - 유효성 검증: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "VALIDATION_ERROR"));
         }
     }
 
     @ApiOperation(value = "비밀번호 변경", notes = "로그인한 사용자의 비밀번호를 변경합니다.")
     @PutMapping("/password")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> updateMemberPassword(
+    public ResponseEntity<ApiResponse<Void>> updateMemberPassword(
             Authentication authentication,
             @RequestBody Map<String, String> passwordData,
             HttpServletRequest request) {
@@ -176,47 +166,40 @@ public class MemberController {
 
         log.info("비밀번호 변경: {} from {}", userId, IPUtils.maskIP(clientIP));
 
-        Map<String, Object> response = new HashMap<>();
-
         try {
             String currentPassword = passwordData.get("currentPassword");
             String newPassword = passwordData.get("newPassword");
 
             if (currentPassword == null || newPassword == null) {
-                response.put("success", false);
-                response.put("message", "현재 비밀번호와 새 비밀번호를 입력해주세요.");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("현재 비밀번호와 새 비밀번호를 입력해주세요.", "MISSING_PARAMETERS"));
             }
 
             boolean success = memberService.updateMemberPassword(userId, currentPassword, newPassword);
 
             if (success) {
-                // 보안 이벤트 기록 (AuthService가 null이 아닌 경우에만)
+                // 보안 이벤트 기록
                 if (authService != null) {
                     authService.recordSecurityEvent(userId, "PASSWORD_CHANGED", clientIP);
                 }
 
-                response.put("success", true);
-                response.put("message", "비밀번호가 변경되었습니다.");
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다.", null));
             } else {
-                response.put("success", false);
-                response.put("message", "비밀번호 변경에 실패했습니다.");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("비밀번호 변경에 실패했습니다.", "PASSWORD_CHANGE_FAILED"));
             }
 
         } catch (IllegalArgumentException e) {
             log.warn("비밀번호 변경 실패: {}", e.getMessage());
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "VALIDATION_ERROR"));
         }
     }
 
     @ApiOperation(value = "회원 탈퇴", notes = "로그인한 사용자의 계정을 삭제합니다.")
     @DeleteMapping("/withdraw")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> deleteMember(
+    public ResponseEntity<ApiResponse<Void>> deleteMember(
             Authentication authentication,
             @RequestParam(required = false) String reason,
             HttpServletRequest request) {
@@ -227,157 +210,139 @@ public class MemberController {
 
         log.info("회원 탈퇴: {} from {}", userId, IPUtils.maskIP(clientIP));
 
-        Map<String, Object> response = new HashMap<>();
-
         try {
             boolean success = memberService.deleteMember(userId);
 
             if (success) {
-                // 보안 이벤트 기록 (AuthService가 null이 아닌 경우에만)
+                // 보안 이벤트 기록
                 if (authService != null) {
                     authService.recordSecurityEvent(userId, "ACCOUNT_WITHDRAWN", clientIP);
                 }
 
-                response.put("success", true);
-                response.put("message", "회원 탈퇴가 완료되었습니다.");
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다.", null));
             } else {
-                response.put("success", false);
-                response.put("message", "회원 탈퇴에 실패했습니다.");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("회원 탈퇴에 실패했습니다.", "WITHDRAWAL_FAILED"));
             }
 
-        } catch (IllegalArgumentException e) {
+        } catch (MemberNotFoundException e) {
             log.warn("회원 탈퇴 실패: {}", e.getMessage());
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "MEMBER_NOT_FOUND"));
         }
     }
 
     @ApiOperation(value = "사용자 ID 중복 확인", notes = "회원가입 시 사용자 ID 중복을 확인합니다.")
     @GetMapping("/checkUserId/{userId}")
-    public ResponseEntity<Map<String, Object>> checkUserIdDuplicate(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkUserIdDuplicate(
             @ApiParam(value = "확인할 사용자 ID", required = true) @PathVariable String userId) {
 
         log.info("사용자 ID 중복 확인: {}", userId);
 
-        Map<String, Object> response = new HashMap<>();
         boolean isDuplicate = memberService.checkUserIdDuplicate(userId);
 
-        response.put("success", true);
-        response.put("isDuplicate", isDuplicate);
-        response.put("message", isDuplicate ? "이미 사용 중인 ID입니다." : "사용 가능한 ID입니다.");
+        Map<String, Object> result = new HashMap<>();
+        result.put("isDuplicate", isDuplicate);
+        result.put("available", !isDuplicate);
 
-        return ResponseEntity.ok(response);
+        String message = isDuplicate ? "이미 사용 중인 ID입니다." : "사용 가능한 ID입니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, result));
     }
 
     @ApiOperation(value = "이메일 중복 확인", notes = "회원가입 시 이메일 중복을 확인합니다.")
     @GetMapping("/checkEmail")
-    public ResponseEntity<Map<String, Object>> checkUserEmailDuplicate(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkUserEmailDuplicate(
             @ApiParam(value = "확인할 이메일", required = true) @RequestParam String userEmail) {
 
         log.info("이메일 중복 확인: {}", userEmail);
 
-        Map<String, Object> response = new HashMap<>();
         boolean isDuplicate = memberService.checkUserEmailDuplicate(userEmail);
 
-        response.put("success", true);
-        response.put("isDuplicate", isDuplicate);
-        response.put("message", isDuplicate ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
+        Map<String, Object> result = new HashMap<>();
+        result.put("isDuplicate", isDuplicate);
+        result.put("available", !isDuplicate);
 
-        return ResponseEntity.ok(response);
+        String message = isDuplicate ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, result));
     }
 
     @ApiOperation(value = "프로필 이미지 업로드", notes = "사용자의 프로필 이미지를 업로드합니다.")
     @PostMapping("/profile-image")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> uploadProfileImage(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadProfileImage(
             Authentication authentication,
             @RequestParam("file") MultipartFile file) {
 
         String userId = SecurityUtils.getCurrentUserId();
         log.info("프로필 이미지 업로드: {}", userId);
 
-        Map<String, Object> response = new HashMap<>();
-
         try {
             String fileName = fileUploadService.uploadProfileImage(userId, file);
 
-            response.put("success", true);
-            response.put("message", "프로필 이미지가 업로드되었습니다.");
-            response.put("fileName", fileName);
-            response.put("imageUrl", "/upload/avatar/" + userId + "/" + fileName);
+            Map<String, Object> result = new HashMap<>();
+            result.put("fileName", fileName);
+            result.put("imageUrl", "/upload/avatar/" + userId + "/" + fileName);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 업로드되었습니다.", result));
 
         } catch (Exception e) {
             log.error("프로필 이미지 업로드 실패", e);
-            response.put("success", false);
-            response.put("message", "프로필 이미지 업로드에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("프로필 이미지 업로드에 실패했습니다.", "UPLOAD_FAILED"));
         }
     }
 
     @ApiOperation(value = "서버 상태 확인", notes = "서버와 데이터베이스 연결 상태를 확인합니다.")
     @GetMapping("/health")
-    public ResponseEntity<Map<String, Object>> healthCheck() {
-        Map<String, Object> response = new HashMap<>();
-
+    public ResponseEntity<ApiResponse<Map<String, Object>>> healthCheck() {
         try {
             // 데이터베이스 연결 확인
-            boolean dbHealthy = true; // 실제로는 memberService.checkDatabaseConnection()
+            boolean dbHealthy = memberService.checkDatabaseConnection();
 
-            response.put("success", true);
-            response.put("status", "OK");
-            response.put("message", "FinMate 서버가 정상 동작 중입니다.");
-            response.put("timestamp", System.currentTimeMillis());
-            response.put("database", dbHealthy ? "Connected" : "Disconnected");
-            response.put("version", "1.0.0");
-            response.put("service", "MemberService");
+            Map<String, Object> healthInfo = new HashMap<>();
+            healthInfo.put("status", "OK");
+            healthInfo.put("database", dbHealthy ? "Connected" : "Disconnected");
+            healthInfo.put("version", "1.0.0");
+            healthInfo.put("service", "MemberService");
+            healthInfo.put("timestamp", System.currentTimeMillis());
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success("FinMate 서버가 정상 동작 중입니다.", healthInfo));
 
         } catch (Exception e) {
             log.error("헬스 체크 실패", e);
-            response.put("success", false);
-            response.put("status", "ERROR");
-            response.put("message", "서버 상태 확인에 실패했습니다.");
-            response.put("timestamp", System.currentTimeMillis());
 
-            return ResponseEntity.ok(response);
+            Map<String, Object> errorInfo = new HashMap<>();
+            errorInfo.put("status", "ERROR");
+            errorInfo.put("timestamp", System.currentTimeMillis());
+
+            return ResponseEntity.ok(ApiResponse.error("서버 상태 확인에 실패했습니다.", "HEALTH_CHECK_FAILED"));
         }
     }
 
     @ApiOperation(value = "보안 설정 조회", notes = "사용자의 보안 설정을 조회합니다.")
     @GetMapping("/security-settings")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> getSecuritySettings(Authentication authentication) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSecuritySettings(Authentication authentication) {
         String userId = SecurityUtils.getCurrentUserId();
         log.info("보안 설정 조회: {}", userId);
-
-        Map<String, Object> response = new HashMap<>();
 
         try {
             Map<String, Object> securitySettings = authService != null ?
                     authService.getSecuritySettings(userId) : getDefaultSecuritySettings();
 
-            response.put("success", true);
-            response.put("data", securitySettings);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(securitySettings));
 
         } catch (Exception e) {
             log.error("보안 설정 조회 실패", e);
-            response.put("success", false);
-            response.put("message", "보안 설정 조회에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("보안 설정 조회에 실패했습니다.", "SECURITY_SETTINGS_ERROR"));
         }
     }
 
     @ApiOperation(value = "2단계 인증 설정", notes = "2단계 인증을 활성화/비활성화합니다.")
     @PostMapping("/two-factor-auth")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> updateTwoFactorAuth(
+    public ResponseEntity<ApiResponse<Void>> updateTwoFactorAuth(
             Authentication authentication,
             @RequestParam boolean enabled,
             HttpServletRequest request) {
@@ -385,8 +350,6 @@ public class MemberController {
         String userId = SecurityUtils.getCurrentUserId();
         String clientIP = IPUtils.getClientIP(request);
         log.info("2단계 인증 설정: {} - {} from {}", userId, enabled, IPUtils.maskIP(clientIP));
-
-        Map<String, Object> response = new HashMap<>();
 
         try {
             boolean success = authService != null ?
@@ -396,20 +359,17 @@ public class MemberController {
                 authService.recordSecurityEvent(userId,
                         enabled ? "TWO_FACTOR_ENABLED" : "TWO_FACTOR_DISABLED", clientIP);
 
-                response.put("success", true);
-                response.put("message", enabled ? "2단계 인증이 활성화되었습니다." : "2단계 인증이 비활성화되었습니다.");
-                return ResponseEntity.ok(response);
+                String message = enabled ? "2단계 인증이 활성화되었습니다." : "2단계 인증이 비활성화되었습니다.";
+                return ResponseEntity.ok(ApiResponse.success(message, null));
             } else {
-                response.put("success", false);
-                response.put("message", "2단계 인증 설정에 실패했습니다.");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("2단계 인증 설정에 실패했습니다.", "TWO_FACTOR_FAILED"));
             }
 
         } catch (Exception e) {
             log.error("2단계 인증 설정 실패", e);
-            response.put("success", false);
-            response.put("message", "2단계 인증 설정에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("2단계 인증 설정에 실패했습니다.", "TWO_FACTOR_ERROR"));
         }
     }
 
