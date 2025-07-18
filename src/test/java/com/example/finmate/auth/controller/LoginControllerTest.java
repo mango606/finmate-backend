@@ -135,11 +135,11 @@ class LoginControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLoginDTO)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(false)))
                 .andExpect(jsonPath("$.message", is("로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.")))
-                .andExpect(jsonPath("$.error", is("AUTHENTICATION_FAILED")));
+                .andExpect(jsonPath("$.errorCode", is("AUTHENTICATION_FAILED")));
 
         verify(authService).recordLoginFailure(eq("testuser"), anyString(), anyString(), anyString());
     }
@@ -178,9 +178,9 @@ class LoginControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.authenticated", is(true)))
-                .andExpect(jsonPath("$.userId", is("testuser")))
-                .andExpect(jsonPath("$.tokenValid", is(true)));
+                .andExpect(jsonPath("$.data.authenticated", is(true)))
+                .andExpect(jsonPath("$.data.userId", is("testuser")))
+                .andExpect(jsonPath("$.data.tokenValid", is(true)));
     }
 
     @Test
@@ -198,8 +198,8 @@ class LoginControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.authenticated", is(false)))
-                .andExpect(jsonPath("$.tokenValid", is(false)));
+                .andExpect(jsonPath("$.data.authenticated", is(false)))
+                .andExpect(jsonPath("$.data.tokenValid", is(false)));
     }
 
     @Test
@@ -220,7 +220,7 @@ class LoginControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.message", is("토큰이 갱신되었습니다.")))
-                .andExpect(jsonPath("$.token", is("new-jwt-token")));
+                .andExpect(jsonPath("$.data.token", is("new-jwt-token")));
     }
 
     @Test
