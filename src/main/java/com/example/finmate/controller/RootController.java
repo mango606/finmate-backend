@@ -1,5 +1,6 @@
 package com.example.finmate.controller;
 
+import com.example.finmate.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,30 +45,26 @@ public class RootController {
     }
 
     @GetMapping(value = "/ping", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<Map<String, Object>> ping() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> ping() {
         log.info("서버 ping 요청");
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "OK");
-        response.put("message", "FinMate 서버가 정상 동작 중입니다");
-        response.put("timestamp", System.currentTimeMillis());
-        response.put("server", "FinMate Backend v1.0.0");
-        response.put("encoding", "UTF-8");
+        Map<String, Object> pingInfo = new HashMap<>();
+        pingInfo.put("status", "OK");
+        pingInfo.put("message", "FinMate 서버가 정상 동작 중입니다");
+        pingInfo.put("timestamp", System.currentTimeMillis());
+        pingInfo.put("server", "FinMate Backend v1.0.0");
+        pingInfo.put("encoding", "UTF-8");
 
-        return ResponseEntity.ok()
-                .header("Content-Type", "application/json; charset=UTF-8")
-                .body(response);
+        return ResponseEntity.ok(ApiResponse.success("서버 응답 성공", pingInfo));
     }
 
-    @GetMapping(value = "/hello", produces = "text/plain; charset=UTF-8")
-    public ResponseEntity<String> hello() {
+    @GetMapping(value = "/hello", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<ApiResponse<String>> hello() {
         log.info("Hello 요청");
-        return ResponseEntity.ok()
-                .header("Content-Type", "text/plain; charset=UTF-8")
-                .body("Hello FinMate! 안녕하세요! 서버가 정상 동작 중입니다. 🚀");
+
+        String message = "Hello FinMate! 안녕하세요! 서버가 정상 동작 중입니다. 🚀";
+        return ResponseEntity.ok(ApiResponse.success("Hello 메시지", message));
     }
-
-
 
     private String getDefaultIndexHtml() {
         return """

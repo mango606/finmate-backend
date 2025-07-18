@@ -64,13 +64,9 @@ public class MemberController {
                 emailService.sendWelcomeEmail(joinDTO.getUserEmail(), joinDTO.getUserName());
 
                 // 이메일 인증 토큰 생성 및 발송
-                if (authService != null) {
-                    String verificationToken = authService.generateEmailVerificationToken(joinDTO.getUserEmail());
-                    emailService.sendActivationEmail(joinDTO.getUserEmail(), verificationToken);
-                    result.put("emailSent", true);
-                } else {
-                    result.put("emailSent", false);
-                }
+                String verificationToken = authService.generateEmailVerificationToken(joinDTO.getUserEmail());
+                emailService.sendActivationEmail(joinDTO.getUserEmail(), verificationToken);
+                result.put("emailSent", true);
             } catch (Exception e) {
                 log.warn("이메일 발송 실패: {}", e.getMessage());
                 result.put("emailSent", false);
@@ -104,11 +100,7 @@ public class MemberController {
             // 보안 정보 포함
             Map<String, Object> enhancedInfo = new HashMap<>();
             enhancedInfo.put("basic", memberInfo);
-
-            // AuthService가 null이 아닌 경우에만 보안 정보 추가
-            if (authService != null) {
-                enhancedInfo.put("security", authService.getAccountSecurity(userId));
-            }
+            enhancedInfo.put("security", authService.getAccountSecurity(userId));
 
             return ResponseEntity.ok(ApiResponse.success(enhancedInfo));
 
@@ -179,10 +171,7 @@ public class MemberController {
 
             if (success) {
                 // 보안 이벤트 기록
-                if (authService != null) {
-                    authService.recordSecurityEvent(userId, "PASSWORD_CHANGED", clientIP);
-                }
-
+                authService.recordSecurityEvent(userId, "PASSWORD_CHANGED", clientIP);
                 return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다.", null));
             } else {
                 return ResponseEntity.badRequest()
@@ -215,10 +204,7 @@ public class MemberController {
 
             if (success) {
                 // 보안 이벤트 기록
-                if (authService != null) {
-                    authService.recordSecurityEvent(userId, "ACCOUNT_WITHDRAWN", clientIP);
-                }
-
+                authService.recordSecurityEvent(userId, "ACCOUNT_WITHDRAWN", clientIP);
                 return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다.", null));
             } else {
                 return ResponseEntity.badRequest()
@@ -310,12 +296,8 @@ public class MemberController {
 
         } catch (Exception e) {
             log.error("헬스 체크 실패", e);
-
-            Map<String, Object> errorInfo = new HashMap<>();
-            errorInfo.put("status", "ERROR");
-            errorInfo.put("timestamp", System.currentTimeMillis());
-
-            return ResponseEntity.ok(ApiResponse.error("서버 상태 확인에 실패했습니다.", "HEALTH_CHECK_FAILED"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("서버 상태 확인에 실패했습니다.", "HEALTH_CHECK_FAILED"));
         }
     }
 
@@ -327,9 +309,7 @@ public class MemberController {
         log.info("보안 설정 조회: {}", userId);
 
         try {
-            Map<String, Object> securitySettings = authService != null ?
-                    authService.getSecuritySettings(userId) : getDefaultSecuritySettings();
-
+            Map<String, Object> securitySettings = authService.getSecuritySettings(userId);
             return ResponseEntity.ok(ApiResponse.success(securitySettings));
 
         } catch (Exception e) {
@@ -352,10 +332,9 @@ public class MemberController {
         log.info("2단계 인증 설정: {} - {} from {}", userId, enabled, IPUtils.maskIP(clientIP));
 
         try {
-            boolean success = authService != null ?
-                    authService.updateTwoFactorAuth(userId, enabled) : false;
+            boolean success = authService.updateTwoFactorAuth(userId, enabled);
 
-            if (success && authService != null) {
+            if (success) {
                 authService.recordSecurityEvent(userId,
                         enabled ? "TWO_FACTOR_ENABLED" : "TWO_FACTOR_DISABLED", clientIP);
 
@@ -371,16 +350,5 @@ public class MemberController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("2단계 인증 설정에 실패했습니다.", "TWO_FACTOR_ERROR"));
         }
-    }
-
-    // 기본 보안 설정 반환 메서드
-    private Map<String, Object> getDefaultSecuritySettings() {
-        Map<String, Object> settings = new HashMap<>();
-        settings.put("emailVerified", false);
-        settings.put("phoneVerified", false);
-        settings.put("twoFactorEnabled", false);
-        settings.put("loginNotificationEnabled", true);
-        settings.put("securityQuestionEnabled", false);
-        return settings;
     }
 }
