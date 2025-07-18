@@ -1,6 +1,9 @@
 package com.example.finmate.auth.controller;
 
 import com.example.finmate.auth.service.AuthService;
+import com.example.finmate.common.dto.ApiResponse;
+import com.example.finmate.common.exception.AuthenticationFailedException;
+import com.example.finmate.common.util.AuthResponseUtil;
 import com.example.finmate.common.util.IPUtils;
 import com.example.finmate.member.dto.MemberLoginDTO;
 import com.example.finmate.member.domain.MemberVO;
@@ -21,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -37,7 +39,7 @@ public class LoginController {
 
     @ApiOperation(value = "사용자 로그인", notes = "사용자 ID와 비밀번호로 로그인하고 JWT 토큰을 발급받습니다.")
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> login(
             @Valid @RequestBody MemberLoginDTO loginDTO,
             HttpServletRequest request) {
 
@@ -45,8 +47,6 @@ public class LoginController {
         String userAgent = request.getHeader("User-Agent");
 
         log.info("로그인 시도: {} from {}", loginDTO.getUserId(), IPUtils.maskIP(clientIP));
-
-        Map<String, Object> response = new HashMap<>();
 
         try {
             // Spring Security를 통한 인증
@@ -63,33 +63,14 @@ public class LoginController {
             // 사용자 정보 조회
             MemberVO member = memberMapper.getMemberByUserId(userId);
 
-            // 사용자 정보 DTO 생성
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("userId", member.getUserId());
-            userInfo.put("userName", member.getUserName());
-            userInfo.put("userEmail", member.getUserEmail());
-            userInfo.put("userPhone", member.getUserPhone());
-            userInfo.put("birthDate", member.getBirthDate());
-            userInfo.put("gender", member.getGender());
-            userInfo.put("regDate", member.getRegDate());
-            userInfo.put("authorities", user.getAuthorities().stream()
-                    .map(authority -> authority.getAuthority())
-                    .collect(Collectors.toList()));
+            // 유틸리티를 사용하여 응답 구성
+            Map<String, Object> authResult = AuthResponseUtil.createAuthResultMap(token, member, user);
 
             // 로그인 성공 기록
             authService.recordLoginSuccess(userId, clientIP, userAgent);
 
-            // 응답 구성
-            Map<String, Object> authResult = new HashMap<>();
-            authResult.put("token", token);
-            authResult.put("user", userInfo);
-
-            response.put("success", true);
-            response.put("message", "로그인 성공");
-            response.put("data", authResult);
-
             log.info("로그인 성공: {} from {}", userId, IPUtils.maskIP(clientIP));
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success("로그인 성공", authResult));
 
         } catch (Exception e) {
             // 로그인 실패 기록
@@ -97,68 +78,178 @@ public class LoginController {
 
             log.warn("로그인 실패: {} from {} - {}", loginDTO.getUserId(), IPUtils.maskIP(clientIP), e.getMessage());
 
-            response.put("success", false);
-            response.put("message", "로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.");
-            response.put("error", "AUTHENTICATION_FAILED");
-
-            return ResponseEntity.badRequest().body(response);
+            throw new AuthenticationFailedException("로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.");
         }
     }
 
     @ApiOperation(value = "로그인 상태 확인", notes = "현재 사용자의 로그인 상태를 확인합니다.")
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> getLoginStatus(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getLoginStatus(HttpServletRequest request) {
         String authHeader = request.getHeader(jwtProcessor.getHeader());
         String token = jwtProcessor.extractTokenFromHeader(authHeader);
 
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> statusInfo = new HashMap<>();
 
         if (token != null && jwtProcessor.validateToken(token)) {
             String userId = jwtProcessor.getUserIdFromToken(token);
 
-            response.put("success", true);
-            response.put("authenticated", true);
-            response.put("userId", userId);
-            response.put("tokenValid", true);
+            statusInfo.put("authenticated", true);
+            statusInfo.put("userId", userId);
+            statusInfo.put("tokenValid", true);
         } else {
-            response.put("success", true);
-            response.put("authenticated", false);
-            response.put("tokenValid", false);
+            statusInfo.put("authenticated", false);
+            statusInfo.put("tokenValid", false);
         }
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(statusInfo));
     }
 
     @ApiOperation(value = "토큰 갱신", notes = "유효한 토큰을 사용하여 새로운 토큰을 발급받습니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<Map<String, Object>> refreshToken(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> refreshToken(HttpServletRequest request) {
         String authHeader = request.getHeader(jwtProcessor.getHeader());
         String token = jwtProcessor.extractTokenFromHeader(authHeader);
 
-        Map<String, Object> response = new HashMap<>();
-
         if (token == null || !jwtProcessor.validateToken(token)) {
-            response.put("success", false);
-            response.put("message", "유효하지 않은 토큰입니다.");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("유효하지 않은 토큰입니다.", "INVALID_TOKEN"));
         }
 
         try {
             String userId = jwtProcessor.getUserIdFromToken(token);
             String newToken = jwtProcessor.generateToken(userId);
 
-            response.put("success", true);
-            response.put("message", "토큰이 갱신되었습니다.");
-            response.put("token", newToken);
+            Map<String, Object> result = new HashMap<>();
+            result.put("token", newToken);
 
             log.info("토큰 갱신: {}", userId);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success("토큰이 갱신되었습니다.", result));
 
         } catch (Exception e) {
             log.error("토큰 갱신 실패", e);
-            response.put("success", false);
-            response.put("message", "토큰 갱신에 실패했습니다.");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("토큰 갱신에 실패했습니다.", "TOKEN_REFRESH_FAILED"));
+        }
+    }
+
+    @ApiOperation(value = "토큰 유효성 검증", notes = "JWT 토큰의 유효성을 검증합니다.")
+    @PostMapping("/validate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(jwtProcessor.getHeader());
+        String token = jwtProcessor.extractTokenFromHeader(authHeader);
+
+        Map<String, Object> validationInfo = new HashMap<>();
+
+        if (token == null) {
+            validationInfo.put("valid", false);
+            validationInfo.put("reason", "토큰이 없습니다.");
+            return ResponseEntity.ok(ApiResponse.success("토큰 검증 결과", validationInfo));
+        }
+
+        try {
+            boolean isValid = jwtProcessor.validateToken(token);
+            validationInfo.put("valid", isValid);
+
+            if (isValid) {
+                String userId = jwtProcessor.getUserIdFromToken(token);
+                validationInfo.put("userId", userId);
+                validationInfo.put("expirationDate", jwtProcessor.getExpirationDateFromToken(token));
+            } else {
+                validationInfo.put("reason", "토큰이 유효하지 않습니다.");
+            }
+
+            return ResponseEntity.ok(ApiResponse.success("토큰 검증 결과", validationInfo));
+
+        } catch (Exception e) {
+            log.warn("토큰 검증 중 오류: {}", e.getMessage());
+            validationInfo.put("valid", false);
+            validationInfo.put("reason", "토큰 검증 중 오류가 발생했습니다.");
+            return ResponseEntity.ok(ApiResponse.success("토큰 검증 결과", validationInfo));
+        }
+    }
+
+    @ApiOperation(value = "로그아웃", notes = "현재 사용자를 로그아웃합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader(jwtProcessor.getHeader());
+        String token = jwtProcessor.extractTokenFromHeader(authHeader);
+        String clientIP = IPUtils.getClientIP(request);
+
+        if (token != null && jwtProcessor.validateToken(token)) {
+            String userId = jwtProcessor.getUserIdFromToken(token);
+
+            // 토큰을 블랙리스트에 추가
+            jwtProcessor.blacklistToken(token);
+
+            // 보안 이벤트 기록
+            authService.recordSecurityEvent(userId, "LOGOUT", clientIP);
+
+            log.info("로그아웃: {} from {}", userId, IPUtils.maskIP(clientIP));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("로그아웃되었습니다.", null));
+    }
+
+    @ApiOperation(value = "토큰 폐기", notes = "현재 토큰을 무효화합니다.")
+    @PostMapping("/revoke")
+    public ResponseEntity<ApiResponse<Void>> revokeToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(jwtProcessor.getHeader());
+        String token = jwtProcessor.extractTokenFromHeader(authHeader);
+
+        if (token == null) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("토큰이 없습니다.", "MISSING_TOKEN"));
+        }
+
+        try {
+            if (jwtProcessor.validateToken(token)) {
+                String userId = jwtProcessor.getUserIdFromToken(token);
+
+                // 토큰을 블랙리스트에 추가
+                jwtProcessor.blacklistToken(token);
+
+                log.info("토큰 폐기: {}", userId);
+                return ResponseEntity.ok(ApiResponse.success("토큰이 폐기되었습니다.", null));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("유효하지 않은 토큰입니다.", "INVALID_TOKEN"));
+            }
+        } catch (Exception e) {
+            log.error("토큰 폐기 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("토큰 폐기에 실패했습니다.", "TOKEN_REVOKE_FAILED"));
+        }
+    }
+
+    @ApiOperation(value = "인증 정보 조회", notes = "현재 인증된 사용자의 정보를 조회합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentUser(HttpServletRequest request) {
+        String authHeader = request.getHeader(jwtProcessor.getHeader());
+        String token = jwtProcessor.extractTokenFromHeader(authHeader);
+
+        if (token == null || !jwtProcessor.validateToken(token)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("유효하지 않은 토큰입니다.", "INVALID_TOKEN"));
+        }
+
+        try {
+            String userId = jwtProcessor.getUserIdFromToken(token);
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+
+            if (member == null) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("사용자를 찾을 수 없습니다.", "USER_NOT_FOUND"));
+            }
+
+            // 유틸리티를 사용하여 사용자 정보 생성
+            Map<String, Object> userInfo = AuthResponseUtil.createUserInfoMap(member);
+
+            return ResponseEntity.ok(ApiResponse.success("사용자 정보 조회 성공", userInfo));
+
+        } catch (Exception e) {
+            log.error("사용자 정보 조회 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("사용자 정보 조회에 실패했습니다.", "USER_INFO_FAILED"));
         }
     }
 }
