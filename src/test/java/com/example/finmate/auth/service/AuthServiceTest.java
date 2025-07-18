@@ -260,4 +260,46 @@ class AuthServiceTest {
         assertNotNull(result.get("grade"));
         assertNotNull(result.get("recommendations"));
     }
+
+    @Test
+    @DisplayName("비밀번호 변경 성공")
+    void changePassword_Success() {
+        // given
+        String userId = "testuser";
+        String currentPassword = "oldPass123!";
+        String newPassword = "newPass123!";
+
+        testMember.setUserPassword("encodedOldPassword");
+
+        when(memberMapper.getMemberByUserId(userId)).thenReturn(testMember);
+        when(passwordEncoder.matches(currentPassword, "encodedOldPassword")).thenReturn(true);
+        when(passwordEncoder.encode(newPassword)).thenReturn("encodedNewPassword");
+        when(memberMapper.updateMemberPassword(userId, "encodedNewPassword")).thenReturn(1);
+
+        // when
+        boolean result = authService.changePassword(userId, currentPassword, newPassword);
+
+        // then
+        assertTrue(result);
+        verify(memberMapper).updateMemberPassword(userId, "encodedNewPassword");
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 현재 비밀번호 불일치")
+    void changePassword_WrongCurrentPassword() {
+        // given
+        String userId = "testuser";
+        String currentPassword = "wrongPassword";
+        String newPassword = "newPass123!";
+
+        testMember.setUserPassword("encodedOldPassword");
+
+        when(memberMapper.getMemberByUserId(userId)).thenReturn(testMember);
+        when(passwordEncoder.matches(currentPassword, "encodedOldPassword")).thenReturn(false);
+
+        // when & then
+        assertThrows(IllegalArgumentException.class, () -> {
+            authService.changePassword(userId, currentPassword, newPassword);
+        });
+    }
 }
