@@ -39,14 +39,18 @@ public class ValidationUtils {
         return userId != null && USER_ID_PATTERN.matcher(userId).matches();
     }
 
-    // 비밀번호 유효성 검사
+    // 비밀번호 유효성 검사 - 수정된 패턴
     public static boolean isValidPassword(String password) {
         if (password == null || password.length() < 8 || password.length() > 20) {
             return false;
         }
 
-        // 영문자와 숫자+특수문자 중 하나 이상 포함 확인
-        return PASSWORD_PATTERN.matcher(password).matches();
+        // 영문자 포함 확인
+        boolean hasLetter = password.matches(".*[a-zA-Z].*");
+        // 숫자 또는 특수문자 포함 확인
+        boolean hasDigitOrSpecial = password.matches(".*[\\d@$!%*?&].*");
+
+        return hasLetter && hasDigitOrSpecial;
     }
 
     // 강력한 비밀번호 유효성 검사 (모든 요소 포함)
@@ -122,24 +126,21 @@ public class ValidationUtils {
         if (password.length() >= 12) score += 25;
 
         // 문자 종류 점수
-        if (password.matches(".*[a-z].*")) score += 10;
-        if (password.matches(".*[A-Z].*")) score += 10;
-        if (password.matches(".*\\d.*")) score += 10;
-        if (password.matches(".*[@$!%*?&].*")) score += 10;
-
-        // 복잡성 점수
-        if (password.matches(".*[a-zA-Z].*") && password.matches(".*\\d.*")) score += 10;
+        if (password.matches(".*[a-z].*")) score += 10;     // 소문자
+        if (password.matches(".*[A-Z].*")) score += 10;     // 대문자
+        if (password.matches(".*\\d.*")) score += 15;       // 숫자
+        if (password.matches(".*[@$!%*?&].*")) score += 15; // 특수문자
 
         return Math.min(score, 100);
     }
 
-    // 비밀번호 강도 등급 반환
+    // 비밀번호 강도 등급 반환 - 수정된 기준
     public static String getPasswordStrengthGrade(String password) {
         int strength = getPasswordStrength(password);
 
-        if (strength >= 80) return "STRONG";
-        if (strength >= 60) return "MEDIUM";
-        if (strength >= 40) return "WEAK";
+        if (strength >= 90) return "STRONG";
+        if (strength >= 70) return "MEDIUM";
+        if (strength >= 50) return "WEAK";
         return "VERY_WEAK";
     }
 }
