@@ -10,7 +10,6 @@ import com.example.finmate.member.dto.MemberInfoDTO;
 import com.example.finmate.member.dto.MemberJoinDTO;
 import com.example.finmate.member.dto.MemberUpdateDTO;
 import com.example.finmate.member.mapper.MemberMapper;
-import com.example.finmate.common.util.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,6 +66,8 @@ public class MemberService {
         member.setBirthDate(joinDTO.getBirthDate());
         member.setGender(joinDTO.getGender());
         member.setActive(true);
+        member.setRegDate(LocalDateTime.now());
+        member.setUpdateDate(LocalDateTime.now());
 
         // 회원 등록
         int memberResult = memberMapper.insertMember(member);
@@ -78,7 +80,12 @@ public class MemberService {
 
         // 계정 보안 정보 초기화 (AuthMapper가 사용 가능한 경우에만)
         if (authMapper != null) {
-            initializeAccountSecurity(joinDTO.getUserId());
+            try {
+                initializeAccountSecurity(joinDTO.getUserId());
+            } catch (Exception e) {
+                log.warn("계정 보안 정보 초기화 실패: {} - {}", joinDTO.getUserId(), e.getMessage());
+                // 보안 정보 초기화 실패해도 회원가입은 진행
+            }
         }
 
         boolean success = memberResult > 0 && authResult > 0;
@@ -141,6 +148,7 @@ public class MemberService {
         member.setUserPhone(updateDTO.getUserPhone());
         member.setBirthDate(updateDTO.getBirthDate());
         member.setGender(updateDTO.getGender());
+        member.setUpdateDate(LocalDateTime.now());
 
         int result = memberMapper.updateMember(member);
         boolean success = result > 0;
@@ -239,6 +247,7 @@ public class MemberService {
             security.setLastLoginTime(null);
             security.setLockTime(null);
             security.setLockReason(null);
+            security.setUpdateDate(LocalDateTime.now());
 
             authMapper.insertAccountSecurity(security);
             log.info("계정 보안 정보 초기화 완료: {}", userId);
@@ -300,7 +309,7 @@ public class MemberService {
 
     // 회원 가입 데이터 유효성 검증
     private void validateMemberJoinData(MemberJoinDTO joinDTO) {
-        if (joinDTO.getUserId().length() < 4 || joinDTO.getUserId().length() > 20) {
+        if (joinDTO.getUserId() == null || joinDTO.getUserId().length() < 4 || joinDTO.getUserId().length() > 20) {
             throw new IllegalArgumentException("사용자 ID는 4-20자 사이여야 합니다.");
         }
 
@@ -308,7 +317,7 @@ public class MemberService {
             throw new IllegalArgumentException("사용자 ID는 영문, 숫자, 언더스코어만 사용 가능합니다.");
         }
 
-        if (joinDTO.getUserPassword().length() < 8 || joinDTO.getUserPassword().length() > 20) {
+        if (joinDTO.getUserPassword() == null || joinDTO.getUserPassword().length() < 8 || joinDTO.getUserPassword().length() > 20) {
             throw new IllegalArgumentException("비밀번호는 8-20자 사이여야 합니다.");
         }
 
@@ -316,12 +325,12 @@ public class MemberService {
             throw new IllegalArgumentException("비밀번호는 영문자와 숫자 또는 특수문자를 포함해야 합니다.");
         }
 
-        if (joinDTO.getUserName().length() < 2 || joinDTO.getUserName().length() > 10) {
+        if (joinDTO.getUserName() == null || joinDTO.getUserName().length() < 2 || joinDTO.getUserName().length() > 10) {
             throw new IllegalArgumentException("사용자 이름은 2-10자 사이여야 합니다.");
         }
 
         // 이메일 형식 검증
-        if (!joinDTO.getUserEmail().matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
+        if (joinDTO.getUserEmail() == null || !joinDTO.getUserEmail().matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
             throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
         }
 
@@ -335,12 +344,12 @@ public class MemberService {
 
     // 회원 수정 데이터 유효성 검증
     private void validateMemberUpdateData(MemberUpdateDTO updateDTO) {
-        if (updateDTO.getUserName().length() < 2 || updateDTO.getUserName().length() > 10) {
+        if (updateDTO.getUserName() == null || updateDTO.getUserName().length() < 2 || updateDTO.getUserName().length() > 10) {
             throw new IllegalArgumentException("사용자 이름은 2-10자 사이여야 합니다.");
         }
 
         // 이메일 형식 검증
-        if (!updateDTO.getUserEmail().matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
+        if (updateDTO.getUserEmail() == null || !updateDTO.getUserEmail().matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
             throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
         }
 
@@ -354,7 +363,7 @@ public class MemberService {
 
     // 비밀번호 유효성 검증
     private void validatePassword(String password) {
-        if (password.length() < 8 || password.length() > 20) {
+        if (password == null || password.length() < 8 || password.length() > 20) {
             throw new IllegalArgumentException("비밀번호는 8-20자 사이여야 합니다.");
         }
 
