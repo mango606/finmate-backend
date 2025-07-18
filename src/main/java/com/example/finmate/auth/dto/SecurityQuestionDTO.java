@@ -1,13 +1,13 @@
 package com.example.finmate.auth.dto;
 
 import lombok.Data;
-
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Data
 public class SecurityQuestionDTO {
     @NotBlank(message = "보안 질문을 선택해주세요")
+    @Size(max = 200, message = "보안 질문이 너무 깁니다")
     private String question;
 
     @NotBlank(message = "답변을 입력해주세요")

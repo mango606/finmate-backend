@@ -1,7 +1,6 @@
 package com.example.finmate.auth.dto;
 
 import lombok.Data;
-
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -19,4 +18,9 @@ public class PasswordResetDTO {
 
     @NotBlank(message = "비밀번호 확인을 입력해주세요")
     private String confirmPassword;
+
+    // 비밀번호 확인 검증 메서드
+    public boolean isPasswordMatching() {
+        return newPassword != null && newPassword.equals(confirmPassword);
+    }
 }
