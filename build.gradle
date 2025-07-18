@@ -97,11 +97,11 @@ dependencies {
     testImplementation 'com.h2database:h2:2.2.224'
 }
 
-// Gretty 설정 (Embedded Tomcat 9)
+// Gretty 설정
 gretty {
     httpPort = 8080
     contextPath = '/'
-    servletContainer = 'tomcat9'
+    servletContainer = 'jetty11'
 
     // 개발 설정
     debugSuspend = false
