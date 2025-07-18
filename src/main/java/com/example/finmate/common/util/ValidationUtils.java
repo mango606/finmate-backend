@@ -1,45 +1,42 @@
 package com.example.finmate.common.util;
 
-import java.util.regex.Pattern;
+import java.security.SecureRandom;
+import java.util.UUID;
 
 public class ValidationUtils {
 
+    private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    private static final String NUMBERS = "0123456789";
+    private static final String SPECIAL_CHARS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+    private static final String ALPHANUMERIC = ALPHABET + NUMBERS;
+    private static final SecureRandom random = new SecureRandom();
+
     // 이메일 정규식
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
-    );
+    private static final String EMAIL_REGEX =
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
 
     // 전화번호 정규식 (한국)
-    private static final Pattern PHONE_PATTERN = Pattern.compile(
-            "^01[0-9]-\\d{4}-\\d{4}$"
-    );
+    private static final String PHONE_REGEX = "^01[0-9]-\\d{4}-\\d{4}$";
 
     // 사용자 ID 정규식 (영문, 숫자, 언더스코어)
-    private static final Pattern USER_ID_PATTERN = Pattern.compile(
-            "^[a-zA-Z0-9_]{4,20}$"
-    );
-
-    // 비밀번호 정규식 (영문자 + 숫자 또는 특수문자)
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-            "^(?=.*[a-zA-Z])(?=.*[\\d@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
-    );
+    private static final String USER_ID_REGEX = "^[a-zA-Z0-9_]{4,20}$";
 
     // 이메일 유효성 검사
     public static boolean isValidEmail(String email) {
-        return email != null && EMAIL_PATTERN.matcher(email).matches();
+        return email != null && email.matches(EMAIL_REGEX);
     }
 
     // 전화번호 유효성 검사
     public static boolean isValidPhone(String phone) {
-        return phone != null && PHONE_PATTERN.matcher(phone).matches();
+        return phone != null && phone.matches(PHONE_REGEX);
     }
 
     // 사용자 ID 유효성 검사
     public static boolean isValidUserId(String userId) {
-        return userId != null && USER_ID_PATTERN.matcher(userId).matches();
+        return userId != null && userId.matches(USER_ID_REGEX);
     }
 
-    // 비밀번호 유효성 검사 - 수정된 패턴
+    // 비밀번호 유효성 검사 - 수정된 패턴 (영문자 + 숫자 또는 특수문자)
     public static boolean isValidPassword(String password) {
         if (password == null || password.length() < 8 || password.length() > 20) {
             return false;
@@ -134,7 +131,7 @@ public class ValidationUtils {
         return Math.min(score, 100);
     }
 
-    // 비밀번호 강도 등급 반환 - 수정된 기준
+    // 비밀번호 강도 등급 반환
     public static String getPasswordStrengthGrade(String password) {
         int strength = getPasswordStrength(password);
 
@@ -142,5 +139,65 @@ public class ValidationUtils {
         if (strength >= 70) return "MEDIUM";
         if (strength >= 50) return "WEAK";
         return "VERY_WEAK";
+    }
+
+    // 랜덤 문자열 생성
+    public static String generateRandomString(int length) {
+        return generateRandomString(length, ALPHANUMERIC);
+    }
+
+    public static String generateRandomString(int length, String characters) {
+        if (length <= 0) {
+            throw new IllegalArgumentException("Length must be positive");
+        }
+
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(characters.charAt(random.nextInt(characters.length())));
+        }
+        return sb.toString();
+    }
+
+    // UUID 생성
+    public static String generateUUID() {
+        return UUID.randomUUID().toString();
+    }
+
+    // UUID 생성 (하이픈 제거)
+    public static String generateUUIDNoDash() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    // 임시 비밀번호 생성
+    public static String generateTempPassword() {
+        StringBuilder password = new StringBuilder();
+
+        // 대문자 1개
+        password.append(ALPHABET.charAt(random.nextInt(26)));
+        // 소문자 2개
+        password.append(ALPHABET.substring(26).charAt(random.nextInt(26)));
+        password.append(ALPHABET.substring(26).charAt(random.nextInt(26)));
+        // 숫자 2개
+        password.append(NUMBERS.charAt(random.nextInt(NUMBERS.length())));
+        password.append(NUMBERS.charAt(random.nextInt(NUMBERS.length())));
+        // 특수문자 1개
+        password.append(SPECIAL_CHARS.charAt(random.nextInt(SPECIAL_CHARS.length())));
+        // 나머지 2개는 영숫자
+        password.append(generateRandomString(2, ALPHANUMERIC));
+
+        // 문자열 섞기
+        return shuffleString(password.toString());
+    }
+
+    // 문자열 섞기
+    private static String shuffleString(String str) {
+        char[] array = str.toCharArray();
+        for (int i = array.length - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+        return new String(array);
     }
 }

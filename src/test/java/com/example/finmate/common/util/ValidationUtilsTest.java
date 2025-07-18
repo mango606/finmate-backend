@@ -139,11 +139,11 @@ class ValidationUtilsTest {
     void getPasswordStrength() {
         // 강력한 비밀번호는 높은 점수
         int strongScore = ValidationUtils.getPasswordStrength("MyPass123!");
-        assertTrue(strongScore >= 80, "강력한 비밀번호는 80점 이상이어야 함");
+        assertTrue(strongScore >= 80, "강력한 비밀번호는 80점 이상이어야 함: " + strongScore);
 
         // 약한 비밀번호는 낮은 점수
         int weakScore = ValidationUtils.getPasswordStrength("password");
-        assertTrue(weakScore < 50, "약한 비밀번호는 50점 미만이어야 함");
+        assertTrue(weakScore < 50, "약한 비밀번호는 50점 미만이어야 함: " + weakScore);
     }
 
     @Test
@@ -160,12 +160,5 @@ class ValidationUtilsTest {
 
         // 매우 약한 비밀번호
         assertEquals("VERY_WEAK", ValidationUtils.getPasswordStrengthGrade("password"));
-    }
-
-    // 테스트용 assertEquals 메서드 (테스트에서 사용되는 것 같음)
-    private void assertEquals(String expected, String actual) {
-        if (!expected.equals(actual)) {
-            throw new AssertionError("Expected: " + expected + ", but was: " + actual);
-        }
     }
 }
