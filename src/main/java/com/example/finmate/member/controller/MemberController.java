@@ -102,7 +102,7 @@ public class MemberController {
             enhancedInfo.put("basic", memberInfo);
             enhancedInfo.put("security", authService.getAccountSecurity(userId));
 
-            return ResponseEntity.ok(ApiResponse.success(enhancedInfo));
+            return ResponseEntity.ok(ApiResponse.success("회원 정보 조회 성공", enhancedInfo));
 
         } catch (MemberNotFoundException e) {
             log.warn("회원 정보 조회 실패: {}", e.getMessage());
@@ -310,7 +310,7 @@ public class MemberController {
 
         try {
             Map<String, Object> securitySettings = authService.getSecuritySettings(userId);
-            return ResponseEntity.ok(ApiResponse.success(securitySettings));
+            return ResponseEntity.ok(ApiResponse.success("보안 설정 조회 성공", securitySettings));
 
         } catch (Exception e) {
             log.error("보안 설정 조회 실패", e);
