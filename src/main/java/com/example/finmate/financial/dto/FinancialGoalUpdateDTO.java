@@ -6,8 +6,8 @@ import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public @Data
-class FinancialGoalUpdateDTO {
+@Data
+public class FinancialGoalUpdateDTO {
     private Long goalId;
 
     @NotBlank(message = "목표명을 입력해주세요")
