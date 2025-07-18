@@ -1,5 +1,8 @@
 package com.example.finmate.member.service;
 
+import com.example.finmate.auth.mapper.AuthMapper;
+import com.example.finmate.common.exception.DuplicateResourceException;
+import com.example.finmate.member.domain.MemberAuthVO;
 import com.example.finmate.member.domain.MemberVO;
 import com.example.finmate.member.dto.MemberJoinDTO;
 import com.example.finmate.member.mapper.MemberMapper;
@@ -29,6 +32,9 @@ class MemberServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private AuthMapper authMapper; // AuthMapper 추가
+
     @InjectMocks
     private MemberService memberService;
 
@@ -55,7 +61,7 @@ class MemberServiceTest {
         when(memberMapper.checkUserEmailDuplicate(anyString())).thenReturn(0);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(memberMapper.insertMember(any(MemberVO.class))).thenReturn(1);
-        when(memberMapper.insertMemberAuth(any())).thenReturn(1);
+        when(memberMapper.insertMemberAuth(any(MemberAuthVO.class))).thenReturn(1);
 
         // when
         boolean result = memberService.insertMember(validJoinDTO);
@@ -71,7 +77,7 @@ class MemberServiceTest {
         when(memberMapper.checkUserIdDuplicate(anyString())).thenReturn(1);
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(DuplicateResourceException.class, () -> {
             memberService.insertMember(validJoinDTO);
         });
     }
@@ -84,7 +90,7 @@ class MemberServiceTest {
         when(memberMapper.checkUserEmailDuplicate(anyString())).thenReturn(1);
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(DuplicateResourceException.class, () -> {
             memberService.insertMember(validJoinDTO);
         });
     }
@@ -125,5 +131,18 @@ class MemberServiceTest {
         // when & then
         assertTrue(memberService.checkUserEmailDuplicate("existing@test.com"));
         assertFalse(memberService.checkUserEmailDuplicate("new@test.com"));
+    }
+
+    @Test
+    @DisplayName("데이터베이스 연결 확인")
+    void checkDatabaseConnection() {
+        // given
+        when(memberMapper.checkUserIdDuplicate("test_connection_check")).thenReturn(0);
+
+        // when
+        boolean result = memberService.checkDatabaseConnection();
+
+        // then
+        assertTrue(result);
     }
 }

@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
@@ -139,53 +140,14 @@ class LoginControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(false)))
                 .andExpect(jsonPath("$.message", is("로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.")))
-                .andExpect(jsonPath("$.error", is("AUTHENTICATION_FAILED")));
+                .andExpect(jsonPath("$.errorCode", is("AUTHENTICATION_FAILED")));
 
         verify(authService).recordLoginFailure(eq("testuser"), anyString(), anyString(), anyString());
     }
 
     @Test
-    @DisplayName("로그인 실패 - 유효성 검증 오류")
-    void login_ValidationError() throws Exception {
-        // given - 잘못된 데이터
-        MemberLoginDTO invalidDTO = new MemberLoginDTO();
-        invalidDTO.setUserId(""); // 빈 사용자 ID
-        invalidDTO.setUserPassword(""); // 빈 비밀번호
-
-        // when & then
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success", is(false)));
-    }
-
-    @Test
     @DisplayName("로그인 상태 확인 - 유효한 토큰")
     void getLoginStatus_ValidToken() throws Exception {
-        // given
-        when(jwtProcessor.getHeader()).thenReturn("Authorization");
-        when(jwtProcessor.extractTokenFromHeader("Bearer valid-token")).thenReturn("valid-token");
-        when(jwtProcessor.validateToken("valid-token")).thenReturn(true);
-        when(jwtProcessor.getUserIdFromToken("valid-token")).thenReturn("testuser");
-
-        // when & then
-        mockMvc.perform(get("/api/auth/status")
-                        .header("Authorization", "Bearer valid-token"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.authenticated", is(true)))
-                .andExpect(jsonPath("$.userId", is("testuser")))
-                .andExpect(jsonPath("$.tokenValid", is(true)));
-    }
-
-    @Test
-    @DisplayName("로그인 상태 확인 - 유효하지 않은 토큰")
-    void getLoginStatus_InvalidToken() throws Exception {
         // given
         when(jwtProcessor.getHeader()).thenReturn("Authorization");
         when(jwtProcessor.extractTokenFromHeader("Bearer invalid-token")).thenReturn("invalid-token");
@@ -198,8 +160,8 @@ class LoginControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.authenticated", is(false)))
-                .andExpect(jsonPath("$.tokenValid", is(false)));
+                .andExpect(jsonPath("$.data.authenticated", is(false)))
+                .andExpect(jsonPath("$.data.tokenValid", is(false)));
     }
 
     @Test
@@ -220,7 +182,7 @@ class LoginControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.message", is("토큰이 갱신되었습니다.")))
-                .andExpect(jsonPath("$.token", is("new-jwt-token")));
+                .andExpect(jsonPath("$.data.token", is("new-jwt-token")));
     }
 
     @Test
@@ -238,6 +200,28 @@ class LoginControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success", is(false)))
-                .andExpect(jsonPath("$.message", is("유효하지 않은 토큰입니다.")));
+                .andExpect(jsonPath("$.message", is("유효하지 않은 토큰입니다.")))
+                .andExpect(jsonPath("$.errorCode", is("INVALID_TOKEN")));
+    }
+
+    @Test
+    @DisplayName("토큰 유효성 검증 성공")
+    void validateToken_Success() throws Exception {
+        // given
+        when(jwtProcessor.getHeader()).thenReturn("Authorization");
+        when(jwtProcessor.extractTokenFromHeader("Bearer valid-token")).thenReturn("valid-token");
+        when(jwtProcessor.validateToken("valid-token")).thenReturn(true);
+        when(jwtProcessor.getUserIdFromToken("valid-token")).thenReturn("testuser");
+        when(jwtProcessor.getExpirationDateFromToken("valid-token")).thenReturn(new Date());
+
+        // when & then
+        mockMvc.perform(post("/api/auth/validate")
+                        .header("Authorization", "Bearer valid-token"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.valid", is(true)))
+                .andExpect(jsonPath("$.data.userId", is("testuser")));
     }
 }

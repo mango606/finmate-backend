@@ -3,8 +3,7 @@ package com.example.finmate.common.util;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("수정된 유효성 검사 유틸리티 테스트")
 class ValidationUtilsTest {
@@ -167,9 +166,29 @@ class ValidationUtilsTest {
         assertFalse(ValidationUtils.isInteger(null));
     }
 
-    private static void assertEquals(String expected, String actual) {
-        if (!expected.equals(actual)) {
-            throw new AssertionError("Expected: " + expected + ", but was: " + actual);
-        }
+    @Test
+    @DisplayName("한글만 포함되어 있는지 검사")
+    void isKorean() {
+        assertTrue(ValidationUtils.isKorean("한글텍스트"));
+        assertTrue(ValidationUtils.isKorean("한글 텍스트"));
+
+        assertFalse(ValidationUtils.isKorean("English"));
+        assertFalse(ValidationUtils.isKorean("한글English"));
+        assertFalse(ValidationUtils.isKorean("123"));
+        assertFalse(ValidationUtils.isKorean(""));
+        assertFalse(ValidationUtils.isKorean(null));
+    }
+
+    @Test
+    @DisplayName("영문만 포함되어 있는지 검사")
+    void isEnglish() {
+        assertTrue(ValidationUtils.isEnglish("English"));
+        assertTrue(ValidationUtils.isEnglish("English Text"));
+
+        assertFalse(ValidationUtils.isEnglish("한글"));
+        assertFalse(ValidationUtils.isEnglish("English한글"));
+        assertFalse(ValidationUtils.isEnglish("123"));
+        assertFalse(ValidationUtils.isEnglish(""));
+        assertFalse(ValidationUtils.isEnglish(null));
     }
 }
