@@ -1,260 +1,185 @@
 plugins {
     id 'java'
     id 'war'
-    id 'application'
-    id 'idea'
+    id 'org.gretty' version '4.0.3'
+    id 'io.spring.dependency-management' version '1.1.3'
 }
 
-group 'com.example'
-version '1.0-SNAPSHOT'
+group = 'com.example'
+version = '1.0.0'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
 
 repositories {
     mavenCentral()
 }
 
-ext {
-    junitVersion = '5.10.2'
-    springVersion = '5.3.37'
-    springSecurityVersion = '5.8.13'
-    lombokVersion = '1.18.30'
-    jettyVersion = '9.4.53.v20231009'
-}
-
-sourceCompatibility = '17'
-targetCompatibility = '17'
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework:spring-framework-bom:5.3.37'
+        mavenBom 'org.springframework.security:spring-security-bom:5.8.13'
+    }
 }
 
 dependencies {
-    // 서블릿 API
-    implementation 'javax.servlet:javax.servlet-api:4.0.1'
-    implementation 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.3'
-    implementation 'javax.servlet:jstl:1.2'
+    // Spring Framework Core
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-webmvc'
+    implementation 'org.springframework:spring-tx'
+    implementation 'org.springframework:spring-jdbc'
+    implementation 'org.springframework:spring-test'
+    implementation 'org.springframework:spring-aop'
+    implementation 'org.springframework:spring-aspects'
 
-    // 내장 Jetty 서버 (개발용)
-    implementation "org.eclipse.jetty:jetty-server:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-webapp:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-annotations:${jettyVersion}"
-    implementation "org.eclipse.jetty:jetty-plus:${jettyVersion}"
+    // Spring Security
+    implementation 'org.springframework.security:spring-security-web'
+    implementation 'org.springframework.security:spring-security-config'
+    implementation 'org.springframework.security:spring-security-core'
 
-    // 스프링 프레임워크 (Spring Legacy)
-    implementation("org.springframework:spring-context:${springVersion}") {
-        exclude group: 'commons-logging', module: 'commons-logging'
-    }
-    implementation "org.springframework:spring-webmvc:${springVersion}"
-    implementation "org.springframework:spring-web:${springVersion}"
-    implementation "org.springframework:spring-core:${springVersion}"
-    implementation "org.springframework:spring-beans:${springVersion}"
-    implementation "org.springframework:spring-expression:${springVersion}"
-    implementation "org.springframework:spring-aop:${springVersion}"
-
-    // 의존성 주입
-    implementation 'javax.inject:javax.inject:1'
-    implementation 'javax.annotation:javax.annotation-api:1.3.2'
-
-    // AOP
-    implementation 'org.aspectj:aspectjrt:1.9.20'
-    implementation 'org.aspectj:aspectjweaver:1.9.20'
-
-    // SLF4J + Logback
-    implementation 'org.slf4j:slf4j-api:2.0.7'
-    implementation 'ch.qos.logback:logback-classic:1.4.8'
-    implementation 'ch.qos.logback:logback-core:1.4.8'
-    implementation 'org.slf4j:jcl-over-slf4j:2.0.7'
-    implementation 'org.slf4j:jul-to-slf4j:2.0.7'
-
-    // P6Spy 제거 - 디버깅이 필요할 때 추가
-    // implementation 'p6spy:p6spy:3.9.1'
-
-    // Swagger
-    implementation 'io.springfox:springfox-swagger2:2.9.2'
-    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
-
-    // Lombok
-    compileOnly "org.projectlombok:lombok:${lombokVersion}"
-    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-
-    // Jackson - JSON 처리
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
-
-    // 데이터베이스
-    implementation 'com.mysql:mysql-connector-j:8.1.0'
+    // Database
+    implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'com.zaxxer:HikariCP:5.0.1'
-
-    // Spring JDBC & Transaction
-    implementation "org.springframework:spring-tx:${springVersion}"
-    implementation "org.springframework:spring-jdbc:${springVersion}"
 
     // MyBatis
     implementation 'org.mybatis:mybatis:3.5.13'
-    implementation 'org.mybatis:mybatis-spring:2.1.1'
+    implementation 'org.mybatis:mybatis-spring:3.0.2'
 
-    // Spring Security
-    implementation("org.springframework.security:spring-security-web:${springSecurityVersion}")
-    implementation("org.springframework.security:spring-security-config:${springSecurityVersion}")
-    implementation("org.springframework.security:spring-security-core:${springSecurityVersion}")
-    implementation("org.springframework.security:spring-security-taglibs:${springSecurityVersion}")
+    // Jackson for JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
 
     // JWT
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
     // Validation
+    implementation 'javax.validation:validation-api:2.0.1.Final'
     implementation 'org.hibernate.validator:hibernate-validator:6.2.5.Final'
-    implementation 'org.glassfish:javax.el:3.0.0'
 
-    // 파일 업로드
+    // Servlet API
+    providedCompile 'javax.servlet:javax.servlet-api:4.0.1'
+    providedCompile 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.3'
+    providedCompile 'javax.servlet:jstl:1.2'
+
+    // Annotation Processing
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
+    // Logging
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // Swagger 2.9.2
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+    // File Upload
     implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'commons-io:commons-io:2.11.0'
 
-    // 테스트
-    testImplementation "org.springframework:spring-test:${springVersion}"
-    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
-    testImplementation('org.mockito:mockito-core:4.11.0')
-    testImplementation('org.mockito:mockito-junit-jupiter:4.11.0')
-
-    // Spring Test 관련
-    testImplementation('org.springframework:spring-test:5.3.37')
-    testImplementation('org.springframework.security:spring-security-test:5.8.13')
-
-    // MockMvc 및 JSON 테스트를 위한 의존성
-    testImplementation('org.hamcrest:hamcrest:2.2')
-    testImplementation('org.hamcrest:hamcrest-library:2.2')
-    testImplementation('com.jayway.jsonpath:json-path:2.8.0')
-    testImplementation('com.jayway.jsonpath:json-path-assert:2.8.0')
+    // Test Dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.5.0'
+    testImplementation 'org.springframework:spring-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+    testImplementation 'com.h2database:h2:2.2.224'
 }
 
-// Application 플러그인 설정
-application {
-    mainClass = 'com.example.finmate.JettyLauncher'
-}
+// Gretty 설정 (Embedded Tomcat 9)
+gretty {
+    httpPort = 8080
+    contextPath = '/'
+    servletContainer = 'tomcat9'
 
-// WAR 배포 설정
-war {
-    archiveFileName = 'finmate-backend.war'
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // 개발 설정
+    debugSuspend = false
+    managedClassReload = true
+    recompileOnSourceChange = true
+    reloadOnClassChange = true
+    reloadOnConfigChange = true
+    reloadOnLibChange = true
 
-    // 웹 리소스 복사
-    from('src/main/webapp') {
-        exclude 'WEB-INF/classes/**'
-        exclude 'WEB-INF/lib/**'
-    }
-}
-
-task runServer(type: JavaExec) {
-    group = 'application'
-    description = 'FinMate 서버 실행'
-    mainClass = 'com.example.finmate.JettyLauncher'
-    classpath = sourceSets.main.runtimeClasspath
-
-    systemProperty 'file.encoding', 'UTF-8'
-    systemProperty 'user.timezone', 'Asia/Seoul'
-    systemProperty 'console.encoding', 'UTF-8'
-    systemProperty 'java.awt.headless', 'true'
-
+    // JVM 옵션
     jvmArgs = [
-            '-Xmx1024m',
             '-Xms512m',
+            '-Xmx1024m',
             '-Dfile.encoding=UTF-8',
-            '-Dconsole.encoding=UTF-8',
-            '-Duser.language=ko',
-            '-Duser.country=KR'
+            '-Duser.timezone=Asia/Seoul',
+            '-Djava.awt.headless=true'
     ]
 
-    doFirst {
-        println "🚀 FinMate 서버를 시작합니다..."
-        println "📍 URL: http://localhost:8080"
-        println "📖 API 문서: http://localhost:8080/swagger-ui.html"
-    }
+    // 시스템 프로퍼티
+    systemProperties = [
+            'file.encoding': 'UTF-8',
+            'user.timezone': 'Asia/Seoul',
+            'console.encoding': 'UTF-8'
+    ]
 }
 
-// 테스트 없이 빌드하는 태스크
-task buildNoTest {
-    group = 'build'
-    description = '테스트 없이 빌드'
-    dependsOn 'clean', 'compileJava', 'processResources', 'classes'
-}
-
-// 테스트 없이 서버 실행
-task runServerNoTest {
-    group = 'application'
-    description = '테스트 없이 서버 실행'
-    dependsOn 'buildNoTest'
-    finalizedBy 'runServer'
-}
-
-// 테스트 설정
-test {
+tasks.named('test') {
     useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
     }
+
+    // 테스트 JVM 옵션
+    jvmArgs = [
+            '-Dfile.encoding=UTF-8',
+            '-Duser.timezone=Asia/Seoul'
+    ]
 }
 
-// 컴파일 옵션
+// WAR 빌드 설정
+war {
+    archiveBaseName = 'finmate'
+    archiveVersion = '1.0.0'
+
+    // 웹 리소스 설정
+    from('src/main/webapp') {
+        into '/'
+    }
+}
+
+// 컴파일 설정
 compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += [
+            '-parameters',
+            '--enable-preview'
+    ]
+    options.release = 17
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
     options.compilerArgs += ['-parameters']
+    options.release = 17
 }
 
-// 직접 실행 태스크 (의존성 포함)
-task runJetty(type: JavaExec) {
-    group = 'application'
-    description = 'Jetty 서버 직접 실행'
-    mainClass = 'com.example.finmate.JettyLauncher'
-    classpath = sourceSets.main.runtimeClasspath + sourceSets.main.output
-    systemProperty 'file.encoding', 'UTF-8'
-    systemProperty 'user.timezone', 'Asia/Seoul'
-    jvmArgs = ['-Xmx1024m', '-Xms512m']
-
-    doFirst {
-        println "🚀 Jetty 서버를 시작합니다..."
-        println "📍 URL: http://localhost:8080"
-    }
+// 리소스 처리 인코딩
+processResources {
+    filteringCharset = 'UTF-8'
 }
 
-// Fat JAR 생성 (모든 의존성 포함)
-task fatJar(type: Jar) {
-    group = 'build'
-    description = '모든 의존성을 포함한 실행 가능한 JAR 생성'
-    archiveFileName = 'finmate-server.jar'
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    manifest {
-        attributes(
-                'Main-Class': 'com.example.finmate.JettyLauncher',
-                'Implementation-Title': 'FinMate Server',
-                'Implementation-Version': project.version
-        )
-    }
-
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-    with jar
+processTestResources {
+    filteringCharset = 'UTF-8'
 }
 
-// Fat JAR 실행 태스크
-task runFatJar(type: Exec) {
-    group = 'application'
-    description = 'Fat JAR로 서버 실행'
-    dependsOn fatJar
-
-    commandLine 'java', '-jar', 'build/libs/finmate-server.jar'
-
-    doFirst {
-        println "🚀 Fat JAR로 서버를 시작합니다..."
-    }
+// Gradle Wrapper 설정
+wrapper {
+    gradleVersion = '8.4'
+    distributionType = Wrapper.DistributionType.ALL
 }
