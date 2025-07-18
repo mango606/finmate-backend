@@ -10,6 +10,7 @@ import com.example.finmate.member.dto.MemberInfoDTO;
 import com.example.finmate.member.dto.MemberJoinDTO;
 import com.example.finmate.member.dto.MemberUpdateDTO;
 import com.example.finmate.member.mapper.MemberMapper;
+import com.example.finmate.common.util.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

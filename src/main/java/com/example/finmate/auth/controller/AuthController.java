@@ -1,8 +1,6 @@
 package com.example.finmate.auth.controller;
 
-import com.example.finmate.auth.dto.PasswordResetRequestDTO;
-import com.example.finmate.auth.dto.PasswordResetDTO;
-import com.example.finmate.auth.dto.EmailVerificationDTO;
+import com.example.finmate.auth.dto.*;
 import com.example.finmate.auth.service.AuthService;
 import com.example.finmate.common.dto.ApiResponse;
 import com.example.finmate.common.service.EmailService;
@@ -108,7 +106,7 @@ public class AuthController {
             HttpServletRequest request) {
 
         String clientIP = IPUtils.getClientIP(request);
-        log.info("비밀번호 재설정 확인: {} from {}", resetDTO.getToken(), IPUtils.maskIP(clientIP));
+        log.info("비밀번호 재설정 확인 from {}", IPUtils.maskIP(clientIP));
 
         try {
             boolean success = authService.resetPassword(resetDTO.getToken(), resetDTO.getNewPassword());
@@ -159,7 +157,7 @@ public class AuthController {
             HttpServletRequest request) {
 
         String clientIP = IPUtils.getClientIP(request);
-        log.info("이메일 인증 확인: {} from {}", verificationDTO.getToken(), IPUtils.maskIP(clientIP));
+        log.info("이메일 인증 확인 from {}", IPUtils.maskIP(clientIP));
 
         try {
             boolean success = authService.verifyEmail(verificationDTO.getToken());
@@ -177,24 +175,141 @@ public class AuthController {
         }
     }
 
+    @ApiOperation(value = "비밀번호 변경", notes = "로그인한 사용자가 비밀번호를 변경합니다.")
+    @PostMapping("/change-password")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordDTO changePasswordDTO,
+            HttpServletRequest request) {
+
+        String userId = SecurityUtils.getCurrentUserId();
+        String clientIP = IPUtils.getClientIP(request);
+        log.info("비밀번호 변경 요청: {} from {}", userId, IPUtils.maskIP(clientIP));
+
+        try {
+            // 비밀번호 확인 검증
+            if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("새 비밀번호가 일치하지 않습니다.", "PASSWORD_MISMATCH"));
+            }
+
+            boolean success = authService.changePassword(userId,
+                    changePasswordDTO.getCurrentPassword(),
+                    changePasswordDTO.getNewPassword());
+
+            if (success) {
+                authService.recordSecurityEvent(userId, "PASSWORD_CHANGED", clientIP);
+                return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다.", null));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("비밀번호 변경에 실패했습니다.", "PASSWORD_CHANGE_FAILED"));
+            }
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "VALIDATION_ERROR"));
+        }
+    }
+
+    @ApiOperation(value = "보안 설정 업데이트", notes = "사용자의 보안 설정을 업데이트합니다.")
+    @PostMapping("/security-settings")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Void>> updateSecuritySettings(
+            @Valid @RequestBody SecuritySettingsDTO settingsDTO,
+            HttpServletRequest request) {
+
+        String userId = SecurityUtils.getCurrentUserId();
+        String clientIP = IPUtils.getClientIP(request);
+        log.info("보안 설정 업데이트: {} from {}", userId, IPUtils.maskIP(clientIP));
+
+        try {
+            boolean success = authService.updateSecuritySettings(userId, settingsDTO);
+
+            if (success) {
+                authService.recordSecurityEvent(userId, "SECURITY_SETTINGS_UPDATED", clientIP);
+                return ResponseEntity.ok(ApiResponse.success("보안 설정이 업데이트되었습니다.", null));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("보안 설정 업데이트에 실패했습니다.", "UPDATE_FAILED"));
+            }
+
+        } catch (Exception e) {
+            log.error("보안 설정 업데이트 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("보안 설정 업데이트에 실패했습니다.", "UPDATE_ERROR"));
+        }
+    }
+
+    @ApiOperation(value = "2단계 인증 설정", notes = "2단계 인증을 설정합니다.")
+    @PostMapping("/two-factor/setup")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> setupTwoFactorAuth(
+            HttpServletRequest request) {
+
+        String userId = SecurityUtils.getCurrentUserId();
+        String clientIP = IPUtils.getClientIP(request);
+        log.info("2단계 인증 설정: {} from {}", userId, IPUtils.maskIP(clientIP));
+
+        try {
+            Map<String, Object> setupInfo = authService.setupTwoFactorAuth(userId);
+            authService.recordSecurityEvent(userId, "TWO_FACTOR_SETUP_INITIATED", clientIP);
+
+            return ResponseEntity.ok(ApiResponse.success("2단계 인증 설정 정보", setupInfo));
+
+        } catch (Exception e) {
+            log.error("2단계 인증 설정 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("2단계 인증 설정에 실패했습니다.", "TWO_FACTOR_SETUP_ERROR"));
+        }
+    }
+
+    @ApiOperation(value = "2단계 인증 확인", notes = "2단계 인증 코드를 확인합니다.")
+    @PostMapping("/two-factor/verify")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Void>> verifyTwoFactorAuth(
+            @Valid @RequestBody TwoFactorAuthDTO twoFactorDTO,
+            HttpServletRequest request) {
+
+        String userId = SecurityUtils.getCurrentUserId();
+        String clientIP = IPUtils.getClientIP(request);
+        log.info("2단계 인증 확인: {} from {}", userId, IPUtils.maskIP(clientIP));
+
+        try {
+            boolean success = authService.verifyTwoFactorAuth(userId, twoFactorDTO.getAuthCode());
+
+            if (success) {
+                authService.recordSecurityEvent(userId, "TWO_FACTOR_ENABLED", clientIP);
+                return ResponseEntity.ok(ApiResponse.success("2단계 인증이 활성화되었습니다.", null));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("인증 코드가 올바르지 않습니다.", "INVALID_AUTH_CODE"));
+            }
+
+        } catch (Exception e) {
+            log.error("2단계 인증 확인 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("2단계 인증 확인에 실패했습니다.", "TWO_FACTOR_VERIFY_ERROR"));
+        }
+    }
+
     @ApiOperation(value = "계정 잠금 해제", notes = "관리자가 잠긴 계정을 해제합니다.")
     @PostMapping("/unlock-account")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> unlockAccount(
-            @RequestParam String userId,
+            @Valid @RequestBody AccountLockDTO unlockDTO,
             Authentication authentication,
             HttpServletRequest request) {
 
         String currentUser = SecurityUtils.getCurrentUserId();
         String clientIP = IPUtils.getClientIP(request);
-        log.info("계정 잠금 해제 요청: {} by {} from {}", userId, currentUser, IPUtils.maskIP(clientIP));
+        log.info("계정 잠금 해제 요청: {} by {} from {}", unlockDTO.getUserId(), currentUser, IPUtils.maskIP(clientIP));
 
         try {
-            boolean success = authService.unlockAccount(userId);
+            boolean success = authService.unlockAccount(unlockDTO.getUserId());
 
             if (success) {
                 // 관리자 활동 기록
-                authService.recordSecurityEvent(currentUser, "ACCOUNT_UNLOCKED_" + userId, clientIP);
+                authService.recordSecurityEvent(currentUser, "ACCOUNT_UNLOCKED_" + unlockDTO.getUserId(), clientIP);
                 return ResponseEntity.ok(ApiResponse.success("계정 잠금이 해제되었습니다.", null));
             } else {
                 return ResponseEntity.badRequest()

@@ -3,9 +3,12 @@ package com.example.finmate.auth.service;
 import com.example.finmate.auth.domain.AccountSecurityVO;
 import com.example.finmate.auth.domain.AuthTokenVO;
 import com.example.finmate.auth.domain.LoginHistoryVO;
+import com.example.finmate.auth.dto.SecuritySettingsDTO;
 import com.example.finmate.auth.mapper.AuthMapper;
 import com.example.finmate.common.service.CacheService;
+import com.example.finmate.common.util.IPUtils;
 import com.example.finmate.common.util.StringUtils;
+import com.example.finmate.common.util.ValidationUtils;
 import com.example.finmate.member.domain.MemberVO;
 import com.example.finmate.member.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -356,25 +360,6 @@ public class AuthService {
         }
     }
 
-    // 계정 활동 내역 조회
-    public Map<String, Object> getActivityHistory(String userId, int page, int size) {
-        try {
-            Map<String, Object> loginHistory = getLoginHistory(userId, page, size);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("activities", loginHistory.get("histories"));
-            result.put("totalCount", loginHistory.get("totalCount"));
-            result.put("currentPage", page);
-            result.put("pageSize", size);
-            result.put("totalPages", loginHistory.get("totalPages"));
-
-            return result;
-        } catch (Exception e) {
-            log.error("계정 활동 내역 조회 실패: {}", userId, e);
-            return getEmptyActivityHistory();
-        }
-    }
-
     // 보안 점검 수행
     public Map<String, Object> performSecurityCheck(String userId) {
         try {
@@ -568,5 +553,279 @@ public class AuthService {
         result.put("grade", "F");
         result.put("recommendations", java.util.Arrays.asList("보안 점검을 다시 시도해주세요."));
         return result;
+    }
+
+    // 비밀번호 변경
+    @Transactional
+    public boolean changePassword(String userId, String currentPassword, String newPassword) {
+        try {
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+            if (member == null) {
+                throw new IllegalArgumentException("회원을 찾을 수 없습니다: " + userId);
+            }
+
+            // 현재 비밀번호 확인
+            if (!passwordEncoder.matches(currentPassword, member.getUserPassword())) {
+                throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            }
+
+            // 새 비밀번호 유효성 검증
+            if (!ValidationUtils.isValidPassword(newPassword)) {
+                throw new IllegalArgumentException("새 비밀번호가 유효하지 않습니다.");
+            }
+
+            // 새 비밀번호와 현재 비밀번호가 같은지 확인
+            if (passwordEncoder.matches(newPassword, member.getUserPassword())) {
+                throw new IllegalArgumentException("새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+            }
+
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            int result = memberMapper.updateMemberPassword(userId, encodedPassword);
+
+            log.info("비밀번호 변경 완료: {}", userId);
+            return result > 0;
+
+        } catch (Exception e) {
+            log.error("비밀번호 변경 실패: {}", userId, e);
+            throw new RuntimeException("비밀번호 변경에 실패했습니다.", e);
+        }
+    }
+
+    // 보안 설정 업데이트
+    @Transactional
+    public boolean updateSecuritySettings(String userId, SecuritySettingsDTO settingsDTO) {
+        try {
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+
+            if (security == null) {
+                // 보안 정보가 없으면 새로 생성
+                security = new AccountSecurityVO();
+                security.setUserId(userId);
+            }
+
+            // 설정 업데이트
+            if (settingsDTO.getEmailVerificationEnabled() != null) {
+                security.setEmailVerified(settingsDTO.getEmailVerificationEnabled());
+            }
+            if (settingsDTO.getPhoneVerificationEnabled() != null) {
+                security.setPhoneVerified(settingsDTO.getPhoneVerificationEnabled());
+            }
+            if (settingsDTO.getTwoFactorAuthEnabled() != null) {
+                security.setTwoFactorEnabled(settingsDTO.getTwoFactorAuthEnabled());
+            }
+
+            int result = authMapper.updateAccountSecurity(security);
+
+            log.info("보안 설정 업데이트 완료: {}", userId);
+            return result > 0;
+
+        } catch (Exception e) {
+            log.error("보안 설정 업데이트 실패: {}", userId, e);
+            return false;
+        }
+    }
+
+    // 2단계 인증 설정 시작
+    public Map<String, Object> setupTwoFactorAuth(String userId) {
+        try {
+            // QR 코드용 시크릿 키 생성 (실제로는 Google Authenticator 등과 연동)
+            String secretKey = StringUtils.generateRandomString(32);
+
+            // 임시로 캐시에 저장 (실제로는 임시 테이블이나 Redis 사용)
+            cacheService.put("2fa_setup_" + userId, secretKey, 300); // 5분간 유효
+
+            Map<String, Object> setupInfo = new HashMap<>();
+            setupInfo.put("secretKey", secretKey);
+            setupInfo.put("qrCodeUrl", generateQRCodeUrl(userId, secretKey));
+            setupInfo.put("manualEntryKey", secretKey);
+            setupInfo.put("backupCodes", generateBackupCodes());
+
+            log.info("2단계 인증 설정 시작: {}", userId);
+            return setupInfo;
+
+        } catch (Exception e) {
+            log.error("2단계 인증 설정 실패: {}", userId, e);
+            throw new RuntimeException("2단계 인증 설정에 실패했습니다.", e);
+        }
+    }
+
+    // 2단계 인증 코드 확인
+    @Transactional
+    public boolean verifyTwoFactorAuth(String userId, String authCode) {
+        try {
+            // 캐시에서 시크릿 키 확인
+            String secretKey = cacheService.get("2fa_setup_" + userId, String.class);
+            if (secretKey == null) {
+                throw new IllegalArgumentException("2단계 인증 설정 세션이 만료되었습니다.");
+            }
+
+            // TOTP 코드 검증 (실제로는 Google Authenticator 라이브러리 사용)
+            boolean isValid = verifyTOTPCode(secretKey, authCode);
+
+            if (isValid) {
+                // 2단계 인증 활성화
+                authMapper.updateTwoFactorStatus(userId, true);
+
+                // 시크릿 키를 안전한 곳에 저장 (실제로는 암호화해서 DB에 저장)
+                cacheService.put("2fa_secret_" + userId, secretKey, 86400 * 365); // 1년간 보관
+
+                // 설정용 임시 키는 삭제
+                cacheService.remove("2fa_setup_" + userId);
+
+                log.info("2단계 인증 활성화 완료: {}", userId);
+                return true;
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            log.error("2단계 인증 확인 실패: {}", userId, e);
+            return false;
+        }
+    }
+
+    // QR 코드 URL 생성 (Google Authenticator 형식)
+    private String generateQRCodeUrl(String userId, String secretKey) {
+        String issuer = "FinMate";
+        String account = userId + "@finmate.com";
+
+        return String.format(
+                "otpauth://totp/%s:%s?secret=%s&issuer=%s",
+                issuer, account, secretKey, issuer
+        );
+    }
+
+    // 백업 코드 생성
+    private List<String> generateBackupCodes() {
+        List<String> backupCodes = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            backupCodes.add(StringUtils.generateRandomString(8).toUpperCase());
+        }
+        return backupCodes;
+    }
+
+    // TOTP 코드 검증
+    private boolean verifyTOTPCode(String secretKey, String code) {
+        // TODO: TOTP 라이브러리 사용
+        if (code == null || code.length() != 6) {
+            return false;
+        }
+
+        // 현재 시간 기반으로 간단한 검증
+        long currentTime = System.currentTimeMillis() / 30000; // 30초 간격
+        String expectedCode = String.valueOf((secretKey.hashCode() + currentTime) % 1000000);
+        expectedCode = String.format("%06d", Integer.parseInt(expectedCode));
+
+        return expectedCode.equals(code);
+    }
+
+    // 활동 내역 조회 (로그인 + 보안 이벤트)
+    public Map<String, Object> getActivityHistory(String userId, int page, int size) {
+        try {
+            Map<String, Object> loginHistory = getLoginHistory(userId, page, size);
+
+            // 보안 이벤트도 함께 조회
+            List<Map<String, Object>> securityEvents = authMapper.getSecurityEvents(userId, 30);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("activities", loginHistory.get("histories"));
+            result.put("securityEvents", securityEvents);
+            result.put("totalCount", loginHistory.get("totalCount"));
+            result.put("currentPage", page);
+            result.put("pageSize", size);
+            result.put("totalPages", loginHistory.get("totalPages"));
+
+            return result;
+        } catch (Exception e) {
+            log.error("활동 내역 조회 실패: {}", userId, e);
+            return getEmptyActivityHistory();
+        }
+    }
+
+    // 계정 보안 점수 계산
+    public Map<String, Object> calculateSecurityScore(String userId) {
+        try {
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+
+            int score = 0;
+            List<String> recommendations = new ArrayList<>();
+
+            // 기본 점수 (계정 존재)
+            score += 20;
+
+            // 이메일 인증 (20점)
+            if (security != null && Boolean.TRUE.equals(security.getEmailVerified())) {
+                score += 20;
+            } else {
+                recommendations.add("이메일 인증을 완료해주세요.");
+            }
+
+            // 2단계 인증 (30점)
+            if (security != null && Boolean.TRUE.equals(security.getTwoFactorEnabled())) {
+                score += 30;
+            } else {
+                recommendations.add("2단계 인증을 활성화해주세요.");
+            }
+
+            // 비밀번호 강도 (30점)
+            // 실제로는 마지막 비밀번호 변경일 등을 고려
+            score += 25; // 기본 점수
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("score", Math.min(score, 100));
+            result.put("grade", getSecurityGrade(score));
+            result.put("recommendations", recommendations);
+            result.put("lastUpdated", System.currentTimeMillis());
+
+            return result;
+        } catch (Exception e) {
+            log.error("보안 점수 계산 실패: {}", userId, e);
+            return getDefaultSecurityCheck();
+        }
+    }
+
+    // 의심스러운 활동 감지 및 알림
+    @Transactional
+    public void detectSuspiciousActivity(String userId, String activityType, String clientIP) {
+        try {
+            // 최근 활동 패턴 분석
+            List<LoginHistoryVO> recentLogins = authMapper.getLoginHistories(userId, 0, 10);
+
+            boolean suspicious = false;
+            String reason = "";
+
+            // IP 주소 변경 감지
+            if (!recentLogins.isEmpty()) {
+                String lastIP = recentLogins.get(0).getIpAddress();
+                if (!clientIP.equals(lastIP)) {
+                    suspicious = true;
+                    reason = "새로운 IP 주소에서의 접근";
+                }
+            }
+
+            // 시간대 이상 감지 (예: 새벽 시간대 접근)
+            int currentHour = java.time.LocalTime.now().getHour();
+            if (currentHour >= 2 && currentHour <= 5) {
+                suspicious = true;
+                reason += (reason.isEmpty() ? "" : ", ") + "비정상적인 시간대 접근";
+            }
+
+            if (suspicious) {
+                // 보안 이벤트 기록
+                recordSecurityEvent(userId, "SUSPICIOUS_ACTIVITY_" + activityType, clientIP);
+
+                // 사용자에게 알림 (이메일 등)
+                MemberVO member = memberMapper.getMemberByUserId(userId);
+                if (member != null) {
+                    emailService.sendSecurityAlert(member.getUserEmail(), member.getUserName(), reason, clientIP);
+                }
+
+                log.warn("의심스러운 활동 감지: {} - {} from {}", userId, reason, IPUtils.maskIP(clientIP));
+            }
+
+        } catch (Exception e) {
+            log.error("의심스러운 활동 감지 실패: {}", userId, e);
+        }
     }
 }
