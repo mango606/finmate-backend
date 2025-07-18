@@ -108,6 +108,9 @@ class ValidationUtilsTest {
 
         // 매우 약한 비밀번호
         assertTrue(ValidationUtils.getPasswordStrength("test") < 40);
+
+        // null 처리
+        assertEquals(0, ValidationUtils.getPasswordStrength(null));
     }
 
     @Test
@@ -120,75 +123,56 @@ class ValidationUtilsTest {
     }
 
     @Test
-    @DisplayName("문자열 길이 검사")
-    void isValidLength() {
-        assertTrue(ValidationUtils.isValidLength("test", 2, 10));
-        assertTrue(ValidationUtils.isValidLength("hello world", 5, 20));
+    @DisplayName("회원 가입 데이터 유효성 검증")
+    void validateMemberJoinData() {
+        // 정상적인 데이터
+        assertDoesNotThrow(() -> {
+            ValidationUtils.validateMemberJoinData(
+                    "testuser", "Test123!", "테스트사용자",
+                    "test@example.com", "010-1234-5678");
+        });
 
-        assertFalse(ValidationUtils.isValidLength("a", 2, 10)); // 너무 짧음
-        assertFalse(ValidationUtils.isValidLength("very long string", 2, 10)); // 너무 김
-        assertFalse(ValidationUtils.isValidLength(null, 2, 10));
+        // 잘못된 사용자 ID
+        assertThrows(IllegalArgumentException.class, () -> {
+            ValidationUtils.validateMemberJoinData(
+                    "ab", "Test123!", "테스트사용자",
+                    "test@example.com", "010-1234-5678");
+        });
+
+        // 약한 비밀번호
+        assertThrows(IllegalArgumentException.class, () -> {
+            ValidationUtils.validateMemberJoinData(
+                    "testuser", "weak", "테스트사용자",
+                    "test@example.com", "010-1234-5678");
+        });
+
+        // 잘못된 이메일
+        assertThrows(IllegalArgumentException.class, () -> {
+            ValidationUtils.validateMemberJoinData(
+                    "testuser", "Test123!", "테스트사용자",
+                    "invalid-email", "010-1234-5678");
+        });
     }
 
     @Test
-    @DisplayName("빈 문자열 검사")
-    void isNotEmpty() {
-        assertTrue(ValidationUtils.isNotEmpty("test"));
-        assertTrue(ValidationUtils.isNotEmpty("  hello  "));
+    @DisplayName("회원 수정 데이터 유효성 검증")
+    void validateMemberUpdateData() {
+        // 정상적인 데이터
+        assertDoesNotThrow(() -> {
+            ValidationUtils.validateMemberUpdateData(
+                    "테스트사용자", "test@example.com", "010-1234-5678");
+        });
 
-        assertFalse(ValidationUtils.isNotEmpty(""));
-        assertFalse(ValidationUtils.isNotEmpty("   "));
-        assertFalse(ValidationUtils.isNotEmpty(null));
-    }
+        // 빈 이름
+        assertThrows(IllegalArgumentException.class, () -> {
+            ValidationUtils.validateMemberUpdateData(
+                    "", "test@example.com", "010-1234-5678");
+        });
 
-    @Test
-    @DisplayName("숫자 검사")
-    void isNumeric() {
-        assertTrue(ValidationUtils.isNumeric("123"));
-        assertTrue(ValidationUtils.isNumeric("123.45"));
-        assertTrue(ValidationUtils.isNumeric("-123"));
-
-        assertFalse(ValidationUtils.isNumeric("abc"));
-        assertFalse(ValidationUtils.isNumeric("123abc"));
-        assertFalse(ValidationUtils.isNumeric(""));
-        assertFalse(ValidationUtils.isNumeric(null));
-    }
-
-    @Test
-    @DisplayName("정수 검사")
-    void isInteger() {
-        assertTrue(ValidationUtils.isInteger("123"));
-        assertTrue(ValidationUtils.isInteger("-123"));
-
-        assertFalse(ValidationUtils.isInteger("123.45"));
-        assertFalse(ValidationUtils.isInteger("abc"));
-        assertFalse(ValidationUtils.isInteger(""));
-        assertFalse(ValidationUtils.isInteger(null));
-    }
-
-    @Test
-    @DisplayName("한글만 포함되어 있는지 검사")
-    void isKorean() {
-        assertTrue(ValidationUtils.isKorean("한글텍스트"));
-        assertTrue(ValidationUtils.isKorean("한글 텍스트"));
-
-        assertFalse(ValidationUtils.isKorean("English"));
-        assertFalse(ValidationUtils.isKorean("한글English"));
-        assertFalse(ValidationUtils.isKorean("123"));
-        assertFalse(ValidationUtils.isKorean(""));
-        assertFalse(ValidationUtils.isKorean(null));
-    }
-
-    @Test
-    @DisplayName("영문만 포함되어 있는지 검사")
-    void isEnglish() {
-        assertTrue(ValidationUtils.isEnglish("English"));
-        assertTrue(ValidationUtils.isEnglish("English Text"));
-
-        assertFalse(ValidationUtils.isEnglish("한글"));
-        assertFalse(ValidationUtils.isEnglish("English한글"));
-        assertFalse(ValidationUtils.isEnglish("123"));
-        assertFalse(ValidationUtils.isEnglish(""));
-        assertFalse(ValidationUtils.isEnglish(null));
+        // 잘못된 전화번호
+        assertThrows(IllegalArgumentException.class, () -> {
+            ValidationUtils.validateMemberUpdateData(
+                    "테스트사용자", "test@example.com", "invalid-phone");
+        });
     }
 }
