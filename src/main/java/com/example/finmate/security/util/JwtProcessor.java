@@ -50,7 +50,7 @@ public class JwtProcessor {
     // JWT 토큰에서 사용자 ID 추출
     public String getUserIdFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
+            Claims claims = Jwts.parser()
                     .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
@@ -66,7 +66,7 @@ public class JwtProcessor {
     // JWT 토큰 유효성 검증
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
+            Jwts.parser()
                     .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token);
@@ -88,7 +88,7 @@ public class JwtProcessor {
     // 토큰 만료 시간 확인
     public Date getExpirationDateFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
+            Claims claims = Jwts.parser()
                     .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
