@@ -3,6 +3,7 @@ package com.example.finmate.auth.service;
 import com.example.finmate.auth.domain.AccountSecurityVO;
 import com.example.finmate.auth.domain.AuthTokenVO;
 import com.example.finmate.auth.domain.LoginHistoryVO;
+import com.example.finmate.auth.dto.SecuritySettingsDTO;
 import com.example.finmate.auth.mapper.AuthMapper;
 import com.example.finmate.common.service.CacheService;
 import com.example.finmate.common.service.EmailService;
@@ -63,24 +64,12 @@ public class AuthService {
             authToken.setTokenType("PASSWORD_RESET");
             authToken.setExpiryTime(expiryTime);
             authToken.setIsUsed(false);
+            authToken.setCreatedDate(LocalDateTime.now());
 
             authMapper.insertAuthToken(authToken);
 
             // 캐시에 토큰 저장
             cacheService.put("pwd_reset_" + token, member.getUserId(), PASSWORD_RESET_TOKEN_EXPIRY);
-
-            // 이메일 발송 (EmailService가 사용 가능한 경우에만)
-            if (emailService != null) {
-                try {
-                    emailService.sendPasswordResetEmail(userEmail, token);
-                    log.info("비밀번호 재설정 이메일 발송 완료: {}", userEmail);
-                } catch (Exception e) {
-                    log.warn("비밀번호 재설정 이메일 발송 실패: {} - {}", userEmail, e.getMessage());
-                    // 이메일 발송 실패해도 토큰은 생성됨
-                }
-            } else {
-                log.warn("EmailService를 사용할 수 없어 이메일 발송을 건너뜁니다: {}", userEmail);
-            }
 
             log.info("비밀번호 재설정 토큰 생성: {}", member.getUserId());
             return token;
@@ -119,18 +108,6 @@ public class AuthService {
                 authMapper.markTokenAsUsed(token);
                 cacheService.remove("pwd_reset_" + token);
 
-                // 비밀번호 변경 알림 이메일 발송 (EmailService가 사용 가능한 경우에만)
-                if (emailService != null) {
-                    try {
-                        MemberVO member = memberMapper.getMemberByUserId(userId);
-                        if (member != null) {
-                            emailService.sendPasswordChangeNotification(member.getUserEmail(), member.getUserName());
-                        }
-                    } catch (Exception e) {
-                        log.warn("비밀번호 변경 알림 이메일 발송 실패: {} - {}", userId, e.getMessage());
-                    }
-                }
-
                 log.info("비밀번호 재설정 완료: {}", userId);
                 return true;
             }
@@ -164,23 +141,12 @@ public class AuthService {
             authToken.setTokenType("EMAIL_VERIFICATION");
             authToken.setExpiryTime(expiryTime);
             authToken.setIsUsed(false);
+            authToken.setCreatedDate(LocalDateTime.now());
 
             authMapper.insertAuthToken(authToken);
 
             // 캐시에 토큰 저장
             cacheService.put("email_verify_" + token, member.getUserId(), EMAIL_VERIFICATION_TOKEN_EXPIRY);
-
-            // 이메일 발송 (EmailService가 사용 가능한 경우에만)
-            if (emailService != null) {
-                try {
-                    emailService.sendActivationEmail(userEmail, token);
-                    log.info("이메일 인증 메일 발송 완료: {}", userEmail);
-                } catch (Exception e) {
-                    log.warn("이메일 인증 메일 발송 실패: {} - {}", userEmail, e.getMessage());
-                }
-            } else {
-                log.warn("EmailService를 사용할 수 없어 이메일 발송을 건너뜁니다: {}", userEmail);
-            }
 
             log.info("이메일 인증 토큰 생성: {}", member.getUserId());
             return token;
@@ -244,20 +210,6 @@ public class AuthService {
             if (result > 0) {
                 // 로그인 실패 횟수 초기화
                 authMapper.resetLoginFailCount(userId);
-
-                // 계정 잠금 해제 알림 이메일 발송 (EmailService가 사용 가능한 경우에만)
-                if (emailService != null) {
-                    try {
-                        emailService.sendEmail(member.getUserEmail(),
-                                "계정 잠금 해제 알림",
-                                "안녕하세요 " + member.getUserName() + "님,\n\n" +
-                                        "귀하의 계정 잠금이 해제되었습니다.\n" +
-                                        "이제 정상적으로 로그인하실 수 있습니다.\n\n" +
-                                        "FinMate 팀");
-                    } catch (Exception e) {
-                        log.warn("계정 잠금 해제 알림 이메일 발송 실패: {} - {}", userId, e.getMessage());
-                    }
-                }
 
                 log.info("계정 잠금 해제: {}", userId);
                 return true;
@@ -338,19 +290,6 @@ public class AuthService {
             int failCount = authMapper.getLoginFailCount(userId);
             if (failCount >= 5) {
                 authMapper.updateAccountLockStatus(userId, true);
-
-                // 계정 잠금 알림 이메일 발송 (EmailService가 사용 가능한 경우에만)
-                if (emailService != null) {
-                    try {
-                        MemberVO member = memberMapper.getMemberByUserId(userId);
-                        if (member != null) {
-                            emailService.sendAccountLockNotification(member.getUserEmail(), member.getUserName());
-                        }
-                    } catch (Exception e) {
-                        log.warn("계정 잠금 알림 이메일 발송 실패: {} - {}", userId, e.getMessage());
-                    }
-                }
-
                 log.warn("계정 잠금 - 로그인 실패 횟수 초과: {}", userId);
             }
 
@@ -425,23 +364,82 @@ public class AuthService {
         }
     }
 
-    // 계정 활동 내역 조회
-    public Map<String, Object> getActivityHistory(String userId, int page, int size) {
+    // 비밀번호 변경
+    @Transactional
+    public boolean changePassword(String userId, String currentPassword, String newPassword) {
         try {
-            Map<String, Object> loginHistory = getLoginHistory(userId, page, size);
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+            if (member == null) {
+                throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
+            }
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("activities", loginHistory.get("histories"));
-            result.put("totalCount", loginHistory.get("totalCount"));
-            result.put("currentPage", page);
-            result.put("pageSize", size);
-            result.put("totalPages", loginHistory.get("totalPages"));
+            // 현재 비밀번호 확인
+            if (!passwordEncoder.matches(currentPassword, member.getUserPassword())) {
+                throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            }
 
-            return result;
+            // 새 비밀번호 암호화 및 업데이트
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            int result = memberMapper.updateMemberPassword(userId, encodedPassword);
+
+            log.info("비밀번호 변경 완료: {}", userId);
+            return result > 0;
         } catch (Exception e) {
-            log.error("계정 활동 내역 조회 실패: {}", userId, e);
-            return getEmptyActivityHistory();
+            log.error("비밀번호 변경 실패: {}", userId, e);
+            throw new RuntimeException("비밀번호 변경에 실패했습니다.", e);
         }
+    }
+
+    // 보안 설정 업데이트
+    @Transactional
+    public boolean updateSecuritySettings(String userId, SecuritySettingsDTO settingsDTO) {
+        try {
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null) {
+                // 보안 정보가 없으면 새로 생성
+                security = new AccountSecurityVO();
+                security.setUserId(userId);
+                security.setEmailVerified(false);
+                security.setPhoneVerified(false);
+                security.setTwoFactorEnabled(false);
+                security.setAccountLocked(false);
+                security.setLoginFailCount(0);
+
+                authMapper.insertAccountSecurity(security);
+            }
+
+            // 설정 업데이트
+            if (settingsDTO.getEmailVerificationEnabled() != null) {
+                authMapper.updateEmailVerificationStatus(userId, settingsDTO.getEmailVerificationEnabled());
+            }
+            if (settingsDTO.getPhoneVerificationEnabled() != null) {
+                authMapper.updatePhoneVerificationStatus(userId, settingsDTO.getPhoneVerificationEnabled());
+            }
+            if (settingsDTO.getTwoFactorAuthEnabled() != null) {
+                authMapper.updateTwoFactorStatus(userId, settingsDTO.getTwoFactorAuthEnabled());
+            }
+
+            log.info("보안 설정 업데이트: {}", userId);
+            return true;
+        } catch (Exception e) {
+            log.error("보안 설정 업데이트 실패: {}", userId, e);
+            return false;
+        }
+    }
+
+    // 2단계 인증 설정
+    public Map<String, Object> setupTwoFactorAuth(String userId) {
+        Map<String, Object> setupInfo = new HashMap<>();
+        setupInfo.put("qrCode", "mock-qr-code-data");
+        setupInfo.put("secret", "mock-secret-key");
+        setupInfo.put("instruction", "QR 코드를 스캔하거나 시크릿 키를 입력하세요.");
+        return setupInfo;
+    }
+
+    // 2단계 인증 확인
+    public boolean verifyTwoFactorAuth(String userId, String authCode) {
+        // TODO: TOTP 라이브러리를 사용하여 인증 코드 검증
+        return "123456".equals(authCode); // Mock 구현
     }
 
     // 보안 점검 수행
@@ -545,17 +543,6 @@ public class AuthService {
         }
     }
 
-    // 만료된 토큰 정리
-    @Transactional
-    public void cleanupExpiredTokens() {
-        try {
-            authMapper.deleteExpiredTokens(null, null);
-            log.info("만료된 토큰 정리 완료");
-        } catch (Exception e) {
-            log.error("만료된 토큰 정리 실패", e);
-        }
-    }
-
     // 헬퍼 메서드들
     private String getSecurityGrade(int score) {
         if (score >= 90) return "A";
@@ -610,16 +597,6 @@ public class AuthService {
     private Map<String, Object> getEmptyLoginHistory() {
         Map<String, Object> result = new HashMap<>();
         result.put("histories", new java.util.ArrayList<>());
-        result.put("totalCount", 0);
-        result.put("currentPage", 0);
-        result.put("pageSize", 10);
-        result.put("totalPages", 0);
-        return result;
-    }
-
-    private Map<String, Object> getEmptyActivityHistory() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("activities", new java.util.ArrayList<>());
         result.put("totalCount", 0);
         result.put("currentPage", 0);
         result.put("pageSize", 10);
