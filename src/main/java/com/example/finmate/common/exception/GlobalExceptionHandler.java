@@ -73,8 +73,19 @@ public class GlobalExceptionHandler {
             fieldErrors.put(error.getField(), error.getDefaultMessage());
         });
 
+        // 첫 번째 오류 메시지를 주 메시지로 사용
+        String mainMessage = fieldErrors.isEmpty() ? "입력값이 올바르지 않습니다."
+                : fieldErrors.values().iterator().next();
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("입력값이 올바르지 않습니다.", "VALIDATION_ERROR"));
+                .body(ApiResponse.<Map<String, String>>builder()
+                        .success(false)
+                        .message(mainMessage)
+                        .data(fieldErrors)
+                        .errorCode("VALIDATION_ERROR")
+                        .timestamp(System.currentTimeMillis())
+                        .traceId(java.util.UUID.randomUUID().toString())
+                        .build());
     }
 
     // Bind Exception 처리
@@ -88,7 +99,14 @@ public class GlobalExceptionHandler {
         });
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("입력값 형식이 올바르지 않습니다.", "BINDING_ERROR"));
+                .body(ApiResponse.<Map<String, String>>builder()
+                        .success(false)
+                        .message("입력값 형식이 올바르지 않습니다.")
+                        .data(fieldErrors)
+                        .errorCode("BINDING_ERROR")
+                        .timestamp(System.currentTimeMillis())
+                        .traceId(java.util.UUID.randomUUID().toString())
+                        .build());
     }
 
     // Constraint Violation Exception 처리
