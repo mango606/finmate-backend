@@ -284,7 +284,7 @@ jobs:
       - name: ⚡ Run Performance Tests
         run: |
           # API 응답 시간 테스트
-          response_time=$(curl -o /dev/null -s -w "%{time_total}" http://localhost:8080/api/member/health)
+          response_time=$(curl -o /dev/null -s -w "%{time_total}" http://localhost:8080/api/health)
           echo "Health check response time: ${response_time}s"
           
           # 기본 성능 검증 (응답 시간 3초 이하)
