@@ -4,12 +4,15 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -116,12 +119,61 @@ public class JwtProcessor {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    // Getter methods for configuration
     public String getHeader() {
         return header;
     }
 
     public String getPrefix() {
         return prefix;
+    }
+
+    private final Set<String> tokenBlacklist = ConcurrentHashMap.newKeySet();
+
+    // 토큰 블랙리스트 추가
+    public void blacklistToken(String token) {
+        tokenBlacklist.add(token);
+        log.info("토큰이 블랙리스트에 추가됨: {}", token.substring(0, 20) + "...");
+    }
+
+    // 토큰 블랙리스트 확인
+    public boolean isTokenBlacklisted(String token) {
+        return tokenBlacklist.contains(token);
+    }
+
+    // 토큰 유효성 검증 (블랙리스트 포함)
+    public boolean validateTokenWithBlacklist(String token) {
+        if (isTokenBlacklisted(token)) {
+            log.warn("블랙리스트에 등록된 토큰 접근 시도: {}", token.substring(0, 20) + "...");
+            return false;
+        }
+        return validateToken(token);
+    }
+
+    // 토큰 갱신 시 기존 토큰 블랙리스트 추가
+    public String refreshTokenSafely(String oldToken) {
+        if (!validateToken(oldToken)) {
+            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+        }
+
+        String userId = getUserIdFromToken(oldToken);
+        String newToken = generateToken(userId);
+
+        // 기존 토큰 블랙리스트 추가
+        blacklistToken(oldToken);
+
+        return newToken;
+    }
+
+    // 정기적으로 만료된 토큰을 블랙리스트에서 제거
+    @Scheduled(fixedRate = 3600000) // 1시간마다
+    public void cleanupExpiredTokensFromBlacklist() {
+        tokenBlacklist.removeIf(token -> {
+            try {
+                Date expiration = getExpirationDateFromToken(token);
+                return expiration != null && expiration.before(new Date());
+            } catch (Exception e) {
+                return true; // 파싱 불가능한 토큰은 제거
+            }
+        });
     }
 }

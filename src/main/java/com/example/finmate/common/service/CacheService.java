@@ -3,6 +3,8 @@ package com.example.finmate.common.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,7 +60,7 @@ public class CacheService {
         log.info("모든 캐시 제거");
     }
 
-    // 캐시 통계
+    // 기본 캐시 통계
     public CacheStats getStats() {
         int size = cache.size();
         long expiredCount = cache.values().stream()
@@ -66,6 +68,50 @@ public class CacheService {
                 .sum();
 
         return new CacheStats(size, expiredCount);
+    }
+
+    // 상세 캐시 통계
+    public DetailedCacheStats getDetailedStats() {
+        int totalSize = cache.size();
+        int expiredCount = 0;
+        int validCount = 0;
+        long totalMemoryUsage = 0;
+
+        for (Map.Entry<String, CacheItem> entry : cache.entrySet()) {
+            CacheItem item = entry.getValue();
+            if (item.isExpired()) {
+                expiredCount++;
+            } else {
+                validCount++;
+            }
+
+            // 메모리 사용량 추정
+            totalMemoryUsage += estimateObjectSize(item.getValue());
+        }
+
+        return new DetailedCacheStats(totalSize, expiredCount, validCount, totalMemoryUsage);
+    }
+
+    // 캐시 키 패턴별 조회
+    public Map<String, Integer> getCacheStatsByPattern() {
+        Map<String, Integer> stats = new HashMap<>();
+
+        for (String key : cache.keySet()) {
+            String pattern = extractPattern(key);
+            stats.put(pattern, stats.getOrDefault(pattern, 0) + 1);
+        }
+
+        return stats;
+    }
+
+    // 캐시 워밍업
+    public void warmUpCache() {
+        log.info("캐시 워밍업 시작");
+
+        // 자주 사용되는 데이터 미리 로드
+        // 예: 시스템 설정, 코드 테이블 등
+
+        log.info("캐시 워밍업 완료");
     }
 
     // 만료된 캐시 정리
@@ -77,6 +123,22 @@ public class CacheService {
         if (beforeSize != afterSize) {
             log.debug("만료된 캐시 정리: {} -> {} ({}개 제거)", beforeSize, afterSize, (beforeSize - afterSize));
         }
+    }
+
+    private long estimateObjectSize(Object obj) {
+        // 객체 크기 추정 (간단한 구현)
+        if (obj == null) return 0;
+        if (obj instanceof String) return ((String) obj).length() * 2;
+        return 100; // 기본값
+    }
+
+    private String extractPattern(String key) {
+        // 키에서 패턴 추출 (예: "user_123" -> "user_*")
+        String[] parts = key.split("_");
+        if (parts.length > 1) {
+            return parts[0] + "_*";
+        }
+        return key;
     }
 
     // 캐시 아이템 클래스
@@ -98,7 +160,7 @@ public class CacheService {
         }
     }
 
-    // 캐시 통계 클래스
+    // 기본 캐시 통계 클래스
     public static class CacheStats {
         private final int size;
         private final long expiredCount;
@@ -110,5 +172,20 @@ public class CacheService {
 
         public int getSize() { return size; }
         public long getExpiredCount() { return expiredCount; }
+    }
+
+    // 상세 캐시 통계 클래스
+    public static class DetailedCacheStats extends CacheStats {
+        private final int validCount;
+        private final long totalMemoryUsage;
+
+        public DetailedCacheStats(int size, long expiredCount, int validCount, long totalMemoryUsage) {
+            super(size, expiredCount);
+            this.validCount = validCount;
+            this.totalMemoryUsage = totalMemoryUsage;
+        }
+
+        public int getValidCount() { return validCount; }
+        public long getTotalMemoryUsage() { return totalMemoryUsage; }
     }
 }

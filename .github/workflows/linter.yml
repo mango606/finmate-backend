@@ -1,23 +1,354 @@
-name: Lint Code Base
+name: 🔍 FinMate Code Quality & Linting
 
 on:
   pull_request:
     branches: [ "main", "develop" ]
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
 
 jobs:
-  run-lint:
+  # 전체 코드베이스 린팅
+  super-linter:
     runs-on: ubuntu-latest
+    name: 🔍 Super Linter
+
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           # PR의 모든 히스토리를 가져와야 정확한 분석 가능
           fetch-depth: 0
 
-      - name: Lint Code Base
-        uses: github/super-linter@v6
-        with:
-          # 'VALIDATE_ALL_CODEBASE: false'는 변경된 파일만 검사하여 속도를 높임
-          VALIDATE_ALL_CODEBASE: false
+      - name: 🔍 Lint Code Base
+        uses: github/super-linter@v5
         env:
+          # 변경된 파일만 검사하여 속도를 높임
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Java 관련 린터 설정
+          VALIDATE_JAVA: true
+          VALIDATE_GOOGLE_JAVA_FORMAT: true
+
+          # Web 관련 파일 검증
+          VALIDATE_HTML: true
+          VALIDATE_CSS: true
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_JSON: true
+          VALIDATE_XML: true
+          VALIDATE_YAML: true
+
+          # 문서 검증
+          VALIDATE_MARKDOWN: true
+
+          # Docker 관련
+          VALIDATE_DOCKERFILE: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+
+          # 스크립트 검증
+          VALIDATE_BASH: true
+
+          # 보안 관련
+          VALIDATE_GITHUB_ACTIONS: true
+
+          # 제외할 디렉토리
+          FILTER_REGEX_EXCLUDE: .*/(build|target|node_modules|\.gradle)/.*
+
+  # Java 전용 코드 품질 검사
+  java-quality:
+    runs-on: ubuntu-latest
+    name: ☕ Java Code Quality
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🔧 Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 📊 Run Checkstyle
+        run: ./gradlew checkstyleMain checkstyleTest
+        continue-on-error: true
+
+      - name: 🔍 Run SpotBugs
+        run: ./gradlew spotbugsMain spotbugsTest
+        continue-on-error: true
+
+      - name: 📈 Run PMD
+        run: ./gradlew pmdMain pmdTest
+        continue-on-error: true
+
+      - name: 📋 Upload Checkstyle Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkstyle-report
+          path: build/reports/checkstyle/
+          retention-days: 30
+
+      - name: 📋 Upload SpotBugs Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: build/reports/spotbugs/
+          retention-days: 30
+
+      - name: 📋 Upload PMD Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmd-report
+          path: build/reports/pmd/
+          retention-days: 30
+
+  # 코딩 스타일 검사
+  code-style:
+    runs-on: ubuntu-latest
+    name: 🎨 Code Style Check
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🎨 Check Google Java Format
+        uses: axel-op/googlejavaformat-action@v3
+        with:
+          args: "--set-exit-if-changed --replace"
+          skip-commit: true
+
+      - name: 📝 Check for formatting changes
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            echo "❌ 코드 포맷팅이 Google Java Style Guide를 따르지 않습니다."
+            echo "변경이 필요한 파일들:"
+            git status --porcelain
+            echo ""
+            echo "💡 로컬에서 다음 명령어로 자동 포맷팅할 수 있습니다:"
+            echo "   ./gradlew googleJavaFormat"
+            exit 1
+          else
+            echo "✅ 모든 Java 파일이 Google Java Style Guide를 따릅니다."
+          fi
+
+  # 보안 취약점 검사
+  security-linting:
+    runs-on: ubuntu-latest
+    name: 🔐 Security Linting
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/java
+            p/owasp-top-ten
+            p/cwe-top-25
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: 🔍 Run CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+
+      - name: ☕ Set up JDK 17 for CodeQL
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🔧 Setup Gradle for CodeQL
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 🏗️ Build for CodeQL
+        run: ./gradlew clean build -x test
+
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # 의존성 검사
+  dependency-check:
+    runs-on: ubuntu-latest
+    name: 📦 Dependency Check
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🔧 Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 📦 Check for vulnerable dependencies
+        run: ./gradlew dependencyCheckAnalyze
+        continue-on-error: true
+
+      - name: 📋 Upload Dependency Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: build/reports/dependency-check-report.html
+          retention-days: 30
+
+      - name: 🔒 Check for license compatibility
+        run: ./gradlew checkLicense
+        continue-on-error: true
+
+  # 문서 품질 검사
+  documentation-quality:
+    runs-on: ubuntu-latest
+    name: 📖 Documentation Quality
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📖 Lint Markdown files
+        uses: articulate/actions-markdownlint@v1
+        with:
+          config: .markdownlint.json
+          files: '**/*.md'
+          ignore: 'node_modules'
+
+      - name: 🔗 Check Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.markdown-link-check.json'
+
+      - name: 📝 Check spelling
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          files: |
+            **/*.md
+            **/*.java
+            **/*.yml
+            **/*.yaml
+            **/*.json
+          incremental_files_only: false
+
+  # 종합 리포트 생성
+  quality-report:
+    runs-on: ubuntu-latest
+    name: 📊 Quality Summary Report
+    needs: [super-linter, java-quality, code-style, security-linting, dependency-check, documentation-quality]
+    if: always()
+
+    steps:
+      - name: 📥 Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: 📊 Generate Quality Report
+        run: |
+          echo "# 🔍 FinMate 코드 품질 검사 결과" > quality-report.md
+          echo "" >> quality-report.md
+          echo "## 📋 검사 결과 요약" >> quality-report.md
+          echo "" >> quality-report.md
+          
+          # 각 검사의 결과 상태
+          echo "| 검사 항목 | 상태 | 비고 |" >> quality-report.md
+          echo "|----------|------|------|" >> quality-report.md
+          
+          if [ "${{ needs.super-linter.result }}" == "success" ]; then
+            echo "| 🔍 전체 린팅 | ✅ 통과 | 모든 파일이 기준을 충족합니다 |" >> quality-report.md
+          else
+            echo "| 🔍 전체 린팅 | ❌ 실패 | 린팅 규칙 위반이 발견되었습니다 |" >> quality-report.md
+          fi
+          
+          if [ "${{ needs.java-quality.result }}" == "success" ]; then
+            echo "| ☕ Java 품질 | ✅ 통과 | Checkstyle, SpotBugs, PMD 검사 통과 |" >> quality-report.md
+          else
+            echo "| ☕ Java 품질 | ⚠️ 경고 | 일부 품질 이슈가 발견되었습니다 |" >> quality-report.md
+          fi
+          
+          if [ "${{ needs.code-style.result }}" == "success" ]; then
+            echo "| 🎨 코드 스타일 | ✅ 통과 | Google Java Style Guide 준수 |" >> quality-report.md
+          else
+            echo "| 🎨 코드 스타일 | ❌ 실패 | 코드 포맷팅이 필요합니다 |" >> quality-report.md
+          fi
+          
+          if [ "${{ needs.security-linting.result }}" == "success" ]; then
+            echo "| 🔐 보안 검사 | ✅ 통과 | 보안 취약점이 발견되지 않았습니다 |" >> quality-report.md
+          else
+            echo "| 🔐 보안 검사 | ⚠️ 검토 | 보안 이슈 검토가 필요합니다 |" >> quality-report.md
+          fi
+          
+          if [ "${{ needs.dependency-check.result }}" == "success" ]; then
+            echo "| 📦 의존성 검사 | ✅ 통과 | 안전한 의존성 라이브러리 사용 |" >> quality-report.md
+          else
+            echo "| 📦 의존성 검사 | ⚠️ 경고 | 의존성 취약점 검토 권장 |" >> quality-report.md
+          fi
+          
+          if [ "${{ needs.documentation-quality.result }}" == "success" ]; then
+            echo "| 📖 문서 품질 | ✅ 통과 | 문서가 품질 기준을 충족합니다 |" >> quality-report.md
+          else
+            echo "| 📖 문서 품질 | ⚠️ 개선 | 문서 품질 개선이 권장됩니다 |" >> quality-report.md
+          fi
+          
+          echo "" >> quality-report.md
+          echo "## 🎯 개선 권장사항" >> quality-report.md
+          echo "" >> quality-report.md
+          echo "- 📊 상세한 검사 결과는 각 아티팩트를 확인해주세요" >> quality-report.md
+          echo "- 🔧 코드 스타일 이슈는 \`./gradlew googleJavaFormat\`으로 자동 수정 가능합니다" >> quality-report.md
+          echo "- 🔐 보안 이슈는 개발팀과 검토 후 적절한 조치를 취해주세요" >> quality-report.md
+          echo "- 📦 의존성 취약점은 라이브러리 업데이트를 검토해주세요" >> quality-report.md
+          echo "" >> quality-report.md
+          echo "---" >> quality-report.md
+          echo "🌟 **FinMate 제테크 서비스** - 높은 코드 품질로 안정적인 금융 서비스를 제공합니다 🏦" >> quality-report.md
+
+      - name: 📋 Upload Quality Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-summary-report
+          path: quality-report.md
+          retention-days: 90
+
+      - name: 💬 Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = './quality-report.md';
+            
+            if (fs.existsSync(path)) {
+              const report = fs.readFileSync(path, 'utf8');
+            
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report + '\n\n🤖 *이 리포트는 자동으로 생성되었습니다.*'
+              });
+            }

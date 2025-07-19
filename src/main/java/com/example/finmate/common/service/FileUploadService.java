@@ -175,4 +175,53 @@ public class FileUploadService {
             }
         }
     }
+
+    // 파일 타입 검증 강화
+    private void validateFileType(MultipartFile file) {
+        String contentType = file.getContentType();
+        String fileName = file.getOriginalFilename();
+
+        if (fileName == null || contentType == null) {
+            throw new IllegalArgumentException("파일 정보가 올바르지 않습니다.");
+        }
+
+        // 허용되지 않는 확장자 차단
+        String[] blockedExtensions = {".exe", ".bat", ".cmd", ".com", ".pif", ".scr", ".vbs", ".js"};
+        String lowerFileName = fileName.toLowerCase();
+
+        for (String ext : blockedExtensions) {
+            if (lowerFileName.endsWith(ext)) {
+                throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + ext);
+            }
+        }
+
+        // MIME 타입 검증
+        List<String> allowedMimeTypes = Arrays.asList(
+                "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp",
+                "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        );
+
+        if (!allowedMimeTypes.contains(contentType)) {
+            throw new IllegalArgumentException("허용되지 않는 파일 타입입니다: " + contentType);
+        }
+    }
+
+    // 파일 스캔 (바이러스 검사 시뮬레이션)
+    private void scanFile(MultipartFile file) {
+        // 실제 환경에서는 바이러스 스캔 라이브러리 사용
+        byte[] fileBytes;
+        try {
+            fileBytes = file.getBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("파일 읽기 실패", e);
+        }
+
+        // 간단한 시그니처 검사 (예시)
+        if (fileBytes.length > 0) {
+            // PE 파일 헤더 검사 (Windows 실행 파일)
+            if (fileBytes.length >= 2 && fileBytes[0] == 'M' && fileBytes[1] == 'Z') {
+                throw new IllegalArgumentException("실행 파일은 업로드할 수 없습니다.");
+            }
+        }
+    }
 }

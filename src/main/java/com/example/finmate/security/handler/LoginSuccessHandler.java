@@ -2,8 +2,6 @@ package com.example.finmate.security.handler;
 
 import com.example.finmate.member.domain.MemberVO;
 import com.example.finmate.member.mapper.MemberMapper;
-import com.example.finmate.security.account.dto.AuthResultDTO;
-import com.example.finmate.security.account.dto.UserInfoDTO;
 import com.example.finmate.security.util.JsonResponse;
 import com.example.finmate.security.util.JwtProcessor;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +15,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,19 +42,23 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         // 사용자 정보 조회
         MemberVO member = memberMapper.getMemberByUserId(userId);
 
-        UserInfoDTO userInfo = new UserInfoDTO();
-        userInfo.setUserId(member.getUserId());
-        userInfo.setUserName(member.getUserName());
-        userInfo.setUserEmail(member.getUserEmail());
-        userInfo.setUserPhone(member.getUserPhone());
-        userInfo.setBirthDate(member.getBirthDate());
-        userInfo.setGender(member.getGender());
-        userInfo.setRegDate(member.getRegDate());
-        userInfo.setAuthorities(user.getAuthorities().stream()
+        // 사용자 정보를 Map으로 구성
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("userId", member.getUserId());
+        userInfo.put("userName", member.getUserName());
+        userInfo.put("userEmail", member.getUserEmail());
+        userInfo.put("userPhone", member.getUserPhone());
+        userInfo.put("birthDate", member.getBirthDate());
+        userInfo.put("gender", member.getGender());
+        userInfo.put("regDate", member.getRegDate());
+        userInfo.put("authorities", user.getAuthorities().stream()
                 .map(authority -> authority.getAuthority())
                 .collect(Collectors.toList()));
 
-        AuthResultDTO authResult = new AuthResultDTO(token, userInfo);
+        // 인증 결과를 Map으로 구성
+        Map<String, Object> authResult = new HashMap<>();
+        authResult.put("token", token);
+        authResult.put("user", userInfo);
 
         JsonResponse.sendSuccess(response, authResult);
     }

@@ -1,9 +1,25 @@
-# 사용자가 'New issue'를 눌렀을 때, 템플릿을 사용하지 않고 빈 이슈를 생성하는 것을 막습니다.
+# GitHub Issue 템플릿 설정
+# 사용자가 'New issue'를 눌렀을 때 템플릿을 사용하지 않고 빈 이슈를 생성하는 것을 막습니다.
 blank_issues_enabled: false
 
 # 이슈가 아닌 다른 내용은 외부 링크로 안내할 수 있습니다.
 contact_links:
-  - name: "🤔 아이디어나 단순 질문"
-    # GitHub Discussions 기능을 활성화하고 연결하면 좋습니다.
+  - name: "💬 일반 질문 및 토론"
     url: "https://github.com/mango606/finmate-backend/discussions"
-    about: "정식 작업이 아닌 아이디어나 간단한 질문은 Discussions에 남겨주세요."
+    about: "FinMate 서비스에 대한 일반적인 질문, 아이디어 제안, 기술 토론은 Discussions를 이용해주세요."
+
+#  - name: "📚 개발 문서 및 가이드"
+#    url: "https://github.com/mango606/finmate-backend/wiki"
+#    about: "API 문서, 개발 가이드, 설치 방법 등은 Wiki에서 확인하실 수 있습니다."
+
+  - name: "🚀 실시간 API 문서"
+    url: "http://localhost:8080/swagger-ui.html"
+    about: "서버 실행 후 Swagger UI에서 최신 API 명세를 확인하세요."
+
+#  - name: "📧 직접 문의"
+#    url: "mailto:contact@finmate.com"
+#    about: "보안 이슈나 민감한 내용은 이메일로 직접 문의해주세요."
+
+#  - name: "💼 비즈니스 제휴 문의"
+#    url: "mailto:business@finmate.com"
+#    about: "FinMate와의 비즈니스 제휴나 파트너십에 관한 문의는 별도 이메일로 연락주세요."
