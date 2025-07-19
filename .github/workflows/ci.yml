@@ -50,24 +50,6 @@ jobs:
     runs-on: ubuntu-latest
     name: 🔨 Build & Test
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: 1234
-          MYSQL_DATABASE: finmate_db
-          MYSQL_USER: finmate
-          MYSQL_PASSWORD: 1234
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-          --character-set-server=utf8mb4
-          --collation-server=utf8mb4_unicode_ci
-
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -81,35 +63,11 @@ jobs:
       - name: 🔧 Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: ⏳ Wait for MySQL
-        run: |
-          for i in {30..0}; do
-            if mysqladmin ping -h"127.0.0.1" -P3306 -uroot -p1234 &> /dev/null; then
-              break
-            fi
-            echo 'MySQL is unavailable - sleeping'
-            sleep 2
-          done
-
-      - name: 🗄️ Initialize Database
-        run: |
-          mysql -h127.0.0.1 -P3306 -uroot -p1234 -e "
-            CREATE DATABASE IF NOT EXISTS finmate_db;
-            CREATE USER IF NOT EXISTS 'finmate'@'%' IDENTIFIED BY '1234';
-            GRANT ALL PRIVILEGES ON finmate_db.* TO 'finmate'@'%';
-            FLUSH PRIVILEGES;
-          "
+      - name: 🔓 Grant execute permission for Gradle Wrapper
+        run: chmod +x ./gradlew
 
       - name: 🏗️ Build with Gradle
-        run: ./gradlew clean build -x test
-
-      - name: 🧪 Run Tests
-        run: ./gradlew test
-        env:
-          SPRING_PROFILES_ACTIVE: test
-          DB_URL: jdbc:h2:mem:testdb
-          DB_USERNAME: sa
-          DB_PASSWORD: ""
+        run: ./gradlew clean build
 
       - name: 📊 Generate Test Report
         uses: dorny/test-reporter@v1
@@ -418,45 +376,3 @@ jobs:
               repo: context.repo.repo,
               body: testSummary
             });
-
-#  # 슬랙 알림 (선택사항)
-#  notify:
-#    runs-on: ubuntu-latest
-#    name: 📢 Notification
-#    needs: [build-and-test]
-#    if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-#
-#    steps:
-#      - name: 📢 Slack Notification
-#        if: always()
-#        uses: 8398a7/action-slack@v3
-#        with:
-#          status: ${{ job.status }}
-#          custom_payload: |
-#            {
-#              "text": "🏦 FinMate CI/CD 결과",
-#              "attachments": [
-#                {
-#                  "color": "${{ job.status == 'success' && 'good' || job.status == 'failure' && 'danger' || 'warning' }}",
-#                  "fields": [
-#                    {
-#                      "title": "브랜치",
-#                      "value": "${{ github.ref_name }}",
-#                      "short": true
-#                    },
-#                    {
-#                      "title": "상태",
-#                      "value": "${{ job.status == 'success' && '✅ 성공' || job.status == 'failure' && '❌ 실패' || '⚠️ 경고' }}",
-#                      "short": true
-#                    },
-#                    {
-#                      "title": "커밋",
-#                      "value": "<${{ github.event.head_commit.url }}|${{ github.event.head_commit.message }}>",
-#                      "short": false
-#                    }
-#                  ]
-#                }
-#              ]
-#            }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
