@@ -2,10 +2,12 @@ package com.example.finmate.common.util;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("수정된 유효성 검사 유틸리티 테스트")
+@ActiveProfiles("test")
 class ValidationUtilsTest {
 
     @Test

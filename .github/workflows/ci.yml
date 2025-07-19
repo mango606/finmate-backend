@@ -61,10 +61,12 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
+          --character-set-server=utf8mb4
+          --collation-server=utf8mb4_unicode_ci
 
     steps:
       - name: 📥 Checkout code
@@ -105,9 +107,9 @@ jobs:
         run: ./gradlew test
         env:
           SPRING_PROFILES_ACTIVE: test
-          DB_URL: jdbc:mysql://localhost:3306/finmate_db
-          DB_USERNAME: finmate
-          DB_PASSWORD: 1234
+          DB_URL: jdbc:h2:mem:testdb
+          DB_USERNAME: sa
+          DB_PASSWORD: ""
 
       - name: 📊 Generate Test Report
         uses: dorny/test-reporter@v1
