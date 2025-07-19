@@ -43,9 +43,17 @@ public class ValidationUtils {
         }
 
         // 영문자 포함 확인
-        boolean hasLetter = password.matches(".*[a-zA-Z].*");
-        // 숫자 또는 특수문자 포함 확인
-        boolean hasDigitOrSpecial = password.matches(".*[\\d@$!%*?&].*");
+        boolean hasLetter = false;
+        boolean hasDigitOrSpecial = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isLetter(c)) {
+                hasLetter = true;
+            }
+            if (Character.isDigit(c) || "!@#$%^&*()_+-=[]{}|;:,.<>?".contains(String.valueOf(c))) {
+                hasDigitOrSpecial = true;
+            }
+        }
 
         return hasLetter && hasDigitOrSpecial;
     }
@@ -57,10 +65,17 @@ public class ValidationUtils {
         }
 
         // 각 조건 체크
-        boolean hasLowerCase = password.matches(".*[a-z].*");     // 소문자 포함
-        boolean hasUpperCase = password.matches(".*[A-Z].*");     // 대문자 포함
-        boolean hasDigit = password.matches(".*\\d.*");           // 숫자 포함
-        boolean hasSpecial = password.matches(".*[@$!%*?&].*");   // 특수문자 포함
+        boolean hasLowerCase = false;
+        boolean hasUpperCase = false;
+        boolean hasDigit = false;
+        boolean hasSpecial = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isLowerCase(c)) hasLowerCase = true;
+            if (Character.isUpperCase(c)) hasUpperCase = true;
+            if (Character.isDigit(c)) hasDigit = true;
+            if ("!@#$%^&*()_+-=[]{}|;:,.<>?".contains(String.valueOf(c))) hasSpecial = true;
+        }
 
         // 모든 조건을 만족해야 함
         return hasLowerCase && hasUpperCase && hasDigit && hasSpecial;
@@ -114,19 +129,32 @@ public class ValidationUtils {
 
     // 비밀번호 강도 체크 (점수 기반)
     public static int getPasswordStrength(String password) {
-        if (password == null) return 0;
+        if (password == null || password.isEmpty()) return 0;
 
         int score = 0;
 
-        // 길이 점수
-        if (password.length() >= 8) score += 25;
-        if (password.length() >= 12) score += 25;
+        // 길이 점수 (최대 20점)
+        if (password.length() >= 8) score += 10;
+        if (password.length() >= 12) score += 10;
+
+        // 문자 종류 체크
+        boolean hasLowerCase = false;
+        boolean hasUpperCase = false;
+        boolean hasDigit = false;
+        boolean hasSpecial = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isLowerCase(c)) hasLowerCase = true;
+            if (Character.isUpperCase(c)) hasUpperCase = true;
+            if (Character.isDigit(c)) hasDigit = true;
+            if ("!@#$%^&*()_+-=[]{}|;:,.<>?".contains(String.valueOf(c))) hasSpecial = true;
+        }
 
         // 문자 종류 점수
-        if (password.matches(".*[a-z].*")) score += 10;     // 소문자
-        if (password.matches(".*[A-Z].*")) score += 10;     // 대문자
-        if (password.matches(".*\\d.*")) score += 15;       // 숫자
-        if (password.matches(".*[@$!%*?&].*")) score += 15; // 특수문자
+        if (hasLowerCase) score += 15;     // 소문자
+        if (hasUpperCase) score += 15;     // 대문자
+        if (hasDigit) score += 15;         // 숫자
+        if (hasSpecial) score += 25;       // 특수문자
 
         return Math.min(score, 100);
     }
@@ -135,9 +163,9 @@ public class ValidationUtils {
     public static String getPasswordStrengthGrade(String password) {
         int strength = getPasswordStrength(password);
 
-        if (strength >= 90) return "STRONG";
-        if (strength >= 70) return "MEDIUM";
-        if (strength >= 50) return "WEAK";
+        if (strength >= 80) return "STRONG";
+        if (strength >= 60) return "MEDIUM";
+        if (strength >= 40) return "WEAK";
         return "VERY_WEAK";
     }
 

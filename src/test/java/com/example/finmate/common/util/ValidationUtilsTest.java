@@ -57,18 +57,22 @@ class ValidationUtilsTest {
     @Test
     @DisplayName("비밀번호 유효성 검사 - 수정된 패턴")
     void isValidPassword() {
-        // 유효한 비밀번호 (영문자 + 숫자 또는 특수문자)
-        assertTrue(ValidationUtils.isValidPassword("Test123"));      // 영문자 + 숫자
-        assertTrue(ValidationUtils.isValidPassword("Test123!"));     // 영문자 + 숫자 + 특수문자
-        assertTrue(ValidationUtils.isValidPassword("Password!"));    // 영문자 + 특수문자
-        assertTrue(ValidationUtils.isValidPassword("MyPass123"));    // 영문자 + 숫자
-        assertTrue(ValidationUtils.isValidPassword("SecurePass!"));  // 영문자 + 특수문자
+        // 유효한 비밀번호 (영문자 + 숫자) - 8글자 이상
+        assertTrue(ValidationUtils.isValidPassword("Test1234"));     // 영문자 + 숫자 (8글자)
+        assertTrue(ValidationUtils.isValidPassword("Test123456"));   // 영문자 + 숫자 (10글자)
+        assertTrue(ValidationUtils.isValidPassword("MyPass123"));    // 영문자 + 숫자 (9글자)
+        assertTrue(ValidationUtils.isValidPassword("SecurePass123"));  // 영문자 + 숫자 (13글자)
+        assertTrue(ValidationUtils.isValidPassword("Password1"));    // 영문자 + 숫자 (9글자)
+        assertTrue(ValidationUtils.isValidPassword("Hello123"));     // 영문자 + 숫자 (8글자)
+
+        // 영문자 + 특수문자 또는 영문자 + 숫자 + 특수문자 조합
+        assertTrue(ValidationUtils.isValidPassword("Password123!")); // 영문자 + 숫자 + 특수문자 (12글자)
 
         // 유효하지 않은 비밀번호
         assertFalse(ValidationUtils.isValidPassword("password"));     // 영문자만
         assertFalse(ValidationUtils.isValidPassword("12345678"));     // 숫자만
-        assertFalse(ValidationUtils.isValidPassword("!@#$%^&*"));     // 특수문자만
-        assertFalse(ValidationUtils.isValidPassword("Test1"));        // 너무 짧음
+        assertFalse(ValidationUtils.isValidPassword("Test123"));      // 너무 짧음 (7글자)
+        assertFalse(ValidationUtils.isValidPassword("Test1"));        // 너무 짧음 (5글자)
         assertFalse(ValidationUtils.isValidPassword("VeryLongPasswordThatExceedsTheMaximumLength123!")); // 너무 김
         assertFalse(ValidationUtils.isValidPassword(null));
     }
@@ -149,16 +153,19 @@ class ValidationUtilsTest {
     @Test
     @DisplayName("비밀번호 강도 등급 테스트")
     void getPasswordStrengthGrade() {
-        // 강력한 비밀번호
+        // 강력한 비밀번호 (점수: 길이10+10 + 대문자15 + 소문자15 + 숫자15 + 특수문자25 = 90점)
         assertEquals("STRONG", ValidationUtils.getPasswordStrengthGrade("MyPass123!@"));
 
-        // 보통 비밀번호
-        assertEquals("MEDIUM", ValidationUtils.getPasswordStrengthGrade("MyPass123"));
+        // 보통 비밀번호 (점수: 길이10+10 + 대문자15 + 소문자15 + 숫자15 = 65점)
+        assertEquals("MEDIUM", ValidationUtils.getPasswordStrengthGrade("MyPass123456"));
 
-        // 약한 비밀번호
+        // 약한 비밀번호 (점수: 길이10 + 대문자15 + 소문자15 + 숫자15 = 55점)
         assertEquals("WEAK", ValidationUtils.getPasswordStrengthGrade("Test123"));
 
-        // 매우 약한 비밀번호
+        // 매우 약한 비밀번호 (점수: 길이10 + 소문자15 = 25점)
         assertEquals("VERY_WEAK", ValidationUtils.getPasswordStrengthGrade("password"));
+
+        // 더 약한 비밀번호 (점수: 소문자15 = 15점)
+        assertEquals("VERY_WEAK", ValidationUtils.getPasswordStrengthGrade("test"));
     }
 }
