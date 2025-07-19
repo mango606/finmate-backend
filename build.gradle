@@ -114,6 +114,9 @@ dependencies {
     implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'commons-io:commons-io:2.11.0'
 
+    // 테스트용 H2 데이터베이스
+    testImplementation 'com.h2database:h2:2.1.214'
+
     // 테스트
     testImplementation "org.springframework:spring-test:${springVersion}"
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
@@ -150,6 +153,56 @@ war {
         exclude 'WEB-INF/classes/**'
         exclude 'WEB-INF/lib/**'
     }
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = false
+        showStackTraces = true
+    }
+
+    jvmArgs = [
+            '-Xmx1024m',
+            '-Xms512m',
+            '-XX:MetaspaceSize=256m',
+            '-XX:MaxMetaspaceSize=512m',
+            '-Dfile.encoding=UTF-8',
+            '-Duser.timezone=Asia/Seoul',
+            '-Djava.awt.headless=true'
+    ]
+
+    // 테스트 환경 설정
+    systemProperty 'spring.profiles.active', 'test'
+
+    // 성능 설정
+    maxParallelForks = 1
+    forkEvery = 100
+
+    // 타임아웃 설정
+    timeout = Duration.ofMinutes(10)
+
+    // 실패 시 계속 진행
+    failFast = false
+
+    // 메모리 누수 방지
+    afterTest { descriptor, result ->
+        logger.lifecycle("Test: $descriptor, Result: $result.resultType")
+    }
+}
+
+// 컴파일 옵션
+compileJava {
+    options.compilerArgs += ['-parameters']
+    options.encoding = 'UTF-8'
+}
+
+compileTestJava {
+    options.compilerArgs += ['-parameters']
+    options.encoding = 'UTF-8'
 }
 
 task runServer(type: JavaExec) {
@@ -192,20 +245,6 @@ task runServerNoTest {
     description = '테스트 없이 서버 실행'
     dependsOn 'buildNoTest'
     finalizedBy 'runServer'
-}
-
-// 테스트 설정
-test {
-    useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat "full"
-    }
-}
-
-// 컴파일 옵션
-compileJava {
-    options.compilerArgs += ['-parameters']
 }
 
 // 직접 실행 태스크 (의존성 포함)
@@ -257,4 +296,12 @@ task runFatJar(type: Exec) {
     doFirst {
         println "🚀 Fat JAR로 서버를 시작합니다..."
     }
+}
+
+// 테스트 리포트 설정
+tasks.register('testReport', TestReport) {
+    group = 'reporting'
+    description = '통합 테스트 리포트 생성'
+    destinationDirectory = file("$buildDir/reports/allTests")
+    testResults.from(file("$buildDir/test-results/test"))
 }
