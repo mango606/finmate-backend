@@ -1,5 +1,7 @@
 ﻿# 🏦 FinMate
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/mango606/finmate-backend?utm_source=oss&utm_medium=github&utm_campaign=mango606%2Ffinmate-backend&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 ## 📋 프로젝트 정보
 
 ### 🛠️ 기술 스택

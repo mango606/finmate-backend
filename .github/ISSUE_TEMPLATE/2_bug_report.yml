@@ -1,50 +1,219 @@
-name: "버그 수정 (Bug Fix)"
-description: "발견한 버그를 분석하고 수정 계획을 세웁니다."
+name: "🐛 버그 수정 (Bug Fix)"
+description: "FinMate 서비스에서 발견한 버그를 분석하고 수정 계획을 세웁니다"
 title: "[BUG] "
-labels: ["bug"]
+labels: ["bug", "needs-triage"]
+assignees: ["mango606"]
+
 body:
   - type: markdown
     attributes:
-      value: "버그의 원인을 분석하고 수정 계획을 명확하게 정리합니다."
+      value: |
+        ## 🏦 FinMate 버그 리포트
+        
+        버그의 원인을 분석하고 수정 계획을 명확하게 정리해주세요.
+        사용자의 제테크 경험을 해치는 문제를 신속히 해결하겠습니다.
+
+  - type: dropdown
+    id: bug-category
+    attributes:
+      label: "🎯 버그 카테고리"
+      description: "버그가 발생한 기능 영역을 선택해주세요"
+      options:
+        - "🔐 로그인/인증 (Authentication)"
+        - "👤 회원 관리 (Member Management)"
+        - "💰 금융 프로필 (Financial Profile)"
+        - "🎯 금융 목표 (Goal Management)"
+        - "📊 투자 포트폴리오 (Portfolio)"
+        - "📈 거래 내역 (Transaction)"
+        - "🎓 금융 교육 (Education)"
+        - "📱 알림 시스템 (Notification)"
+        - "🔧 시스템/인프라 (Infrastructure)"
+        - "📊 API/백엔드 (Backend API)"
+        - "🔍 기타 (Others)"
+    validations:
+      required: true
 
   - type: textarea
-    id: bug-symptom
+    id: bug-description
     attributes:
-      label: "1. 버그 현상 및 재현 방법"
-      description: "어떤 현상이 발생하는지, 어떻게 재현할 수 있는지 순서대로 작성해주세요."
+      label: "🔍 버그 현상 및 재현 방법"
+      description: "어떤 현상이 발생하는지, 어떻게 재현할 수 있는지 단계별로 상세히 작성해주세요"
       placeholder: |
-        - 현상: 특정 API 호출 시 500 에러 발생
-        - 재현: GET /api/users/123 요청 시 NullPointerException 발생
+        **발생 현상:**
+        로그인 후 금융 목표 조회 시 500 Internal Server Error 발생
+        
+        **재현 단계:**
+        1. POST /api/auth/login 으로 정상 로그인
+        2. JWT 토큰을 헤더에 포함하여 GET /api/financial/goals 요청
+        3. 서버에서 500 에러 응답 및 NullPointerException 발생
+        
+        **예상 결과:**
+        사용자의 금융 목표 목록이 정상적으로 반환되어야 함
+        
+        **실제 결과:**
+        500 에러와 함께 "Goal list retrieval failed" 메시지 반환
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: "📋 에러 로그 및 스택 트레이스"
+      description: "관련 에러 로그, 스택 트레이스, 데이터베이스 쿼리 등을 첨부해주세요"
+      placeholder: |
+        ```
+        2025-01-20 14:30:25.123 ERROR --- [http-nio-8080-exec-1] c.e.f.financial.service.FinancialService : 
+        java.lang.NullPointerException: Cannot invoke "getGoals()" on null reference
+            at com.example.finmate.financial.service.FinancialService.getFinancialGoals(FinancialService.java:85)
+            at com.example.finmate.financial.controller.FinancialController.getFinancialGoals(FinancialController.java:45)
+            ...
+        
+        SQL Query:
+        SELECT goal_id, user_id, goal_name FROM tbl_financial_goal WHERE user_id = 'testuser'
+        ```
+      render: text
+
+  - type: textarea
+    id: environment-info
+    attributes:
+      label: "🖥️ 환경 정보"
+      description: "버그가 발생한 환경 정보를 제공해주세요"
+      placeholder: |
+        **서버 환경:**
+        - OS: Windows 11 / macOS 14 / Ubuntu 22.04
+        - Java Version: OpenJDK 17.0.8
+        - Spring Version: 5.3.37
+        - Database: MySQL 8.0.35
+        - Build Tool: Gradle 8.8
+        
+        **클라이언트 환경:**
+        - Browser: Chrome 120.0.6099.109
+        - User Agent: Mozilla/5.0...
+        - API Tool: Postman 10.x / curl
+        
+        **Docker:**
+        - Docker Version: 24.0.7
+        - Docker Compose Version: 2.21.0
     validations:
       required: true
 
   - type: textarea
     id: root-cause
     attributes:
-      label: "2. 원인 분석 (Root Cause Analysis)"
-      description: "로그나 코드를 분석하여 버그의 근본 원인이 무엇인지 작성해주세요."
-      placeholder: "예: 사용자 조회 시 연관된 데이터가 null일 경우를 처리하지 못함."
+      label: "🔬 원인 분석 (Root Cause Analysis)"
+      description: "코드 분석, 로그 검토를 통해 파악한 버그의 근본 원인을 작성해주세요"
+      placeholder: |
+        **근본 원인:**
+        FinancialService.getFinancialGoals() 메서드에서 user 객체가 null인 상태로 전달됨
+        
+        **상세 분석:**
+        1. JWT 토큰에서 추출한 userId가 올바르게 전달되지 않음
+        2. SecurityUtils.getCurrentUserId() 메서드에서 null 반환
+        3. null 체크 로직이 없어 NullPointerException 발생
+        
+        **영향 범위:**
+        - 모든 인증이 필요한 금융 API에서 동일한 문제 발생 가능
+        - 로그인한 사용자의 모든 개인화 기능에 영향
     validations:
       required: true
 
   - type: checkboxes
+    id: affected-features
+    attributes:
+      label: "🎯 영향받는 기능"
+      description: "이 버그로 인해 영향받는 다른 기능들을 선택해주세요"
+      options:
+        - label: "🔐 JWT 토큰 인증 시스템"
+        - label: "👤 사용자 프로필 조회"
+        - label: "💰 금융 프로필 관리"
+        - label: "🎯 금융 목표 설정/조회"
+        - label: "📊 투자 포트폴리오 관리"
+        - label: "📈 거래 내역 조회"
+        - label: "📱 개인화 알림"
+        - label: "📊 대시보드 데이터"
+        - label: "🔍 전체 서비스 이용 불가"
+
+  - type: checkboxes
     id: todo-list
     attributes:
-      label: "3. 수정 계획 (To-Do List)"
-      description: "버그를 해결하기 위한 구체적인 작업 목록을 작성해주세요."
+      label: "🛠️ 수정 계획 (To-Do List)"
+      description: "버그를 해결하기 위한 구체적인 작업 목록을 작성해주세요"
       options:
-        - label: "Service 로직: null 체크 로직 추가"
-        - label: "Test: 해당 케이스에 대한 단위 테스트 코드 추가"
-        - label: "Docs: 변경된 내용 API 문서에 반영"
+        - label: "🔍 Code: 근본 원인 코드 수정"
+        - label: "🛡️ Validation: null 체크 및 예외 처리 로직 추가"
+        - label: "🔐 Security: JWT 토큰 처리 로직 검토 및 개선"
+        - label: "🗄️ Database: 관련 데이터베이스 쿼리 최적화"
+        - label: "🧪 Test: 버그 재현 테스트 케이스 작성"
+        - label: "🧪 Test: 수정된 코드에 대한 단위 테스트 추가"
+        - label: "🧪 Test: 통합 테스트 및 회귀 테스트 실행"
+        - label: "📖 Docs: API 문서 업데이트 (필요시)"
+        - label: "🔄 Refactor: 유사한 패턴의 코드 일괄 개선"
 
   - type: dropdown
     id: severity
     attributes:
-      label: "4. 중요도 (Severity)"
-      description: "버그의 영향도를 선택해주세요."
+      label: "🚨 심각도 (Severity)"
+      description: "버그의 영향도를 선택해주세요"
       options:
-        - "High: 기능 마비, 데이터 손실"
-        - "Medium: 기능 오동작"
-        - "Low: 사소한 오류"
+        - "🔥 Critical - 서비스 전체 마비, 보안 취약점"
+        - "⚡ High - 핵심 기능 마비, 데이터 손실 위험"
+        - "⚠️ Medium - 주요 기능 오동작, 사용성 저해"
+        - "💡 Low - 부분적 오류, 사용 가능하나 불편함"
+        - "🐛 Trivial - UI 오타, 성능 미미한 영향"
     validations:
       required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: "📊 발생 빈도"
+      description: "이 버그가 얼마나 자주 발생하는지 선택해주세요"
+      options:
+        - "🔄 Always - 매번 발생 (100%)"
+        - "🔴 Often - 자주 발생 (70-99%)"
+        - "🟡 Sometimes - 가끔 발생 (30-69%)"
+        - "🟢 Rarely - 드물게 발생 (1-29%)"
+        - "🔵 Unknown - 발생 빈도 불명"
+    validations:
+      required: true
+
+  - type: textarea
+    id: temporary-workaround
+    attributes:
+      label: "🔧 임시 해결책 (Workaround)"
+      description: "버그 수정 전까지 사용할 수 있는 임시 해결책이 있다면 작성해주세요"
+      placeholder: |
+        **임시 해결책:**
+        1. 로그인 후 페이지 새로고침을 한 번 더 수행
+        2. 다른 API 엔드포인트 사용: GET /api/member/financial-summary
+        3. 로그아웃 후 재로그인으로 JWT 토큰 갱신
+        
+        **주의사항:**
+        - 임시 해결책은 사용자 경험을 저해할 수 있음
+        - 근본적인 해결책이 우선되어야 함
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "📝 추가 정보"
+      description: "버그 해결에 도움이 될 만한 추가 정보나 컨텍스트를 제공해주세요"
+      placeholder: |
+        - 관련 Pull Request: #123
+        - 비슷한 이슈: #456
+        - 외부 의존성 변경사항
+        - 최근 배포 이력
+        - 사용자 피드백 내용
+
+  - type: checkboxes
+    id: verification-checklist
+    attributes:
+      label: "✅ 확인 체크리스트"
+      options:
+        - label: "동일한 버그에 대한 기존 이슈가 없음을 확인했습니다"
+          required: true
+        - label: "최신 버전에서도 버그가 재현됨을 확인했습니다"
+          required: true
+        - label: "충분한 정보를 제공하여 개발자가 버그를 재현할 수 있습니다"
+          required: true
+        - label: "이 버그가 FinMate 사용자 경험에 미치는 영향을 고려했습니다"
+          required: true

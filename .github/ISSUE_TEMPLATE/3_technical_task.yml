@@ -1,39 +1,297 @@
-name: "기술적 작업 (Technical Task)"
-description: "리팩토링, 성능 개선 등 내부 기술 작업을 관리합니다."
+name: "🔧 기술적 작업 (Technical Task)"
+description: "FinMate 서비스의 리팩토링, 성능 개선, 인프라 업그레이드 등 기술적 작업을 관리합니다"
 title: "[TASK] "
-labels: ["tech-debt", "chore"]
+labels: ["tech-debt", "infrastructure", "performance"]
+assignees: ["mango606"]
+
 body:
   - type: markdown
     attributes:
-      value: "기술적 작업의 목표와 계획을 구체적으로 정리합니다."
+      value: |
+        ## 🏦 FinMate 기술적 작업
+        
+        코드 품질 향상, 성능 최적화, 인프라 개선 등 기술적 작업의 목표와 계획을 구체적으로 정리합니다.
+        안정적이고 확장 가능한 제테크 서비스 구축을 위한 기술적 개선사항을 제안해주세요.
+
+  - type: dropdown
+    id: task-category
+    attributes:
+      label: "🛠️ 작업 카테고리"
+      description: "수행할 기술적 작업의 유형을 선택해주세요"
+      options:
+        - "🔄 리팩토링 (Code Refactoring)"
+        - "⚡ 성능 최적화 (Performance Optimization)"
+        - "🏗️ 인프라 개선 (Infrastructure Improvement)"
+        - "🔐 보안 강화 (Security Enhancement)"
+        - "📊 데이터베이스 최적화 (Database Optimization)"
+        - "🧪 테스트 커버리지 향상 (Test Coverage)"
+        - "📖 문서화 (Documentation)"
+        - "🔧 도구 및 환경 개선 (Tooling)"
+        - "📦 의존성 업데이트 (Dependencies Update)"
+        - "🔍 모니터링 개선 (Monitoring)"
+    validations:
+      required: true
 
   - type: textarea
-    id: task-goal
+    id: task-background
     attributes:
-      label: "1. 작업 배경 및 목표"
-      description: "왜 이 작업이 필요한지(배경), 이 작업을 통해 무엇을 개선할 것인지(목표)를 설명해주세요."
-      placeholder: "예: 로그인 API의 응답 속도가 느려 성능 개선이 필요함. 목표는 응답 시간을 50% 단축하는 것."
+      label: "📋 작업 배경 및 목표"
+      description: "왜 이 작업이 필요한지(배경), 이 작업을 통해 무엇을 개선할 것인지(목표)를 설명해주세요"
+      placeholder: |
+        **배경:**
+        현재 FinMate의 금융 목표 조회 API가 사용자별 목표가 많아질수록 응답 속도가 현저히 느려지고 있습니다.
+        사용자가 50개 이상의 목표를 설정했을 때 응답 시간이 5초를 초과하여 사용자 경험이 크게 저하됩니다.
+        
+        **목표:**
+        - 금융 목표 조회 API의 평균 응답 시간을 현재 3초에서 500ms 이하로 단축
+        - 데이터베이스 쿼리 최적화를 통한 서버 리소스 사용량 20% 감소
+        - 사용자 경험 개선을 통한 앱 사용 만족도 향상
+        - 향후 사용자 증가에 대비한 확장성 확보
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-issues
+    attributes:
+      label: "🚨 현재 문제점"
+      description: "개선이 필요한 현재 상황이나 기술적 부채를 구체적으로 설명해주세요"
+      placeholder: |
+        **성능 문제:**
+        - 금융 목표 조회 시 N+1 쿼리 문제로 인한 성능 저하
+        - 인덱스 부재로 인한 풀 테이블 스캔 발생
+        - 불필요한 JOIN 쿼리로 인한 리소스 낭비
+        
+        **코드 품질 문제:**
+        - 중복된 비즈니스 로직이 여러 서비스에 산재
+        - 하드코딩된 상수값들이 코드 곳곳에 존재
+        - 예외 처리가 일관성 없이 구현됨
+        
+        **확장성 문제:**
+        - 모놀리식 구조로 인한 부분 배포 어려움
+        - 캐싱 전략 부재로 인한 반복적인 DB 조회
     validations:
       required: true
 
   - type: textarea
     id: acceptance-criteria
     attributes:
-      label: "2. 완료 조건 (Acceptance Criteria)"
-      description: "어떤 상태가 되면 이 작업이 끝난 것으로 볼 수 있는지 명확한 기준을 제시해주세요."
+      label: "🎯 완료 조건 (Acceptance Criteria)"
+      description: "어떤 상태가 되면 이 작업이 끝난 것으로 볼 수 있는지 명확한 기준을 제시해주세요"
       placeholder: |
-        - 로그인 API의 평균 응답 시간이 200ms 이하로 측정된다.
-        - 관련 쿼리에 인덱스가 적용되었는지 확인된다.
-        - 부하 테스트 시에도 안정적인 성능을 보인다.
+        **성능 기준:**
+        - 금융 목표 조회 API의 평균 응답 시간이 500ms 이하로 측정된다
+        - 데이터베이스 쿼리 수가 현재 대비 70% 감소한다
+        - 동시 접속자 1000명 환경에서도 안정적인 성능을 보인다
+        
+        **품질 기준:**
+        - 모든 관련 코드에 적절한 인덱스가 적용되었다
+        - 리팩토링된 코드의 테스트 커버리지가 90% 이상이다
+        - SonarQube 코드 품질 점수가 A 등급 이상이다
+        
+        **문서화 기준:**
+        - 변경된 아키텍처에 대한 기술 문서가 작성되었다
+        - API 문서가 최신 상태로 업데이트되었다
     validations:
       required: true
 
   - type: checkboxes
     id: todo-list
     attributes:
-      label: "3. 세부 작업 목록 (To-Do List)"
-      description: "목표 달성을 위해 필요한 구체적인 작업들을 작성해주세요."
+      label: "📝 세부 작업 목록 (To-Do List)"
+      description: "목표 달성을 위해 필요한 구체적인 작업들을 체크리스트로 작성해주세요"
       options:
-        - label: "DB: users 테이블의 email 필드에 인덱스 추가"
-        - label: "CODE: 불필요한 중복 쿼리 로직 리팩토링"
-        - label: "TEST: 성능 테스트 스크립트 작성 및 실행"
+        - label: "🔍 Analysis: 현재 시스템 성능 분석 및 병목지점 파악"
+        - label: "🗄️ Database: 필요한 인덱스 설계 및 적용"
+        - label: "🗄️ Database: 쿼리 최적화 및 N+1 문제 해결"
+        - label: "🔄 Refactor: 중복 코드 제거 및 공통 모듈화"
+        - label: "⚡ Performance: 캐싱 전략 설계 및 구현"
+        - label: "🔐 Security: 보안 취약점 검토 및 개선"
+        - label: "🧪 Test: 성능 테스트 스크립트 작성 및 실행"
+        - label: "🧪 Test: 단위 테스트 및 통합 테스트 추가"
+        - label: "📊 Monitoring: 모니터링 및 알림 시스템 구축"
+        - label: "📖 Documentation: 기술 문서 및 아키텍처 가이드 작성"
+
+  - type: dropdown
+    id: impact-level
+    attributes:
+      label: "📊 영향 범위"
+      description: "이 기술적 작업이 시스템에 미치는 영향 범위를 선택해주세요"
+      options:
+        - "🌍 전체 시스템 (System Wide)"
+        - "🏗️ 특정 모듈 (Specific Module)"
+        - "🔧 인프라/환경 (Infrastructure)"
+        - "📊 데이터베이스 (Database Only)"
+        - "🎨 프론트엔드 (Frontend Only)"
+        - "🔍 제한적 영향 (Limited Impact)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: "⏰ 긴급도"
+      description: "이 작업의 긴급도를 선택해주세요"
+      options:
+        - "🔥 즉시 (Critical) - 서비스 안정성에 직접적 영향"
+        - "⚡ 높음 (High) - 다음 릴리즈 전 완료 필요"
+        - "📅 보통 (Medium) - 향후 스프린트에서 처리"
+        - "💡 낮음 (Low) - 여유 있을 때 개선"
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-approach
+    attributes:
+      label: "🛠️ 기술적 접근 방법"
+      description: "이 작업을 어떻게 수행할 것인지 구체적인 기술적 접근 방법을 설명해주세요"
+      placeholder: |
+        **데이터베이스 최적화:**
+        1. 인덱스 전략:
+           - tbl_financial_goal 테이블의 user_id + status 복합 인덱스 추가
+           - created_date 컬럼에 부분 인덱스 적용
+        
+        2. 쿼리 개선:
+           - MyBatis resultMap 활용하여 N+1 문제 해결
+           - 페이징 처리를 위한 LIMIT/OFFSET 최적화
+           - 불필요한 LEFT JOIN 제거
+        
+        **캐싱 구현:**
+        - Redis 도입하여 자주 조회되는 사용자 목표 캐싱
+        - TTL 60분 설정, 목표 변경 시 캐시 무효화
+        
+        **코드 리팩토링:**
+        - FinancialService의 비즈니스 로직을 도메인별로 분리
+        - GoalCalculationService 신설하여 계산 로직 집중화
+
+  - type: textarea
+    id: performance-metrics
+    attributes:
+      label: "📈 성능 지표 및 측정 방법"
+      description: "개선 효과를 측정할 수 있는 구체적인 지표와 측정 방법을 정의해주세요"
+      placeholder: |
+        **측정 지표:**
+        1. 응답 시간 (Response Time):
+           - 현재: 평균 3.2초 → 목표: 500ms 이하
+           - 측정: JMeter를 이용한 부하 테스트
+        
+        2. 데이터베이스 성능:
+           - 현재: 평균 15개 쿼리 → 목표: 3개 이하
+           - 측정: MySQL Slow Query Log 분석
+        
+        3. 메모리 사용량:
+           - 현재: 평균 512MB → 목표: 350MB 이하
+           - 측정: JProfiler 메모리 프로파일링
+        
+        **측정 환경:**
+        - 동시 사용자: 100명, 500명, 1000명
+        - 테스트 데이터: 사용자당 평균 30개 목표
+        - 측정 기간: 1시간 연속 부하 테스트
+
+  - type: checkboxes
+    id: risk-assessment
+    attributes:
+      label: "⚠️ 위험 요소 및 대응 방안"
+      description: "작업 수행 시 발생할 수 있는 위험과 대응 방안을 선택해주세요"
+      options:
+        - label: "💾 데이터 손실 위험 - 백업 및 롤백 계획 수립"
+        - label: "⏱️ 서비스 다운타임 - 무중단 배포 전략 적용"
+        - label: "🔄 호환성 문제 - 점진적 마이그레이션 수행"
+        - label: "📊 성능 저하 위험 - 단계별 성능 테스트 수행"
+        - label: "🔐 보안 취약점 - 보안 검토 및 테스트 강화"
+        - label: "👥 팀 의존성 - 충분한 문서화 및 지식 공유"
+        - label: "🎯 예상 효과 미달 - 대안 방안 사전 준비"
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: "🔗 의존성 및 연관 작업"
+      description: "이 작업과 관련된 다른 작업이나 의존성이 있다면 설명해주세요"
+      placeholder: |
+        **선행 작업:**
+        - Redis 서버 설치 및 환경 구성 (#123)
+        - 데이터베이스 백업 시스템 구축 (#456)
+        
+        **연관 작업:**
+        - 프론트엔드 로딩 상태 개선 (#789)
+        - API 응답 형식 표준화 (#101)
+        
+        **후속 작업:**
+        - 실시간 알림 시스템 성능 최적화
+        - 대시보드 차트 렌더링 개선
+        
+        **외부 의존성:**
+        - MySQL 8.0 → 8.1 업그레이드 계획
+        - Redis Cluster 도입 검토
+
+  - type: textarea
+    id: rollback-plan
+    attributes:
+      label: "🔄 롤백 계획"
+      description: "작업 완료 후 문제가 발생할 경우의 롤백 계획을 작성해주세요"
+      placeholder: |
+        **즉시 롤백 조건:**
+        - API 응답 시간이 기존 대비 150% 이상 증가
+        - 에러율이 1% 이상 발생
+        - 데이터 무결성 문제 발견
+        
+        **롤백 절차:**
+        1. 애플리케이션 이전 버전으로 즉시 배포
+        2. 데이터베이스 인덱스 제거 (필요시)
+        3. 캐시 서버 정리 및 초기화
+        4. 모니터링 지표 정상화 확인
+        
+        **복구 시간 목표:**
+        - 감지: 5분 이내
+        - 롤백 실행: 10분 이내
+        - 서비스 정상화: 15분 이내
+
+  - type: checkboxes
+    id: testing-strategy
+    attributes:
+      label: "🧪 테스트 전략"
+      description: "이 작업에 대한 테스트 계획을 선택해주세요"
+      options:
+        - label: "🔬 단위 테스트 - 개별 함수/메서드 동작 검증"
+        - label: "🔗 통합 테스트 - 모듈 간 연동 테스트"
+        - label: "⚡ 성능 테스트 - 부하 테스트 및 응답 시간 측정"
+        - label: "🔐 보안 테스트 - 취약점 스캔 및 보안 검증"
+        - label: "📱 사용자 인수 테스트 - 실제 사용 시나리오 검증"
+        - label: "🔄 회귀 테스트 - 기존 기능 정상 동작 확인"
+        - label: "🌊 스트레스 테스트 - 극한 상황에서의 안정성 검증"
+
+  - type: textarea
+    id: documentation-plan
+    attributes:
+      label: "📚 문서화 계획"
+      description: "작업 완료 후 업데이트하거나 새로 작성해야 할 문서를 나열해주세요"
+      placeholder: |
+        **업데이트할 문서:**
+        - API 문서 (Swagger) - 성능 개선된 엔드포인트 정보
+        - 데이터베이스 스키마 문서 - 새로 추가된 인덱스 정보
+        - 배포 가이드 - 캐시 서버 설정 방법
+        
+        **새로 작성할 문서:**
+        - 성능 최적화 가이드 - 향후 유사 작업 시 참고
+        - 캐싱 전략 문서 - Redis 사용 방법 및 주의사항
+        - 모니터링 대시보드 사용법
+        
+        **코드 문서화:**
+        - 리팩토링된 클래스의 JavaDoc 업데이트
+        - 복잡한 쿼리에 대한 주석 추가
+        - README.md 성능 개선 내용 반영
+
+  - type: checkboxes
+    id: final-checklist
+    attributes:
+      label: "✅ 최종 확인"
+      options:
+        - label: "관련된 기존 이슈나 작업이 없는 것을 확인했습니다"
+          required: true
+        - label: "이 작업이 FinMate 서비스 품질 향상에 기여함을 확인했습니다"
+          required: true
+        - label: "기술적 실현 가능성과 리소스를 검토했습니다"
+          required: true
+        - label: "위험 요소와 대응 방안을 충분히 고려했습니다"
+          required: true
+        - label: "작업 완료 기준이 명확하고 측정 가능합니다"
+          required: true
