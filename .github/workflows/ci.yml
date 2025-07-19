@@ -189,10 +189,17 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: 🔓 Grant execute permission for Gradle Wrapper
+        run: chmod +x ./gradlew
+
+      - name: 🏗️ Build Fat JAR
+        run: ./gradlew fatJar
+
       - name: 🔨 Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}
