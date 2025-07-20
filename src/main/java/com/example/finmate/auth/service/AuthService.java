@@ -5,6 +5,7 @@ import com.example.finmate.auth.domain.AuthTokenVO;
 import com.example.finmate.auth.domain.LoginHistoryVO;
 import com.example.finmate.auth.mapper.AuthMapper;
 import com.example.finmate.common.service.CacheService;
+import com.example.finmate.common.service.EmailService;
 import com.example.finmate.common.util.StringUtils;
 import com.example.finmate.member.domain.MemberVO;
 import com.example.finmate.member.mapper.MemberMapper;
@@ -28,9 +29,12 @@ public class AuthService {
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
     private final CacheService cacheService;
+    private final EmailService emailService;
+    private final RefreshTokenService refreshTokenService;
 
     private static final int PASSWORD_RESET_TOKEN_EXPIRY = 24 * 60 * 60; // 24시간 (초)
     private static final int EMAIL_VERIFICATION_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7일 (초)
+    private static final int MAX_LOGIN_ATTEMPTS = 5; // 최대 로그인 시도 횟수
 
     // 비밀번호 재설정 토큰 생성
     @Transactional
@@ -100,6 +104,12 @@ public class AuthService {
                 // 토큰 사용 처리
                 authMapper.markTokenAsUsed(token);
                 cacheService.remove("pwd_reset_" + token);
+
+                // 비밀번호 변경 시 모든 Refresh Token 무효화 (보안상)
+                refreshTokenService.invalidateAllRefreshTokens(userId);
+
+                // 로그인 실패 횟수 초기화
+                authMapper.resetLoginFailCount(userId);
 
                 log.info("비밀번호 재설정 완료: {}", userId);
                 return true;
@@ -255,6 +265,9 @@ public class AuthService {
             // 마지막 로그인 시간 업데이트
             authMapper.updateLastLoginTime(userId);
 
+            // 의심스러운 로그인 감지
+            detectSuspiciousLogin(userId, ipAddress, userAgent);
+
             log.info("로그인 성공 기록: {} from {}", userId, ipAddress);
         } catch (Exception e) {
             log.error("로그인 성공 기록 실패: {}", userId, e);
@@ -278,16 +291,107 @@ public class AuthService {
             // 로그인 실패 횟수 증가
             authMapper.incrementLoginFailCount(userId);
 
-            // 실패 횟수가 5회 이상이면 계정 잠금
+            // 실패 횟수가 최대치 이상이면 계정 잠금
             int failCount = authMapper.getLoginFailCount(userId);
-            if (failCount >= 5) {
+            if (failCount >= MAX_LOGIN_ATTEMPTS) {
                 authMapper.updateAccountLockStatus(userId, true);
-                log.warn("계정 잠금 - 로그인 실패 횟수 초과: {}", userId);
+
+                // 계정 잠금 시 모든 Refresh Token 무효화
+                refreshTokenService.invalidateAllRefreshTokens(userId);
+
+                // 계정 잠금 알림 이메일 발송
+                try {
+                    MemberVO member = memberMapper.getMemberByUserId(userId);
+                    if (member != null) {
+                        emailService.sendAccountLockNotification(member.getUserEmail(), member.getUserName());
+                    }
+                } catch (Exception e) {
+                    log.warn("계정 잠금 알림 이메일 발송 실패: {}", userId, e);
+                }
+
+                log.warn("계정 잠금 - 로그인 실패 횟수 초과: {} ({}회)", userId, failCount);
             }
 
-            log.warn("로그인 실패 기록: {} from {} - {}", userId, ipAddress, failureReason);
+            log.warn("로그인 실패 기록: {} from {} - {} (실패 횟수: {})", userId, ipAddress, failureReason, failCount);
         } catch (Exception e) {
             log.error("로그인 실패 기록 실패: {}", userId, e);
+        }
+    }
+
+    // 의심스러운 로그인 감지
+    private void detectSuspiciousLogin(String userId, String ipAddress, String userAgent) {
+        try {
+            // 최근 로그인 정보 확인
+            String lastIpKey = "last_login_ip_" + userId;
+            String lastUserAgentKey = "last_login_ua_" + userId;
+
+            String lastIp = cacheService.get(lastIpKey, String.class);
+            String lastUserAgent = cacheService.get(lastUserAgentKey, String.class);
+
+            boolean suspicious = false;
+            StringBuilder suspiciousReason = new StringBuilder();
+
+            // IP 주소가 다른 경우
+            if (lastIp != null && !lastIp.equals(ipAddress)) {
+                suspicious = true;
+                suspiciousReason.append("새로운 IP 주소에서 로그인 (").append(lastIp).append(" -> ").append(ipAddress).append("); ");
+            }
+
+            // User Agent가 다른 경우
+            if (lastUserAgent != null && !lastUserAgent.equals(userAgent)) {
+                suspicious = true;
+                suspiciousReason.append("새로운 기기/브라우저에서 로그인; ");
+            }
+
+            if (suspicious) {
+                // 의심스러운 로그인 이벤트 기록
+                recordSecurityEvent(userId, "SUSPICIOUS_LOGIN: " + suspiciousReason.toString(), ipAddress);
+
+                // 의심스러운 로그인 알림 이메일 발송
+                try {
+                    MemberVO member = memberMapper.getMemberByUserId(userId);
+                    if (member != null) {
+                        sendSuspiciousLoginNotification(member, ipAddress, userAgent);
+                    }
+                } catch (Exception e) {
+                    log.warn("의심스러운 로그인 알림 이메일 발송 실패: {}", userId, e);
+                }
+
+                log.info("의심스러운 로그인 감지: {} - {}", userId, suspiciousReason.toString());
+            }
+
+            // 정보 업데이트
+            cacheService.put(lastIpKey, ipAddress, 86400); // 24시간
+            cacheService.put(lastUserAgentKey, userAgent, 86400);
+
+        } catch (Exception e) {
+            log.error("의심스러운 로그인 감지 실패: {}", userId, e);
+        }
+    }
+
+    // 의심스러운 로그인 알림 이메일 발송
+    private void sendSuspiciousLoginNotification(MemberVO member, String ipAddress, String userAgent) {
+        try {
+            String subject = "FinMate 보안 알림: 새로운 기기에서 로그인";
+            String content = String.format(
+                    "안녕하세요 %s님,\n\n" +
+                            "회원님의 계정에 새로운 기기에서 로그인이 감지되었습니다.\n\n" +
+                            "로그인 정보:\n" +
+                            "- IP 주소: %s\n" +
+                            "- 기기/브라우저: %s\n" +
+                            "- 시간: %s\n\n" +
+                            "본인의 로그인이 아니라면 즉시 비밀번호를 변경하고 고객센터로 문의해주세요.\n\n" +
+                            "감사합니다.\n" +
+                            "FinMate 보안팀",
+                    member.getUserName(),
+                    ipAddress,
+                    userAgent != null ? userAgent.substring(0, Math.min(userAgent.length(), 100)) : "알 수 없음",
+                    LocalDateTime.now()
+            );
+
+            emailService.sendEmail(member.getUserEmail(), subject, content);
+        } catch (Exception e) {
+            log.error("의심스러운 로그인 알림 이메일 발송 실패", e);
         }
     }
 
@@ -304,9 +408,14 @@ public class AuthService {
                 result.put("accountLocked", security.getAccountLocked());
                 result.put("loginFailCount", security.getLoginFailCount());
                 result.put("lastLoginTime", security.getLastLoginTime());
+                result.put("lockReason", security.getLockReason());
             } else {
                 result = getDefaultSecurityInfo();
             }
+
+            // Refresh Token 통계 추가
+            Map<String, Object> refreshTokenStats = refreshTokenService.getRefreshTokenStatistics(userId);
+            result.put("refreshTokenStats", refreshTokenStats);
 
             return result;
         } catch (Exception e) {
@@ -327,6 +436,8 @@ public class AuthService {
                 settings.put("twoFactorEnabled", security.getTwoFactorEnabled());
                 settings.put("loginNotificationEnabled", true);
                 settings.put("securityQuestionEnabled", false);
+                settings.put("accountLocked", security.getAccountLocked());
+                settings.put("loginFailCount", security.getLoginFailCount());
             } else {
                 settings = getDefaultSecuritySettings();
             }
@@ -345,6 +456,11 @@ public class AuthService {
             int result = authMapper.updateTwoFactorStatus(userId, enabled);
 
             if (result > 0) {
+                // 2단계 인증 비활성화 시 기존 Refresh Token 모두 무효화 (보안상)
+                if (!enabled) {
+                    refreshTokenService.invalidateAllRefreshTokens(userId);
+                }
+
                 log.info("2단계 인증 설정 변경: {} - {}", userId, enabled);
                 return true;
             }
@@ -417,9 +533,20 @@ public class AuthService {
                 checkResult.put("recentActivity", false);
             }
 
+            // Refresh Token 보안 검사 (추가 5점)
+            Map<String, Object> tokenStats = refreshTokenService.getRefreshTokenStatistics(userId);
+            int activeTokenCount = (Integer) tokenStats.getOrDefault("activeTokenCount", 0);
+            if (activeTokenCount <= 3) { // 적절한 토큰 개수 유지
+                score += 5;
+                checkResult.put("refreshTokenSecurity", true);
+            } else {
+                checkResult.put("refreshTokenSecurity", false);
+            }
+
             checkResult.put("totalScore", score);
             checkResult.put("grade", getSecurityGrade(score));
-            checkResult.put("recommendations", getSecurityRecommendations(security));
+            checkResult.put("recommendations", getSecurityRecommendations(security, activeTokenCount));
+            checkResult.put("refreshTokenStats", tokenStats);
 
             return checkResult;
         } catch (Exception e) {
@@ -496,7 +623,7 @@ public class AuthService {
         return "F";
     }
 
-    private java.util.List<String> getSecurityRecommendations(AccountSecurityVO security) {
+    private java.util.List<String> getSecurityRecommendations(AccountSecurityVO security, int activeTokenCount) {
         java.util.List<String> recommendations = new java.util.ArrayList<>();
 
         if (security == null || !security.getEmailVerified()) {
@@ -509,6 +636,10 @@ public class AuthService {
 
         if (security == null || !security.getPhoneVerified()) {
             recommendations.add("휴대폰 인증을 완료해주세요.");
+        }
+
+        if (activeTokenCount > 5) {
+            recommendations.add("사용하지 않는 기기의 로그인 세션을 정리해주세요.");
         }
 
         recommendations.add("정기적으로 비밀번호를 변경해주세요.");
@@ -525,6 +656,7 @@ public class AuthService {
         result.put("accountLocked", false);
         result.put("loginFailCount", 0);
         result.put("lastLoginTime", null);
+        result.put("refreshTokenStats", new HashMap<>());
         return result;
     }
 
@@ -535,6 +667,8 @@ public class AuthService {
         settings.put("twoFactorEnabled", false);
         settings.put("loginNotificationEnabled", true);
         settings.put("securityQuestionEnabled", false);
+        settings.put("accountLocked", false);
+        settings.put("loginFailCount", 0);
         return settings;
     }
 
@@ -564,9 +698,11 @@ public class AuthService {
         result.put("twoFactorEnabled", false);
         result.put("passwordStrength", "UNKNOWN");
         result.put("recentActivity", false);
+        result.put("refreshTokenSecurity", false);
         result.put("totalScore", 0);
         result.put("grade", "F");
         result.put("recommendations", java.util.Arrays.asList("보안 점검을 다시 시도해주세요."));
+        result.put("refreshTokenStats", new HashMap<>());
         return result;
     }
 }
