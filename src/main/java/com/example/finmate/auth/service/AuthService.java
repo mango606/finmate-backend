@@ -35,6 +35,7 @@ public class AuthService {
     private static final int PASSWORD_RESET_TOKEN_EXPIRY = 24 * 60 * 60; // 24시간 (초)
     private static final int EMAIL_VERIFICATION_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7일 (초)
     private static final int MAX_LOGIN_ATTEMPTS = 5; // 최대 로그인 시도 횟수
+    private static final int ACCOUNT_LOCK_DURATION_MINUTES = 30; // 계정 잠금 시간 (분)
 
     // 비밀번호 재설정 토큰 생성
     @Transactional
@@ -197,7 +198,7 @@ public class AuthService {
         }
     }
 
-    // 계정 잠금 해제
+    // 계정 잠금 해제 (개선된 버전)
     @Transactional
     public boolean unlockAccount(String userId) {
         try {
@@ -207,16 +208,18 @@ public class AuthService {
             }
 
             // 계정 잠금 해제
-            int result = authMapper.updateAccountLockStatus(userId, false);
+            AccountSecurityVO security = new AccountSecurityVO();
+            security.setUserId(userId);
+            security.setAccountLocked(false);
+            security.setLockTime(null);
+            security.setLockReason(null);
+            security.setLoginFailCount(0);
 
+            int result = authMapper.updateAccountSecurity(security);
             if (result > 0) {
-                // 로그인 실패 횟수 초기화
-                authMapper.resetLoginFailCount(userId);
-
                 log.info("계정 잠금 해제: {}", userId);
                 return true;
             }
-
             return false;
         } catch (Exception e) {
             log.error("계정 잠금 해제 실패: {}", userId, e);
@@ -274,10 +277,11 @@ public class AuthService {
         }
     }
 
-    // 로그인 실패 기록
+    // 로그인 실패 기록 (개선된 버전)
     @Transactional
     public void recordLoginFailure(String userId, String ipAddress, String userAgent, String failureReason) {
         try {
+            // 로그인 이력 기록
             LoginHistoryVO loginHistory = new LoginHistoryVO();
             loginHistory.setUserId(userId);
             loginHistory.setIpAddress(ipAddress);
@@ -290,13 +294,19 @@ public class AuthService {
 
             // 로그인 실패 횟수 증가
             authMapper.incrementLoginFailCount(userId);
-
-            // 실패 횟수가 최대치 이상이면 계정 잠금
             int failCount = authMapper.getLoginFailCount(userId);
-            if (failCount >= MAX_LOGIN_ATTEMPTS) {
-                authMapper.updateAccountLockStatus(userId, true);
 
-                // 계정 잠금 시 모든 Refresh Token 무효화
+            // 계정 잠금 처리
+            if (failCount >= MAX_LOGIN_ATTEMPTS) {
+                AccountSecurityVO security = new AccountSecurityVO();
+                security.setUserId(userId);
+                security.setAccountLocked(true);
+                security.setLockTime(LocalDateTime.now());
+                security.setLockReason(String.format("로그인 %d회 실패로 인한 자동 잠금", failCount));
+
+                authMapper.updateAccountSecurity(security);
+
+                // 모든 Refresh Token 무효화
                 refreshTokenService.invalidateAllRefreshTokens(userId);
 
                 // 계정 잠금 알림 이메일 발송
@@ -315,6 +325,26 @@ public class AuthService {
             log.warn("로그인 실패 기록: {} from {} - {} (실패 횟수: {})", userId, ipAddress, failureReason, failCount);
         } catch (Exception e) {
             log.error("로그인 실패 기록 실패: {}", userId, e);
+        }
+    }
+
+    // 잠긴 계정 목록 조회 (관리자용)
+    public List<AccountSecurityVO> getLockedAccounts() {
+        try {
+            return authMapper.getLockedAccounts();
+        } catch (Exception e) {
+            log.error("잠긴 계정 목록 조회 실패", e);
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    // 계정 잠금 통계 조회
+    public Map<String, Object> getAccountLockStatistics() {
+        try {
+            return authMapper.getAccountLockStatistics();
+        } catch (Exception e) {
+            log.error("계정 잠금 통계 조회 실패", e);
+            return new HashMap<>();
         }
     }
 
@@ -525,8 +555,6 @@ public class AuthService {
                 LocalDateTime lastLogin = security.getLastLoginTime();
                 if (lastLogin.isAfter(LocalDateTime.now().minusDays(30))) {
                     score += 25;
-                    checkResult.put("recentActivity", true);
-                } else {
                     checkResult.put("recentActivity", false);
                 }
             } else {
