@@ -18,6 +18,15 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // 계정 잠금 예외 처리
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccountLockedException(AccountLockedException e) {
+        log.warn("계정 잠금 예외: {}", e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(e.getMessage(), "ACCOUNT_LOCKED"));
+    }
+
     // 일반적인 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
@@ -149,6 +158,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(org.springframework.security.core.AuthenticationException e) {
         log.warn("인증 필요: {}", e.getMessage());
+
+        if (e instanceof AccountLockedException) {
+            return handleAccountLockedException((AccountLockedException) e);
+        }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("인증이 필요합니다.", "AUTHENTICATION_REQUIRED"));

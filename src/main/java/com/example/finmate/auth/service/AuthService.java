@@ -207,20 +207,26 @@ public class AuthService {
                 throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
             }
 
-            // 계정 잠금 해제
-            AccountSecurityVO security = new AccountSecurityVO();
-            security.setUserId(userId);
-            security.setAccountLocked(false);
-            security.setLockTime(null);
-            security.setLockReason(null);
-            security.setLoginFailCount(0);
-
-            int result = authMapper.updateAccountSecurity(security);
-            if (result > 0) {
-                log.info("계정 잠금 해제: {}", userId);
-                return true;
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null) {
+                log.info("계정 보안 정보가 없는 사용자의 잠금 해제 요청: {}", userId);
+                return true; // 보안 정보가 없으면 이미 잠기지 않은 상태
             }
-            return false;
+
+            if (!Boolean.TRUE.equals(security.getAccountLocked())) {
+                log.info("이미 잠금 해제된 계정: {}", userId);
+                return true; // 이미 잠금 해제된 상태
+            }
+
+            // 계정 잠금 해제
+            authMapper.updateAccountLockStatus(userId, false);
+            authMapper.resetLoginFailCount(userId);
+
+            log.info("계정 잠금 해제 완료: {}", userId);
+            return true;
+
+        } catch (IllegalArgumentException e) {
+            throw e; // 비즈니스 예외는 그대로 전파
         } catch (Exception e) {
             log.error("계정 잠금 해제 실패: {}", userId, e);
             throw new RuntimeException("계정 잠금 해제에 실패했습니다.", e);
@@ -277,7 +283,7 @@ public class AuthService {
         }
     }
 
-    // 로그인 실패 기록 (개선된 버전)
+    // 로그인 실패 기록 및 계정 잠금 처리 (개선된 버전)
     @Transactional
     public void recordLoginFailure(String userId, String ipAddress, String userAgent, String failureReason) {
         try {
@@ -292,39 +298,129 @@ public class AuthService {
 
             authMapper.insertLoginHistory(loginHistory);
 
-            // 로그인 실패 횟수 증가
-            authMapper.incrementLoginFailCount(userId);
-            int failCount = authMapper.getLoginFailCount(userId);
-
-            // 계정 잠금 처리
-            if (failCount >= MAX_LOGIN_ATTEMPTS) {
-                AccountSecurityVO security = new AccountSecurityVO();
-                security.setUserId(userId);
-                security.setAccountLocked(true);
-                security.setLockTime(LocalDateTime.now());
-                security.setLockReason(String.format("로그인 %d회 실패로 인한 자동 잠금", failCount));
-
-                authMapper.updateAccountSecurity(security);
-
-                // 모든 Refresh Token 무효화
-                refreshTokenService.invalidateAllRefreshTokens(userId);
-
-                // 계정 잠금 알림 이메일 발송
-                try {
-                    MemberVO member = memberMapper.getMemberByUserId(userId);
-                    if (member != null) {
-                        emailService.sendAccountLockNotification(member.getUserEmail(), member.getUserName());
-                    }
-                } catch (Exception e) {
-                    log.warn("계정 잠금 알림 이메일 발송 실패: {}", userId, e);
-                }
-
-                log.warn("계정 잠금 - 로그인 실패 횟수 초과: {} ({}회)", userId, failCount);
+            // 사용자가 실제로 존재하는지 확인
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+            if (member == null) {
+                log.warn("존재하지 않는 사용자의 로그인 실패 기록: {}", userId);
+                return; // 존재하지 않는 사용자는 계정 잠금 처리하지 않음
             }
 
-            log.warn("로그인 실패 기록: {} from {} - {} (실패 횟수: {})", userId, ipAddress, failureReason, failCount);
+            // 계정 보안 정보 확인 및 초기화
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null) {
+                // 계정 보안 정보가 없으면 초기화
+                initializeAccountSecurityForFailure(userId);
+                security = authMapper.getAccountSecurity(userId);
+            }
+
+            // 이미 계정이 잠긴 상태라면 추가 처리하지 않음
+            if (Boolean.TRUE.equals(security.getAccountLocked())) {
+                log.info("이미 잠긴 계정의 로그인 실패: {}", userId);
+                return;
+            }
+
+            // 로그인 실패 횟수 증가
+            authMapper.incrementLoginFailCount(userId);
+            int currentFailCount = authMapper.getLoginFailCount(userId);
+
+            log.info("로그인 실패 기록: {} - 실패 횟수: {}/{}", userId, currentFailCount, MAX_LOGIN_ATTEMPTS);
+
+            // 최대 시도 횟수 초과 시 계정 잠금
+            if (currentFailCount >= MAX_LOGIN_ATTEMPTS) {
+                lockAccount(userId, currentFailCount);
+            }
+
         } catch (Exception e) {
-            log.error("로그인 실패 기록 실패: {}", userId, e);
+            log.error("로그인 실패 기록 처리 실패: {}", userId, e);
+            // 로그인 실패 기록 실패가 로그인 프로세스를 방해하지 않도록 예외를 삼킴
+        }
+    }
+
+    // 계정을 잠급니다.
+    private void lockAccount(String userId, int failCount) {
+        try {
+            AccountSecurityVO security = new AccountSecurityVO();
+            security.setUserId(userId);
+            security.setAccountLocked(true);
+            security.setLockTime(LocalDateTime.now());
+            security.setLockReason(String.format("로그인 %d회 실패로 인한 자동 잠금", failCount));
+
+            authMapper.updateAccountSecurity(security);
+
+            // 모든 Refresh Token 무효화 (보안상)
+            refreshTokenService.invalidateAllRefreshTokens(userId);
+
+            log.warn("계정 잠금 처리 완료: {} (실패 횟수: {}회)", userId, failCount);
+
+            // 계정 잠금 알림 이메일 발송 (비동기)
+            sendAccountLockNotificationAsync(userId);
+
+        } catch (Exception e) {
+            log.error("계정 잠금 처리 실패: {}", userId, e);
+            throw new RuntimeException("계정 잠금 처리 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    // 로그인 실패 처리용 계정 보안 정보 초기화
+    private void initializeAccountSecurityForFailure(String userId) {
+        try {
+            AccountSecurityVO security = new AccountSecurityVO();
+            security.setUserId(userId);
+            security.setEmailVerified(false);
+            security.setPhoneVerified(false);
+            security.setTwoFactorEnabled(false);
+            security.setAccountLocked(false);
+            security.setLoginFailCount(0);
+            security.setLastLoginTime(null);
+            security.setLockTime(null);
+            security.setLockReason(null);
+
+            authMapper.insertAccountSecurity(security);
+            log.info("로그인 실패 처리용 계정 보안 정보 초기화: {}", userId);
+
+        } catch (Exception e) {
+            log.warn("계정 보안 정보 초기화 실패: {} - {}", userId, e.getMessage());
+        }
+    }
+
+    // 계정 잠금 알림 이메일을 비동기로 발송합니다.
+    private void sendAccountLockNotificationAsync(String userId) {
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                MemberVO member = memberMapper.getMemberByUserId(userId);
+                if (member != null && member.getUserEmail() != null) {
+                    emailService.sendAccountLockNotification(member.getUserEmail(), member.getUserName());
+                    log.info("계정 잠금 알림 이메일 발송 완료: {}", userId);
+                }
+            } catch (Exception e) {
+                log.warn("계정 잠금 알림 이메일 발송 실패: {} - {}", userId, e.getMessage());
+            }
+        });
+    }
+
+    // 계정 잠금 상태 확인
+    public boolean isAccountLocked(String userId) {
+        try {
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null || !Boolean.TRUE.equals(security.getAccountLocked())) {
+                return false;
+            }
+
+            // 자동 해제 시간 확인
+            if (security.getLockTime() != null) {
+                LocalDateTime unlockTime = security.getLockTime().plusMinutes(ACCOUNT_LOCK_DURATION_MINUTES);
+                if (LocalDateTime.now().isAfter(unlockTime)) {
+                    // 자동 해제 시간이 지났으므로 해제 처리
+                    unlockAccount(userId);
+                    return false;
+                }
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("계정 잠금 상태 확인 실패: {}", userId, e);
+            return false; // 오류 시 잠금되지 않은 것으로 처리
         }
     }
 
