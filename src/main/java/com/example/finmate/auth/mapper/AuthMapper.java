@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface AuthMapper {
@@ -38,8 +39,13 @@ public interface AuthMapper {
     int getLoginFailCount(String userId);
 
     // 보안 관련 통계
-    List<java.util.Map<String, Object>> getLoginStatistics(@Param("userId") String userId,
-                                                           @Param("days") int days);
-    List<java.util.Map<String, Object>> getSecurityEvents(@Param("userId") String userId,
-                                                          @Param("days") int days);
+    List<Map<String, Object>> getLoginStatistics(@Param("userId") String userId,
+                                                 @Param("days") int days);
+    List<Map<String, Object>> getSecurityEvents(@Param("userId") String userId,
+                                                @Param("days") int days);
+
+    // 추가된 메서드들 (계정 잠금 관리)
+    List<AccountSecurityVO> getLockedAccounts();
+    Map<String, Object> getAccountLockStatistics();
+    List<AccountSecurityVO> getExpiredLockedAccounts(@Param("minutes") int minutes);
 }

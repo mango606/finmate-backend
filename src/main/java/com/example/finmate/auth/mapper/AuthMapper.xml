@@ -204,4 +204,34 @@
             LIMIT 100
     </select>
 
+    <!-- 잠긴 계정 목록 조회 -->
+    <select id="getLockedAccounts" resultType="com.example.finmate.auth.domain.AccountSecurityVO">
+        SELECT user_id, email_verified, phone_verified, two_factor_enabled,
+               account_locked, login_fail_count, last_login_time, lock_time, lock_reason, update_date
+        FROM tbl_account_security
+        WHERE account_locked = true
+        ORDER BY lock_time DESC
+    </select>
+
+    <!-- 계정 잠금 통계 -->
+    <select id="getAccountLockStatistics" resultType="java.util.Map">
+        SELECT
+            COUNT(*) as total_locked_accounts,
+            COUNT(CASE WHEN lock_time > DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 END) as locked_today,
+            COUNT(CASE WHEN lock_time > DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as locked_this_week,
+            AVG(login_fail_count) as avg_fail_count
+        FROM tbl_account_security
+        WHERE account_locked = true
+    </select>
+
+    <!-- 만료된 잠긴 계정 목록 조회 -->
+    <select id="getExpiredLockedAccounts" resultType="com.example.finmate.auth.domain.AccountSecurityVO">
+        SELECT user_id, email_verified, phone_verified, two_factor_enabled,
+               account_locked, login_fail_count, last_login_time, lock_time, lock_reason, update_date
+        FROM tbl_account_security
+        WHERE account_locked = true
+          AND lock_time IS NOT NULL
+          AND lock_time &lt; DATE_SUB(NOW(), INTERVAL #{minutes} MINUTE)
+    </select>
+
 </mapper>

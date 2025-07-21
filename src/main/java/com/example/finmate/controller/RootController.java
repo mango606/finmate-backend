@@ -222,7 +222,7 @@ public class RootController {
         <h3>🧪 테스트 엔드포인트</h3>
         <p><strong>Hello:</strong> <a href="/hello" target="_blank">http://localhost:8080/hello</a></p>
         <p><strong>Ping:</strong> <a href="/ping" target="_blank">http://localhost:8080/ping</a></p>
-        <p><strong>Health:</strong> <a href="/api/member/health" target="_blank">http://localhost:8080/api/member/health</a></p>
+        <p><strong>Health:</strong> <a href="/api/member/health" target="_blank">http://localhost:8080/api/health</a></p>
         <p><strong>API 문서:</strong> <a href="/swagger-ui.html" target="_blank">http://localhost:8080/swagger-ui.html</a></p>
     </div>
 </div>

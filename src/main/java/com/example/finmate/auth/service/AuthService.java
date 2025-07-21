@@ -5,6 +5,7 @@ import com.example.finmate.auth.domain.AuthTokenVO;
 import com.example.finmate.auth.domain.LoginHistoryVO;
 import com.example.finmate.auth.mapper.AuthMapper;
 import com.example.finmate.common.service.CacheService;
+import com.example.finmate.common.service.EmailService;
 import com.example.finmate.common.util.StringUtils;
 import com.example.finmate.member.domain.MemberVO;
 import com.example.finmate.member.mapper.MemberMapper;
@@ -28,9 +29,13 @@ public class AuthService {
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
     private final CacheService cacheService;
+    private final EmailService emailService;
+    private final RefreshTokenService refreshTokenService;
 
     private static final int PASSWORD_RESET_TOKEN_EXPIRY = 24 * 60 * 60; // 24시간 (초)
     private static final int EMAIL_VERIFICATION_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7일 (초)
+    private static final int MAX_LOGIN_ATTEMPTS = 5; // 최대 로그인 시도 횟수
+    private static final int ACCOUNT_LOCK_DURATION_MINUTES = 30; // 계정 잠금 시간 (분)
 
     // 비밀번호 재설정 토큰 생성
     @Transactional
@@ -100,6 +105,12 @@ public class AuthService {
                 // 토큰 사용 처리
                 authMapper.markTokenAsUsed(token);
                 cacheService.remove("pwd_reset_" + token);
+
+                // 비밀번호 변경 시 모든 Refresh Token 무효화 (보안상)
+                refreshTokenService.invalidateAllRefreshTokens(userId);
+
+                // 로그인 실패 횟수 초기화
+                authMapper.resetLoginFailCount(userId);
 
                 log.info("비밀번호 재설정 완료: {}", userId);
                 return true;
@@ -187,7 +198,7 @@ public class AuthService {
         }
     }
 
-    // 계정 잠금 해제
+    // 계정 잠금 해제 (개선된 버전)
     @Transactional
     public boolean unlockAccount(String userId) {
         try {
@@ -196,18 +207,26 @@ public class AuthService {
                 throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
             }
 
-            // 계정 잠금 해제
-            int result = authMapper.updateAccountLockStatus(userId, false);
-
-            if (result > 0) {
-                // 로그인 실패 횟수 초기화
-                authMapper.resetLoginFailCount(userId);
-
-                log.info("계정 잠금 해제: {}", userId);
-                return true;
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null) {
+                log.info("계정 보안 정보가 없는 사용자의 잠금 해제 요청: {}", userId);
+                return true; // 보안 정보가 없으면 이미 잠기지 않은 상태
             }
 
-            return false;
+            if (!Boolean.TRUE.equals(security.getAccountLocked())) {
+                log.info("이미 잠금 해제된 계정: {}", userId);
+                return true; // 이미 잠금 해제된 상태
+            }
+
+            // 계정 잠금 해제
+            authMapper.updateAccountLockStatus(userId, false);
+            authMapper.resetLoginFailCount(userId);
+
+            log.info("계정 잠금 해제 완료: {}", userId);
+            return true;
+
+        } catch (IllegalArgumentException e) {
+            throw e; // 비즈니스 예외는 그대로 전파
         } catch (Exception e) {
             log.error("계정 잠금 해제 실패: {}", userId, e);
             throw new RuntimeException("계정 잠금 해제에 실패했습니다.", e);
@@ -255,16 +274,20 @@ public class AuthService {
             // 마지막 로그인 시간 업데이트
             authMapper.updateLastLoginTime(userId);
 
+            // 의심스러운 로그인 감지
+            detectSuspiciousLogin(userId, ipAddress, userAgent);
+
             log.info("로그인 성공 기록: {} from {}", userId, ipAddress);
         } catch (Exception e) {
             log.error("로그인 성공 기록 실패: {}", userId, e);
         }
     }
 
-    // 로그인 실패 기록
+    // 로그인 실패 기록 및 계정 잠금 처리 (개선된 버전)
     @Transactional
     public void recordLoginFailure(String userId, String ipAddress, String userAgent, String failureReason) {
         try {
+            // 로그인 이력 기록
             LoginHistoryVO loginHistory = new LoginHistoryVO();
             loginHistory.setUserId(userId);
             loginHistory.setIpAddress(ipAddress);
@@ -275,19 +298,226 @@ public class AuthService {
 
             authMapper.insertLoginHistory(loginHistory);
 
-            // 로그인 실패 횟수 증가
-            authMapper.incrementLoginFailCount(userId);
-
-            // 실패 횟수가 5회 이상이면 계정 잠금
-            int failCount = authMapper.getLoginFailCount(userId);
-            if (failCount >= 5) {
-                authMapper.updateAccountLockStatus(userId, true);
-                log.warn("계정 잠금 - 로그인 실패 횟수 초과: {}", userId);
+            // 사용자가 실제로 존재하는지 확인
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+            if (member == null) {
+                log.warn("존재하지 않는 사용자의 로그인 실패 기록: {}", userId);
+                return; // 존재하지 않는 사용자는 계정 잠금 처리하지 않음
             }
 
-            log.warn("로그인 실패 기록: {} from {} - {}", userId, ipAddress, failureReason);
+            // 계정 보안 정보 확인 및 초기화
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null) {
+                // 계정 보안 정보가 없으면 초기화
+                initializeAccountSecurityForFailure(userId);
+                security = authMapper.getAccountSecurity(userId);
+            }
+
+            // 이미 계정이 잠긴 상태라면 추가 처리하지 않음
+            if (Boolean.TRUE.equals(security.getAccountLocked())) {
+                log.info("이미 잠긴 계정의 로그인 실패: {}", userId);
+                return;
+            }
+
+            // 로그인 실패 횟수 증가
+            authMapper.incrementLoginFailCount(userId);
+            int currentFailCount = authMapper.getLoginFailCount(userId);
+
+            log.info("로그인 실패 기록: {} - 실패 횟수: {}/{}", userId, currentFailCount, MAX_LOGIN_ATTEMPTS);
+
+            // 최대 시도 횟수 초과 시 계정 잠금
+            if (currentFailCount >= MAX_LOGIN_ATTEMPTS) {
+                lockAccount(userId, currentFailCount);
+            }
+
         } catch (Exception e) {
-            log.error("로그인 실패 기록 실패: {}", userId, e);
+            log.error("로그인 실패 기록 처리 실패: {}", userId, e);
+            // 로그인 실패 기록 실패가 로그인 프로세스를 방해하지 않도록 예외를 삼킴
+        }
+    }
+
+    // 계정을 잠급니다.
+    private void lockAccount(String userId, int failCount) {
+        try {
+            AccountSecurityVO security = new AccountSecurityVO();
+            security.setUserId(userId);
+            security.setAccountLocked(true);
+            security.setLockTime(LocalDateTime.now());
+            security.setLockReason(String.format("로그인 %d회 실패로 인한 자동 잠금", failCount));
+
+            authMapper.updateAccountSecurity(security);
+
+            // 모든 Refresh Token 무효화 (보안상)
+            refreshTokenService.invalidateAllRefreshTokens(userId);
+
+            log.warn("계정 잠금 처리 완료: {} (실패 횟수: {}회)", userId, failCount);
+
+            // 계정 잠금 알림 이메일 발송 (비동기)
+            sendAccountLockNotificationAsync(userId);
+
+        } catch (Exception e) {
+            log.error("계정 잠금 처리 실패: {}", userId, e);
+            throw new RuntimeException("계정 잠금 처리 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    // 로그인 실패 처리용 계정 보안 정보 초기화
+    private void initializeAccountSecurityForFailure(String userId) {
+        try {
+            AccountSecurityVO security = new AccountSecurityVO();
+            security.setUserId(userId);
+            security.setEmailVerified(false);
+            security.setPhoneVerified(false);
+            security.setTwoFactorEnabled(false);
+            security.setAccountLocked(false);
+            security.setLoginFailCount(0);
+            security.setLastLoginTime(null);
+            security.setLockTime(null);
+            security.setLockReason(null);
+
+            authMapper.insertAccountSecurity(security);
+            log.info("로그인 실패 처리용 계정 보안 정보 초기화: {}", userId);
+
+        } catch (Exception e) {
+            log.warn("계정 보안 정보 초기화 실패: {} - {}", userId, e.getMessage());
+        }
+    }
+
+    // 계정 잠금 알림 이메일을 비동기로 발송합니다.
+    private void sendAccountLockNotificationAsync(String userId) {
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                MemberVO member = memberMapper.getMemberByUserId(userId);
+                if (member != null && member.getUserEmail() != null) {
+                    emailService.sendAccountLockNotification(member.getUserEmail(), member.getUserName());
+                    log.info("계정 잠금 알림 이메일 발송 완료: {}", userId);
+                }
+            } catch (Exception e) {
+                log.warn("계정 잠금 알림 이메일 발송 실패: {} - {}", userId, e.getMessage());
+            }
+        });
+    }
+
+    // 계정 잠금 상태 확인
+    public boolean isAccountLocked(String userId) {
+        try {
+            AccountSecurityVO security = authMapper.getAccountSecurity(userId);
+            if (security == null || !Boolean.TRUE.equals(security.getAccountLocked())) {
+                return false;
+            }
+
+            // 자동 해제 시간 확인
+            if (security.getLockTime() != null) {
+                LocalDateTime unlockTime = security.getLockTime().plusMinutes(ACCOUNT_LOCK_DURATION_MINUTES);
+                if (LocalDateTime.now().isAfter(unlockTime)) {
+                    // 자동 해제 시간이 지났으므로 해제 처리
+                    unlockAccount(userId);
+                    return false;
+                }
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("계정 잠금 상태 확인 실패: {}", userId, e);
+            return false; // 오류 시 잠금되지 않은 것으로 처리
+        }
+    }
+
+    // 잠긴 계정 목록 조회 (관리자용)
+    public List<AccountSecurityVO> getLockedAccounts() {
+        try {
+            return authMapper.getLockedAccounts();
+        } catch (Exception e) {
+            log.error("잠긴 계정 목록 조회 실패", e);
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    // 계정 잠금 통계 조회
+    public Map<String, Object> getAccountLockStatistics() {
+        try {
+            return authMapper.getAccountLockStatistics();
+        } catch (Exception e) {
+            log.error("계정 잠금 통계 조회 실패", e);
+            return new HashMap<>();
+        }
+    }
+
+    // 의심스러운 로그인 감지
+    private void detectSuspiciousLogin(String userId, String ipAddress, String userAgent) {
+        try {
+            // 최근 로그인 정보 확인
+            String lastIpKey = "last_login_ip_" + userId;
+            String lastUserAgentKey = "last_login_ua_" + userId;
+
+            String lastIp = cacheService.get(lastIpKey, String.class);
+            String lastUserAgent = cacheService.get(lastUserAgentKey, String.class);
+
+            boolean suspicious = false;
+            StringBuilder suspiciousReason = new StringBuilder();
+
+            // IP 주소가 다른 경우
+            if (lastIp != null && !lastIp.equals(ipAddress)) {
+                suspicious = true;
+                suspiciousReason.append("새로운 IP 주소에서 로그인 (").append(lastIp).append(" -> ").append(ipAddress).append("); ");
+            }
+
+            // User Agent가 다른 경우
+            if (lastUserAgent != null && !lastUserAgent.equals(userAgent)) {
+                suspicious = true;
+                suspiciousReason.append("새로운 기기/브라우저에서 로그인; ");
+            }
+
+            if (suspicious) {
+                // 의심스러운 로그인 이벤트 기록
+                recordSecurityEvent(userId, "SUSPICIOUS_LOGIN: " + suspiciousReason.toString(), ipAddress);
+
+                // 의심스러운 로그인 알림 이메일 발송
+                try {
+                    MemberVO member = memberMapper.getMemberByUserId(userId);
+                    if (member != null) {
+                        sendSuspiciousLoginNotification(member, ipAddress, userAgent);
+                    }
+                } catch (Exception e) {
+                    log.warn("의심스러운 로그인 알림 이메일 발송 실패: {}", userId, e);
+                }
+
+                log.info("의심스러운 로그인 감지: {} - {}", userId, suspiciousReason.toString());
+            }
+
+            // 정보 업데이트
+            cacheService.put(lastIpKey, ipAddress, 86400); // 24시간
+            cacheService.put(lastUserAgentKey, userAgent, 86400);
+
+        } catch (Exception e) {
+            log.error("의심스러운 로그인 감지 실패: {}", userId, e);
+        }
+    }
+
+    // 의심스러운 로그인 알림 이메일 발송
+    private void sendSuspiciousLoginNotification(MemberVO member, String ipAddress, String userAgent) {
+        try {
+            String subject = "FinMate 보안 알림: 새로운 기기에서 로그인";
+            String content = String.format(
+                    "안녕하세요 %s님,\n\n" +
+                            "회원님의 계정에 새로운 기기에서 로그인이 감지되었습니다.\n\n" +
+                            "로그인 정보:\n" +
+                            "- IP 주소: %s\n" +
+                            "- 기기/브라우저: %s\n" +
+                            "- 시간: %s\n\n" +
+                            "본인의 로그인이 아니라면 즉시 비밀번호를 변경하고 고객센터로 문의해주세요.\n\n" +
+                            "감사합니다.\n" +
+                            "FinMate 보안팀",
+                    member.getUserName(),
+                    ipAddress,
+                    userAgent != null ? userAgent.substring(0, Math.min(userAgent.length(), 100)) : "알 수 없음",
+                    LocalDateTime.now()
+            );
+
+            emailService.sendEmail(member.getUserEmail(), subject, content);
+        } catch (Exception e) {
+            log.error("의심스러운 로그인 알림 이메일 발송 실패", e);
         }
     }
 
@@ -304,9 +534,14 @@ public class AuthService {
                 result.put("accountLocked", security.getAccountLocked());
                 result.put("loginFailCount", security.getLoginFailCount());
                 result.put("lastLoginTime", security.getLastLoginTime());
+                result.put("lockReason", security.getLockReason());
             } else {
                 result = getDefaultSecurityInfo();
             }
+
+            // Refresh Token 통계 추가
+            Map<String, Object> refreshTokenStats = refreshTokenService.getRefreshTokenStatistics(userId);
+            result.put("refreshTokenStats", refreshTokenStats);
 
             return result;
         } catch (Exception e) {
@@ -327,6 +562,8 @@ public class AuthService {
                 settings.put("twoFactorEnabled", security.getTwoFactorEnabled());
                 settings.put("loginNotificationEnabled", true);
                 settings.put("securityQuestionEnabled", false);
+                settings.put("accountLocked", security.getAccountLocked());
+                settings.put("loginFailCount", security.getLoginFailCount());
             } else {
                 settings = getDefaultSecuritySettings();
             }
@@ -345,6 +582,11 @@ public class AuthService {
             int result = authMapper.updateTwoFactorStatus(userId, enabled);
 
             if (result > 0) {
+                // 2단계 인증 비활성화 시 기존 Refresh Token 모두 무효화 (보안상)
+                if (!enabled) {
+                    refreshTokenService.invalidateAllRefreshTokens(userId);
+                }
+
                 log.info("2단계 인증 설정 변경: {} - {}", userId, enabled);
                 return true;
             }
@@ -409,17 +651,26 @@ public class AuthService {
                 LocalDateTime lastLogin = security.getLastLoginTime();
                 if (lastLogin.isAfter(LocalDateTime.now().minusDays(30))) {
                     score += 25;
-                    checkResult.put("recentActivity", true);
-                } else {
                     checkResult.put("recentActivity", false);
                 }
             } else {
                 checkResult.put("recentActivity", false);
             }
 
+            // Refresh Token 보안 검사 (추가 5점)
+            Map<String, Object> tokenStats = refreshTokenService.getRefreshTokenStatistics(userId);
+            int activeTokenCount = (Integer) tokenStats.getOrDefault("activeTokenCount", 0);
+            if (activeTokenCount <= 3) { // 적절한 토큰 개수 유지
+                score += 5;
+                checkResult.put("refreshTokenSecurity", true);
+            } else {
+                checkResult.put("refreshTokenSecurity", false);
+            }
+
             checkResult.put("totalScore", score);
             checkResult.put("grade", getSecurityGrade(score));
-            checkResult.put("recommendations", getSecurityRecommendations(security));
+            checkResult.put("recommendations", getSecurityRecommendations(security, activeTokenCount));
+            checkResult.put("refreshTokenStats", tokenStats);
 
             return checkResult;
         } catch (Exception e) {
@@ -496,7 +747,7 @@ public class AuthService {
         return "F";
     }
 
-    private java.util.List<String> getSecurityRecommendations(AccountSecurityVO security) {
+    private java.util.List<String> getSecurityRecommendations(AccountSecurityVO security, int activeTokenCount) {
         java.util.List<String> recommendations = new java.util.ArrayList<>();
 
         if (security == null || !security.getEmailVerified()) {
@@ -509,6 +760,10 @@ public class AuthService {
 
         if (security == null || !security.getPhoneVerified()) {
             recommendations.add("휴대폰 인증을 완료해주세요.");
+        }
+
+        if (activeTokenCount > 5) {
+            recommendations.add("사용하지 않는 기기의 로그인 세션을 정리해주세요.");
         }
 
         recommendations.add("정기적으로 비밀번호를 변경해주세요.");
@@ -525,6 +780,7 @@ public class AuthService {
         result.put("accountLocked", false);
         result.put("loginFailCount", 0);
         result.put("lastLoginTime", null);
+        result.put("refreshTokenStats", new HashMap<>());
         return result;
     }
 
@@ -535,6 +791,8 @@ public class AuthService {
         settings.put("twoFactorEnabled", false);
         settings.put("loginNotificationEnabled", true);
         settings.put("securityQuestionEnabled", false);
+        settings.put("accountLocked", false);
+        settings.put("loginFailCount", 0);
         return settings;
     }
 
@@ -564,9 +822,11 @@ public class AuthService {
         result.put("twoFactorEnabled", false);
         result.put("passwordStrength", "UNKNOWN");
         result.put("recentActivity", false);
+        result.put("refreshTokenSecurity", false);
         result.put("totalScore", 0);
         result.put("grade", "F");
         result.put("recommendations", java.util.Arrays.asList("보안 점검을 다시 시도해주세요."));
+        result.put("refreshTokenStats", new HashMap<>());
         return result;
     }
 }
