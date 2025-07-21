@@ -34,7 +34,12 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("/resources/images/");
 
-        // 루트 경로의 정적 파일들 (index.html 등)
+        // HTML 파일들을 직접 서빙
+        registry.addResourceHandler("/*.html")
+                .addResourceLocations("/")
+                .setCachePeriod(0);
+
+        // 루트 경로의 정적 파일들
         registry.addResourceHandler("/**")
                 .addResourceLocations("/")
                 .resourceChain(true);
@@ -48,10 +53,5 @@ public class WebConfig implements WebMvcConfigurer {
     public void addViewControllers(ViewControllerRegistry registry) {
         // 루트 경로를 index.html로 포워딩
         registry.addViewController("/").setViewName("forward:/index.html");
-
-        // 회원 관련 페이지 라우팅 추가
-        registry.addViewController("/member").setViewName("forward:/member.html");
-        registry.addViewController("/login").setViewName("forward:/member.html");
-        registry.addViewController("/register").setViewName("forward:/member.html");
     }
 }

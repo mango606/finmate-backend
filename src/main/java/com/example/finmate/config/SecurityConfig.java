@@ -1,13 +1,8 @@
 package com.example.finmate.config;
 
-import com.example.finmate.security.filter.JwtAuthenticationFilter;
-import com.example.finmate.security.filter.JwtUsernamePasswordAuthenticationFilter;
-import com.example.finmate.security.handler.CustomAccessDeniedHandler;
-import com.example.finmate.security.handler.CustomAuthenticationEntryPoint;
-import com.example.finmate.security.handler.LoginFailureHandler;
-import com.example.finmate.security.handler.LoginSuccessHandler;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.example.finmate.security.service.CustomUserDetailsService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,28 +15,21 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-@RequiredArgsConstructor
 @SuppressWarnings("deprecation")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Qualifier("customUserDetailsService")
-    private final UserDetailsService userDetailsService;
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final LoginSuccessHandler loginSuccessHandler;
-    private final LoginFailureHandler loginFailureHandler;
-    private final CustomAccessDeniedHandler customAccessDeniedHandler;
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -70,11 +58,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+        auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        log.info("Security 설정 적용 중...");
+
         http
                 // CSRF 비활성화
                 .csrf().disable()
@@ -84,9 +74,44 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
 
-                // 세션 관리 설정
+                // 세션 관리 설정 (기본 세션 사용)
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+
+                .and()
+
+                // HTTP Basic 인증 비활성화
+                .httpBasic().disable()
+
+                // 폼 로그인 설정
+                .formLogin()
+                .loginProcessingUrl("/api/auth/login")
+                .usernameParameter("userId")
+                .passwordParameter("userPassword")
+                .successHandler((request, response, authentication) -> {
+                    log.info("로그인 성공: {}", authentication.getName());
+                    response.setStatus(200);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":true,\"message\":\"로그인 성공\"}");
+                })
+                .failureHandler((request, response, exception) -> {
+                    log.warn("로그인 실패: {}", exception.getMessage());
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":false,\"message\":\"로그인 실패\"}");
+                })
+
+                .and()
+
+                // 로그아웃 설정
+                .logout()
+                .logoutUrl("/api/auth/logout")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    log.info("로그아웃 성공");
+                    response.setStatus(200);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":true,\"message\":\"로그아웃 성공\"}");
+                })
 
                 .and()
 
@@ -94,14 +119,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 // 정적 리소스 허용
                 .antMatchers("/resources/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                // HTML 파일들 허용
+                .antMatchers("/", "/index.html", "/member.html", "/*.html").permitAll()
                 // Swagger 허용
                 .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v2/api-docs", "/webjars/**").permitAll()
                 .antMatchers("/swagger-resources/**", "/configuration/ui", "/configuration/security").permitAll()
                 // 인증 불필요 API
-                .antMatchers("/api/auth/login", "/api/member/join").permitAll()
-                .antMatchers("/api/member/checkUserId/**", "/api/member/checkEmail").permitAll()
+                .antMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                .antMatchers("/api/member/join", "/api/member/checkUserId/**", "/api/member/checkEmail").permitAll()
                 .antMatchers("/api/member/health", "/api/health/**").permitAll()
-                .antMatchers("/", "/index.html").permitAll()
+                // 테스트 엔드포인트 허용
+                .antMatchers("/ping", "/hello").permitAll()
                 // 회원 관련 API - 인증 필요
                 .antMatchers("/api/member/**").hasRole("USER")
                 // 관리자 API
@@ -114,22 +142,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 // 예외 처리
                 .exceptionHandling()
-                .accessDeniedHandler(customAccessDeniedHandler)
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    log.warn("접근 거부: {}", request.getRequestURI());
+                    response.setStatus(403);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":false,\"message\":\"접근 권한이 없습니다\"}");
+                })
+                .authenticationEntryPoint((request, response, authException) -> {
+                    log.warn("인증 필요: {}", request.getRequestURI());
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":false,\"message\":\"인증이 필요합니다\"}");
+                });
 
-                .and()
-
-                // JWT 필터 추가
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAt(createJwtUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-    }
-
-    @Bean
-    public JwtUsernamePasswordAuthenticationFilter createJwtUsernamePasswordAuthenticationFilter() throws Exception {
-        return new JwtUsernamePasswordAuthenticationFilter(
-                authenticationManagerBean(),
-                loginSuccessHandler,
-                loginFailureHandler
-        );
+        log.info("Security 설정 완료");
     }
 }
