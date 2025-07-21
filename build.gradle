@@ -212,10 +212,14 @@ task runServer(type: JavaExec) {
     mainClass = 'com.example.finmate.JettyLauncher'
     classpath = sourceSets.main.runtimeClasspath
 
+    // UTF-8 시스템 프로퍼티 강제 설정
     systemProperty 'file.encoding', 'UTF-8'
     systemProperty 'user.timezone', 'Asia/Seoul'
     systemProperty 'console.encoding', 'UTF-8'
     systemProperty 'java.awt.headless', 'true'
+    systemProperty 'user.language', 'ko'
+    systemProperty 'user.country', 'KR'
+    systemProperty 'sun.jnu.encoding', 'UTF-8'
 
     jvmArgs = [
             '-Xmx1024m',
@@ -223,12 +227,15 @@ task runServer(type: JavaExec) {
             '-Dfile.encoding=UTF-8',
             '-Dconsole.encoding=UTF-8',
             '-Duser.language=ko',
-            '-Duser.country=KR'
+            '-Duser.country=KR',
+            '-Dsun.jnu.encoding=UTF-8',
+            '-Djava.awt.headless=true'
     ]
 
     doFirst {
         println "🚀 FinMate 서버를 시작합니다..."
         println "📍 URL: http://localhost:8080"
+        println "👥 회원 페이지: http://localhost:8080/member.html"
         println "📖 API 문서: http://localhost:8080/swagger-ui.html"
     }
 }

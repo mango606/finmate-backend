@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 회원가입/로그인</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            min-height: 600px;
+            display: flex;
+        }
+
+        .welcome-section {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="1.5" fill="white" opacity="0.1"/><circle cx="40" cy="70" r="1" fill="white" opacity="0.1"/></svg>');
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .welcome-text {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .features {
+            list-style: none;
+        }
+
+        .features li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .features li::before {
+            content: '✓';
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .form-section {
+            flex: 1;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .form-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .form-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .form-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            padding: 5px;
+        }
+
+        .form-tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .form-tab.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #dc3545;
+        }
+
+        .form-control.success {
+            border-color: #28a745;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .validation-message {
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .validation-message.error {
+            color: #dc3545;
+        }
+
+        .validation-message.success {
+            color: #28a745;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .password-strength {
+            margin-top: 10px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s;
+            border-radius: 2px;
+        }
+
+        .strength-text {
+            font-size: 12px;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s;
+        }
+
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+                margin: 10px;
+            }
+
+            .welcome-section {
+                padding: 30px 20px;
+            }
+
+            .form-section {
+                padding: 30px 20px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        .member-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .member-info h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .member-details {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .member-details div {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .member-details div:last-child {
+            border-bottom: none;
+        }
+
+        .member-details strong {
+            color: #667eea;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .home-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            padding: 10px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+<a href="/" class="home-link">🏠 홈으로</a>
+
+<div id="app">
+    <div class="app-container">
+        <!-- 좌측 환영 섹션 -->
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <div class="logo">🏦 FinMate</div>
+                <div class="welcome-text">
+                    당신의 제테크 여정을 함께하는<br>
+                    스마트 금융 서비스
+                </div>
+                <ul class="features">
+                    <li>개인 맞춤형 투자 포트폴리오</li>
+                    <li>실시간 자산 관리</li>
+                    <li>전문가 투자 조언</li>
+                    <li>안전한 데이터 보호</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 우측 폼 섹션 -->
+        <div class="form-section">
+            <!-- 로딩 상태 -->
+            <transition name="fade">
+                <div v-if="isLoading" class="loading-overlay">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <div>처리 중...</div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- 로그인 성공 후 회원 정보 표시 -->
+            <div v-if="isLoggedIn" class="member-info">
+                <h2>환영합니다! {{ memberInfo.userName }}님</h2>
+                <div class="member-details">
+                    <div><strong>사용자 ID:</strong> {{ memberInfo.userId }}</div>
+                    <div><strong>이메일:</strong> {{ memberInfo.userEmail }}</div>
+                    <div><strong>전화번호:</strong> {{ memberInfo.userPhone || '미등록' }}</div>
+                    <div><strong>가입일:</strong> {{ formatDate(memberInfo.regDate) }}</div>
+                    <div><strong>권한:</strong> {{ memberInfo.authorities ? memberInfo.authorities.join(', ') : '일반사용자' }}</div>
+                </div>
+                <button @click="logout" class="btn btn-secondary">로그아웃</button>
+            </div>
+
+            <!-- 로그인/회원가입 폼 -->
+            <div v-else>
+                <div class="form-header">
+                    <h1 class="form-title">{{ currentTab === 'login' ? '로그인' : '회원가입' }}</h1>
+                    <p class="form-subtitle">
+                        {{ currentTab === 'login' ? 'FinMate에 오신 것을 환영합니다' : '새로운 금융 여정을 시작하세요' }}
+                    </p>
+                </div>
+
+                <!-- 탭 메뉴 -->
+                <div class="form-tabs">
+                    <button
+                            @click="currentTab = 'login'"
+                            :class="['form-tab', { active: currentTab === 'login' }]">
+                        로그인
+                    </button>
+                    <button
+                            @click="currentTab = 'register'"
+                            :class="['form-tab', { active: currentTab === 'register' }]">
+                        회원가입
+                    </button>
+                </div>
+
+                <!-- 알림 메시지 -->
+                <transition name="fade">
+                    <div v-if="alertMessage" :class="['alert', 'alert-' + alertType]">
+                        <span>{{ alertMessage }}</span>
+                    </div>
+                </transition>
+
+                <!-- 로그인 폼 -->
+                <form v-if="currentTab === 'login'" @submit.prevent="handleLogin">
+                    <div class="form-group">
+                        <label class="form-label">사용자 ID</label>
+                        <input
+                                v-model="loginForm.userId"
+                                type="text"
+                                class="form-control"
+                                placeholder="사용자 ID를 입력하세요"
+                                required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input
+                                v-model="loginForm.userPassword"
+                                type="password"
+                                class="form-control"
+                                placeholder="비밀번호를 입력하세요"
+                                required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                        {{ isLoading ? '로그인 중...' : '로그인' }}
+                    </button>
+                </form>
+
+                <!-- 회원가입 폼 -->
+                <form v-if="currentTab === 'register'" @submit.prevent="handleRegister">
+                    <div class="form-group">
+                        <label class="form-label">사용자 ID</label>
+                        <input
+                                v-model="registerForm.userId"
+                                @blur="checkUserIdDuplicate"
+                                type="text"
+                                :class="['form-control', getValidationClass('userId')]"
+                                placeholder="4-20자의 영문, 숫자, 언더스코어"
+                                required>
+                        <div :class="['validation-message', getValidationClass('userId')]">
+                            {{ validationMessages.userId }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input
+                                v-model="registerForm.userPassword"
+                                @input="checkPasswordStrength"
+                                type="password"
+                                :class="['form-control', getValidationClass('userPassword')]"
+                                placeholder="8-20자, 영문자+숫자 또는 특수문자"
+                                required>
+                        <div v-if="registerForm.userPassword" class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" :style="{
+                                        width: passwordStrength.percentage + '%',
+                                        backgroundColor: passwordStrength.color
+                                    }"></div>
+                            </div>
+                            <div class="strength-text" :style="{ color: passwordStrength.color }">
+                                {{ passwordStrength.text }}
+                            </div>
+                        </div>
+                        <div :class="['validation-message', getValidationClass('userPassword')]">
+                            {{ validationMessages.userPassword }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호 확인</label>
+                        <input
+                                v-model="registerForm.passwordConfirm"
+                                @blur="validatePasswordConfirm"
+                                type="password"
+                                :class="['form-control', getValidationClass('passwordConfirm')]"
+                                placeholder="비밀번호를 다시 입력하세요"
+                                required>
+                        <div :class="['validation-message', getValidationClass('passwordConfirm')]">
+                            {{ validationMessages.passwordConfirm }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">이름</label>
+                        <input
+                                v-model="registerForm.userName"
+                                @blur="validateUserName"
+                                type="text"
+                                :class="['form-control', getValidationClass('userName')]"
+                                placeholder="2-10자의 이름"
+                                required>
+                        <div :class="['validation-message', getValidationClass('userName')]">
+                            {{ validationMessages.userName }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">이메일</label>
+                        <input
+                                v-model="registerForm.userEmail"
+                                @blur="checkEmailDuplicate"
+                                type="email"
+                                :class="['form-control', getValidationClass('userEmail')]"
+                                placeholder="example@finmate.com"
+                                required>
+                        <div :class="['validation-message', getValidationClass('userEmail')]">
+                            {{ validationMessages.userEmail }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">전화번호 (선택)</label>
+                            <input
+                                    v-model="registerForm.userPhone"
+                                    @blur="validateUserPhone"
+                                    type="tel"
+                                    :class="['form-control', getValidationClass('userPhone')]"
+                                    placeholder="010-1234-5678">
+                            <div :class="['validation-message', getValidationClass('userPhone')]">
+                                {{ validationMessages.userPhone }}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">성별 (선택)</label>
+                            <select v-model="registerForm.gender" class="form-control">
+                                <option value="">선택하세요</option>
+                                <option value="M">남성</option>
+                                <option value="F">여성</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">생년월일 (선택)</label>
+                        <input
+                                v-model="registerForm.birthDate"
+                                type="date"
+                                class="form-control"
+                                :max="new Date().toISOString().split('T')[0]">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" :disabled="isLoading || !isFormValid">
+                        {{ isLoading ? '가입 중...' : '회원가입' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed, reactive, watch, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            // 반응형 데이터
+            const currentTab = ref('login');
+            const isLoading = ref(false);
+            const isLoggedIn = ref(false);
+            const alertMessage = ref('');
+            const alertType = ref('info');
+            const memberInfo = ref({});
+
+            // 로그인 폼
+            const loginForm = reactive({
+                userId: '',
+                userPassword: ''
+            });
+
+            // 회원가입 폼
+            const registerForm = reactive({
+                userId: '',
+                userPassword: '',
+                passwordConfirm: '',
+                userName: '',
+                userEmail: '',
+                userPhone: '',
+                gender: '',
+                birthDate: ''
+            });
+
+            // 유효성 검증 상태
+            const validationStates = reactive({
+                userId: null,
+                userPassword: null,
+                passwordConfirm: null,
+                userName: null,
+                userEmail: null,
+                userPhone: null
+            });
+
+            // 유효성 검증 메시지
+            const validationMessages = reactive({
+                userId: '',
+                userPassword: '',
+                passwordConfirm: '',
+                userName: '',
+                userEmail: '',
+                userPhone: ''
+            });
+
+            // 비밀번호 강도
+            const passwordStrength = reactive({
+                percentage: 0,
+                color: '#dc3545',
+                text: '약함'
+            });
+
+            // API 기본 설정
+            const API_BASE_URL = '/api';
+
+            // Axios 기본 설정
+            axios.defaults.baseURL = API_BASE_URL;
+            axios.defaults.headers.common['Content-Type'] = 'application/json';
+            axios.defaults.withCredentials = true;
+
+            // 알림 표시 함수
+            const showAlert = (message, type = 'info', duration = 5000) => {
+                alertMessage.value = message;
+                alertType.value = type;
+                setTimeout(() => {
+                    alertMessage.value = '';
+                }, duration);
+            };
+
+            // 유효성 검증 클래스 반환
+            const getValidationClass = (field) => {
+                const state = validationStates[field];
+                if (state === true) return 'success';
+                if (state === false) return 'error';
+                return '';
+            };
+
+            // 사용자 ID 중복 확인
+            const checkUserIdDuplicate = async () => {
+                const userId = registerForm.userId.trim();
+
+                if (!userId) {
+                    validationStates.userId = null;
+                    validationMessages.userId = '';
+                    return;
+                }
+
+                if (userId.length < 4 || userId.length > 20) {
+                    validationStates.userId = false;
+                    validationMessages.userId = '사용자 ID는 4-20자 사이여야 합니다.';
+                    return;
+                }
+
+                if (!/^[a-zA-Z0-9_]+$/.test(userId)) {
+                    validationStates.userId = false;
+                    validationMessages.userId = '영문, 숫자, 언더스코어만 사용 가능합니다.';
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(`/member/checkUserId/${userId}`);
+                    if (response.data.success) {
+                        if (response.data.data.isDuplicate) {
+                            validationStates.userId = false;
+                            validationMessages.userId = '이미 사용 중인 ID입니다.';
+                        } else {
+                            validationStates.userId = true;
+                            validationMessages.userId = '사용 가능한 ID입니다.';
+                        }
+                    }
+                } catch (error) {
+                    validationStates.userId = false;
+                    validationMessages.userId = '중복 확인 중 오류가 발생했습니다.';
+                }
+            };
+
+            // 이메일 중복 확인
+            const checkEmailDuplicate = async () => {
+                const userEmail = registerForm.userEmail.trim();
+
+                if (!userEmail) {
+                    validationStates.userEmail = null;
+                    validationMessages.userEmail = '';
+                    return;
+                }
+
+                const emailRegex = /^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$/;
+                if (!emailRegex.test(userEmail)) {
+                    validationStates.userEmail = false;
+                    validationMessages.userEmail = '올바른 이메일 형식이 아닙니다.';
+                    return;
+                }
+
+                try {
+                    const response = await axios.get('/member/checkEmail', {
+                        params: { userEmail }
+                    });
+                    if (response.data.success) {
+                        if (response.data.data.isDuplicate) {
+                            validationStates.userEmail = false;
+                            validationMessages.userEmail = '이미 사용 중인 이메일입니다.';
+                        } else {
+                            validationStates.userEmail = true;
+                            validationMessages.userEmail = '사용 가능한 이메일입니다.';
+                        }
+                    }
+                } catch (error) {
+                    validationStates.userEmail = false;
+                    validationMessages.userEmail = '중복 확인 중 오류가 발생했습니다.';
+                }
+            };
+
+            // 비밀번호 강도 확인
+            const checkPasswordStrength = () => {
+                const password = registerForm.userPassword;
+
+                if (!password) {
+                    passwordStrength.percentage = 0;
+                    validationStates.userPassword = null;
+                    validationMessages.userPassword = '';
+                    return;
+                }
+
+                let strength = 0;
+                let feedback = [];
+
+                if (password.length >= 8) {
+                    strength += 20;
+                } else {
+                    feedback.push('최소 8자');
+                }
+
+                if (/[A-Z]/.test(password)) {
+                    strength += 20;
+                }
+
+                if (/[a-z]/.test(password)) {
+                    strength += 20;
+                } else {
+                    feedback.push('영문자 필요');
+                }
+
+                if (/\d/.test(password)) {
+                    strength += 20;
+                } else {
+                    feedback.push('숫자 필요');
+                }
+
+                if (/[@$!%*?&]/.test(password)) {
+                    strength += 20;
+                }
+
+                passwordStrength.percentage = Math.min(strength, 100);
+
+                if (strength >= 80) {
+                    passwordStrength.color = '#28a745';
+                    passwordStrength.text = '매우 안전';
+                    validationStates.userPassword = true;
+                    validationMessages.userPassword = '안전한 비밀번호입니다.';
+                } else if (strength >= 60) {
+                    passwordStrength.color = '#ffc107';
+                    passwordStrength.text = '보통';
+                    validationStates.userPassword = true;
+                    validationMessages.userPassword = '사용 가능한 비밀번호입니다.';
+                } else {
+                    passwordStrength.color = '#dc3545';
+                    passwordStrength.text = '약함';
+                    validationStates.userPassword = false;
+                    validationMessages.userPassword = feedback.length > 0 ? feedback.join(', ') + ' 포함해주세요.' : '더 안전한 비밀번호를 사용하세요.';
+                }
+            };
+
+            // 비밀번호 확인 검증
+            const validatePasswordConfirm = () => {
+                if (!registerForm.passwordConfirm) {
+                    validationStates.passwordConfirm = null;
+                    validationMessages.passwordConfirm = '';
+                    return;
+                }
+
+                if (registerForm.passwordConfirm === registerForm.userPassword) {
+                    validationStates.passwordConfirm = true;
+                    validationMessages.passwordConfirm = '비밀번호가 일치합니다.';
+                } else {
+                    validationStates.passwordConfirm = false;
+                    validationMessages.passwordConfirm = '비밀번호가 일치하지 않습니다.';
+                }
+            };
+
+            // 사용자 이름 검증
+            const validateUserName = () => {
+                const userName = registerForm.userName.trim();
+
+                if (!userName) {
+                    validationStates.userName = null;
+                    validationMessages.userName = '';
+                    return;
+                }
+
+                if (userName.length < 2 || userName.length > 10) {
+                    validationStates.userName = false;
+                    validationMessages.userName = '이름은 2-10자 사이여야 합니다.';
+                } else {
+                    validationStates.userName = true;
+                    validationMessages.userName = '올바른 이름입니다.';
+                }
+            };
+
+            // 전화번호 검증
+            const validateUserPhone = () => {
+                const userPhone = registerForm.userPhone.trim();
+
+                if (!userPhone) {
+                    validationStates.userPhone = null;
+                    validationMessages.userPhone = '';
+                    return;
+                }
+
+                const phoneRegex = /^01[0-9]-\d{4}-\d{4}$/;
+                if (phoneRegex.test(userPhone)) {
+                    validationStates.userPhone = true;
+                    validationMessages.userPhone = '올바른 전화번호 형식입니다.';
+                } else {
+                    validationStates.userPhone = false;
+                    validationMessages.userPhone = '010-1234-5678 형식으로 입력하세요.';
+                }
+            };
+
+            // 폼 유효성 검증
+            const isFormValid = computed(() => {
+                const requiredFields = ['userId', 'userPassword', 'passwordConfirm', 'userName', 'userEmail'];
+
+                for (const field of requiredFields) {
+                    if (!registerForm[field] || !registerForm[field].trim()) {
+                        return false;
+                    }
+                }
+
+                for (const field of requiredFields) {
+                    if (validationStates[field] !== true) {
+                        return false;
+                    }
+                }
+
+                if (registerForm.userPhone && validationStates.userPhone !== true) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // 로그인 처리
+            const handleLogin = async () => {
+                if (!loginForm.userId.trim() || !loginForm.userPassword) {
+                    showAlert('사용자 ID와 비밀번호를 모두 입력해주세요.', 'error');
+                    return;
+                }
+
+                isLoading.value = true;
+
+                try {
+                    const response = await axios.post('/auth/login', {
+                        userId: loginForm.userId.trim(),
+                        userPassword: loginForm.userPassword
+                    });
+
+                    if (response.data.success) {
+                        const token = response.data.data.accessToken;
+                        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                        localStorage.setItem('accessToken', token);
+                        if (response.data.data.refreshToken) {
+                            localStorage.setItem('refreshToken', response.data.data.refreshToken);
+                        }
+
+                        memberInfo.value = response.data.data.user;
+                        isLoggedIn.value = true;
+
+                        showAlert(`환영합니다, ${memberInfo.value.userName}님!`, 'success');
+
+                        loginForm.userId = '';
+                        loginForm.userPassword = '';
+                    }
+                } catch (error) {
+                    console.error('로그인 오류:', error);
+
+                    if (error.response?.status === 423) {
+                        showAlert('계정이 잠금 상태입니다. 30분 후 다시 시도해주세요.', 'error');
+                    } else if (error.response?.status === 401) {
+                        showAlert('사용자 ID 또는 비밀번호가 올바르지 않습니다.', 'error');
+                    } else {
+                        showAlert(error.response?.data?.message || '로그인 중 오류가 발생했습니다.', 'error');
+                    }
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            // 회원가입 처리
+            const handleRegister = async () => {
+                if (!isFormValid.value) {
+                    showAlert('모든 필수 항목을 올바르게 입력해주세요.', 'error');
+                    return;
+                }
+
+                isLoading.value = true;
+
+                try {
+                    const registerData = {
+                        userId: registerForm.userId.trim(),
+                        userPassword: registerForm.userPassword,
+                        passwordConfirm: registerForm.passwordConfirm,
+                        userName: registerForm.userName.trim(),
+                        userEmail: registerForm.userEmail.trim(),
+                        userPhone: registerForm.userPhone.trim() || null,
+                        gender: registerForm.gender || null,
+                        birthDate: registerForm.birthDate || null
+                    };
+
+                    const response = await axios.post('/member/join', registerData);
+
+                    if (response.data.success) {
+                        showAlert('회원가입이 완료되었습니다! 로그인해주세요.', 'success');
+
+                        Object.keys(registerForm).forEach(key => {
+                            registerForm[key] = '';
+                        });
+                        Object.keys(validationStates).forEach(key => {
+                            validationStates[key] = null;
+                        });
+                        Object.keys(validationMessages).forEach(key => {
+                            validationMessages[key] = '';
+                        });
+
+                        currentTab.value = 'login';
+                        loginForm.userId = registerData.userId;
+                    }
+                } catch (error) {
+                    console.error('회원가입 오류:', error);
+
+                    if (error.response?.data?.errorCode === 'DUPLICATE_RESOURCE') {
+                        showAlert('이미 사용 중인 정보입니다. 다시 확인해주세요.', 'error');
+                    } else if (error.response?.data?.errorCode === 'VALIDATION_ERROR') {
+                        showAlert(error.response.data.message || '입력 정보를 다시 확인해주세요.', 'error');
+                    } else {
+                        showAlert(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.', 'error');
+                    }
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            // 로그아웃 처리
+            const logout = async () => {
+                try {
+                    await axios.post('/auth/logout');
+                } catch (error) {
+                    console.warn('로그아웃 API 호출 실패:', error);
+                } finally {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    delete axios.defaults.headers.common['Authorization'];
+
+                    isLoggedIn.value = false;
+                    memberInfo.value = {};
+
+                    showAlert('로그아웃되었습니다.', 'info');
+                }
+            };
+
+            // 날짜 포맷 함수
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            };
+
+            // 페이지 로드 시 토큰 확인
+            const checkAuthStatus = async () => {
+                const token = localStorage.getItem('accessToken');
+                if (!token) return;
+
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                try {
+                    const response = await axios.get('/auth/me');
+                    if (response.data.success) {
+                        memberInfo.value = response.data.data;
+                        isLoggedIn.value = true;
+                    }
+                } catch (error) {
+                    console.warn('토큰 검증 실패:', error);
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    delete axios.defaults.headers.common['Authorization'];
+                }
+            };
+
+            // 비밀번호 필드 변경 시 확인 필드도 다시 검증
+            watch(() => registerForm.userPassword, () => {
+                if (registerForm.passwordConfirm) {
+                    validatePasswordConfirm();
+                }
+            });
+
+            // 컴포넌트 마운트 시 실행
+            onMounted(() => {
+                checkAuthStatus();
+            });
+
+            return {
+                // 데이터
+                currentTab,
+                isLoading,
+                isLoggedIn,
+                alertMessage,
+                alertType,
+                memberInfo,
+                loginForm,
+                registerForm,
+                validationStates,
+                validationMessages,
+                passwordStrength,
+
+                // 계산된 속성
+                isFormValid,
+
+                // 메서드
+                showAlert,
+                getValidationClass,
+                checkUserIdDuplicate,
+                checkEmailDuplicate,
+                checkPasswordStrength,
+                validatePasswordConfirm,
+                validateUserName,
+                validateUserPhone,
+                handleLogin,
+                handleRegister,
+                logout,
+                formatDate
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

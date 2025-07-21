@@ -4,6 +4,7 @@ import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.plus.webapp.EnvConfiguration;
 import org.eclipse.jetty.plus.webapp.PlusConfiguration;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.FragmentConfiguration;
 import org.eclipse.jetty.webapp.MetaInfConfiguration;
@@ -12,18 +13,29 @@ import org.eclipse.jetty.webapp.WebInfConfiguration;
 import org.eclipse.jetty.webapp.WebXmlConfiguration;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 public class JettyLauncher {
 
     public static void main(String[] args) throws Exception {
-        // 시스템 프로퍼티 설정
+        // UTF-8 시스템 프로퍼티 설정
         System.setProperty("file.encoding", "UTF-8");
         System.setProperty("user.timezone", "Asia/Seoul");
         System.setProperty("console.encoding", "UTF-8");
         System.setProperty("java.awt.headless", "true");
+        System.setProperty("user.language", "ko");
+        System.setProperty("user.country", "KR");
 
-        // 서버 생성
-        Server server = new Server(8080);
+        // JVM 인코딩 강제 설정
+        System.setProperty("sun.jnu.encoding", "UTF-8");
+        System.setProperty("file.encoding.pkg", "sun.io");
+
+        // 서버 생성 (포트 8080)
+        Server server = new Server();
+        ServerConnector connector = new ServerConnector(server);
+        connector.setPort(8080);
+        connector.setHost("localhost");
+        server.addConnector(connector);
 
         // 웹 애플리케이션 컨텍스트 설정
         WebAppContext webapp = new WebAppContext();
@@ -38,6 +50,7 @@ public class JettyLauncher {
 
         if (webappDir.exists()) {
             webapp.setWar(webappDir.getAbsolutePath());
+            webapp.setResourceBase(webappDir.getAbsolutePath());
         } else {
             // 대체 경로
             webapp.setResourceBase("src/main/webapp");
@@ -79,9 +92,11 @@ public class JettyLauncher {
         try {
             // 서버 시작
             server.start();
+
             System.out.println("=================================");
             System.out.println("🚀 FinMate 서버가 시작되었습니다!");
             System.out.println("📍 URL: http://localhost:8080");
+            System.out.println("👥 회원 페이지: http://localhost:8080/member.html");
             System.out.println("📖 API 문서: http://localhost:8080/swagger-ui.html");
             System.out.println("🔧 관리자 계정: admin / finmate123!");
             System.out.println("👤 테스트 계정: testuser / finmate123!");
