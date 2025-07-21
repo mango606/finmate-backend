@@ -53,5 +53,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addViewControllers(ViewControllerRegistry registry) {
         // 루트 경로를 index.html로 포워딩
         registry.addViewController("/").setViewName("forward:/index.html");
+
+        // 회원 관련 페이지 라우팅 추가
+        registry.addViewController("/member").setViewName("forward:/member.html");
+        registry.addViewController("/login").setViewName("forward:/member.html");
+        registry.addViewController("/register").setViewName("forward:/member.html");
     }
 }
