@@ -11,7 +11,7 @@
 
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/mango606/finmate-backend?utm_source=oss&utm_medium=github&utm_campaign=mango606%2Ffinmate-backend&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
-[🚀 빠른 시작](#-빠른-시작) • [📋 주요 기능](#-주요-기능) • [🛠️ 기술 스택](#️-기술-스택) • [📖 API 문서](#-api-문서) • [🤝 기여하기](#-기여하기)
+[🚀 빠른 시작](#-빠른-시작) • [📋 주요 기능](#-주요-기능) • [🛠️ 기술 스택](#️-기술-스택) • [📖 API 문서](#-api-문서) • [🤝 기여하기](https://github.com/mango606/finmate-backend/fork)
 
 </div>
 
