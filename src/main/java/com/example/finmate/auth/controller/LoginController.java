@@ -50,6 +50,12 @@ public class LoginController {
         log.info("로그인 시도: {} from {}", loginDTO.getUserId(), IPUtils.maskIP(clientIP));
 
         try {
+            if (authService.isAccountLocked(loginDTO.getUserId())) {
+                authService.recordLoginFailure(loginDTO.getUserId(), clientIP, userAgent, "ACCOUNT_LOCKED");
+                return ResponseEntity.status(423) // 423 Locked
+                        .body(ApiResponse.error("계정이 잠금 상태입니다. 30분 후 다시 시도해주세요.", "ACCOUNT_LOCKED"));
+            }
+
             // Spring Security를 통한 인증
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(loginDTO.getUserId(), loginDTO.getUserPassword());

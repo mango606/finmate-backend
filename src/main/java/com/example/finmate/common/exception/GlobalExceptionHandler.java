@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
+import java.util.UUID;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -17,13 +19,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleAccountLockedException(
             AccountLockedException ex, WebRequest request) {
         log.warn("계정 잠금 예외: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        return ResponseEntity.status(423) // 423 Locked
                 .body(ApiResponse.<Void>builder()
                         .success(false)
                         .message(ex.getMessage())
                         .errorCode("ACCOUNT_LOCKED")
                         .timestamp(System.currentTimeMillis())
-                        .traceId(java.util.UUID.randomUUID().toString())
+                        .traceId(UUID.randomUUID().toString())
                         .build());
     }
 
