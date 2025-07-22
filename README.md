@@ -99,11 +99,11 @@ docker exec finmate-mysql mysql -u finmate -p1234 -e "SELECT 'OK' as status;"
 
 ### 🎉 실행 완료!
 
-| 서비스 | URL | 설명 |
-|--------|-----|------|
-| **메인 서버** | http://localhost:8080 | FinMate 백엔드 API 서버 |
-| **API 문서** | http://localhost:8080/swagger-ui.html | Swagger UI API 문서 |
-| **데이터베이스 관리** | http://localhost:8081 | phpMyAdmin (root/1234) |
+| 서비스 | URL                              | 설명 |
+|--------|----------------------------------|------|
+| **메인 서버** | http://localhost:8080            | FinMate 백엔드 API 서버 |
+| **API 문서** | http://localhost:8080/swagger-ui/index.html           | Swagger UI API 문서 |
+| **데이터베이스 관리** | http://localhost:8081            | phpMyAdmin (root/1234) |
 | **헬스 체크** | http://localhost:8080/api/health | 서버 상태 확인 |
 
 ---
@@ -233,7 +233,7 @@ finmate-backend/
 
 ### 📚 상세 API 문서
 
-실행 후 [Swagger UI](http://localhost:8080/swagger-ui.html)에서 전체 API 명세를 확인할 수 있습니다.
+실행 후 [Swagger UI](http://localhost:8080/swagger-ui/index.html)에서 전체 API 명세를 확인할 수 있습니다.
 
 ---
 

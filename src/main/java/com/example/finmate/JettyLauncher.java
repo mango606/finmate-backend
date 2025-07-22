@@ -97,7 +97,7 @@ public class JettyLauncher {
             System.out.println("🚀 FinMate 서버가 시작되었습니다!");
             System.out.println("📍 URL: http://localhost:8080");
             System.out.println("👥 회원 페이지: http://localhost:8080/member.html");
-            System.out.println("📖 API 문서: http://localhost:8080/swagger-ui.html");
+            System.out.println("📖 API 문서: http://localhost:8080/swagger-ui/index.html");
             System.out.println("🔧 관리자 계정: admin / finmate123!");
             System.out.println("👤 테스트 계정: testuser / finmate123!");
             System.out.println("=================================");

@@ -44,6 +44,21 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("/")
                 .resourceChain(true);
 
+        // Swagger UI 리소스 핸들링
+
+        // Swagger UI HTML 파일
+        registry.addResourceHandler("/swagger-ui.html**")
+                .addResourceLocations("classpath:/META-INF/resources/");
+
+        registry.addResourceHandler("/swagger-ui/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/springfox-swagger-ui/")
+                .resourceChain(false);
+
+        // Webjars 리소스 (CSS, JS 파일들)
+        registry.addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/")
+                .resourceChain(false);
+
         // 업로드 파일 핸들링
         registry.addResourceHandler("/upload/**")
                 .addResourceLocations("file:c:/upload/");

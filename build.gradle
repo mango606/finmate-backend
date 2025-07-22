@@ -71,8 +71,7 @@ dependencies {
     // implementation 'p6spy:p6spy:3.9.1'
 
     // Swagger
-    implementation 'io.springfox:springfox-swagger2:2.9.2'
-    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+    implementation 'io.springfox:springfox-boot-starter:3.0.0'
 
     // Lombok
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
@@ -236,7 +235,7 @@ task runServer(type: JavaExec) {
         println "🚀 FinMate 서버를 시작합니다..."
         println "📍 URL: http://localhost:8080"
         println "👥 회원 페이지: http://localhost:8080/member.html"
-        println "📖 API 문서: http://localhost:8080/swagger-ui.html"
+        println "📖 API 문서: http://localhost:8080/swagger-ui/index.html"
     }
 }
 

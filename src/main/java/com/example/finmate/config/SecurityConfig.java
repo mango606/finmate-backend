@@ -122,8 +122,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // HTML 파일들 허용
                 .antMatchers("/", "/index.html", "/member.html", "/*.html").permitAll()
                 // Swagger 허용
-                .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v2/api-docs", "/webjars/**").permitAll()
-                .antMatchers("/swagger-resources/**", "/configuration/ui", "/configuration/security").permitAll()
+                .antMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
+                .antMatchers("/v2/api-docs", "/v3/api-docs/**").permitAll()
+                .antMatchers("/swagger-resources/**").permitAll()
+                .antMatchers("/configuration/ui", "/configuration/security").permitAll()
+                .antMatchers("/webjars/**").permitAll()
                 // 인증 불필요 API
                 .antMatchers("/api/auth/login", "/api/auth/logout").permitAll()
                 .antMatchers("/api/member/join", "/api/member/checkUserId/**", "/api/member/checkEmail").permitAll()
