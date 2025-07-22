@@ -42,6 +42,7 @@
 
     <!-- Swagger UI 리소스 -->
     <resources mapping="swagger-ui.html" location="classpath:/META-INF/resources/"/>
+    <resources mapping="/swagger-ui/**" location="classpath:/META-INF/resources/webjars/springfox-swagger-ui/"/>
     <resources mapping="/webjars/**" location="classpath:/META-INF/resources/webjars/"/>
 
     <!-- JSP 뷰 리졸버 -->

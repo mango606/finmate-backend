@@ -196,7 +196,7 @@ public class RootController {
         <a href="/hello" class="api-link">👋 Hello 테스트</a>
         <a href="/ping" class="api-link">🏓 서버 Ping</a>
         <a href="/api/member/health" class="api-link">❤️ Health 체크</a>
-        <a href="/swagger-ui.html" class="api-link">📖 API 문서</a>
+        <a href="/swagger-ui/index.html" class="api-link">📖 API 문서</a>
     </div>
 
     <div style="background: #e7f3ff; padding: 20px; border-radius: 10px; margin-top: 20px; text-align: left;">

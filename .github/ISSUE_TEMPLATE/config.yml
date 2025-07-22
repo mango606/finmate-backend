@@ -13,7 +13,7 @@ contact_links:
 #    about: "API 문서, 개발 가이드, 설치 방법 등은 Wiki에서 확인하실 수 있습니다."
 
   - name: "🚀 실시간 API 문서"
-    url: "http://localhost:8080/swagger-ui.html"
+    url: "http://localhost:8080/swagger-ui/index.html"
     about: "서버 실행 후 Swagger UI에서 최신 API 명세를 확인하세요."
 
 #  - name: "📧 직접 문의"
