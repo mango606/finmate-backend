@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinMate - 투자분석</title>
+    <title>FinMate - 거래 내역 관리</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -49,44 +49,13 @@
         .nav-item {
             color: white;
             text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background-color 0.3s;
         }
 
         .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        .user-menu {
-            position: relative;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 10px 15px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .user-info:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
+            background-color: rgba(255,255,255,0.2);
         }
 
         .container {
@@ -96,956 +65,860 @@
         }
 
         .page-header {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
         }
 
         .page-title {
             font-size: 2rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .page-subtitle {
-            color: #666;
-            font-size: 1.1rem;
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .section {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .risk-analysis {
-            margin-bottom: 30px;
-        }
-
-        .risk-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-        }
-
-        .risk-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .risk-type {
-            font-size: 1.2rem;
             font-weight: bold;
             color: #333;
         }
 
-        .risk-level {
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .risk-low {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .risk-medium {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .risk-high {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .risk-description {
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-
-        .recommendation-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .recommendation-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .recommendation-list li:last-child {
-            border-bottom: none;
-        }
-
-        .recommendation-list li::before {
-            content: '💎';
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 1rem;
+            transition: opacity 0.3s;
+            text-decoration: none;
+            display: inline-block;
         }
 
-        .portfolio-section {
-            margin-bottom: 30px;
+        .btn:hover {
+            opacity: 0.9;
         }
 
-        .allocation-grid {
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
 
-        .allocation-card {
-            background: #f8f9fa;
-            border-radius: 10px;
+        .stat-card {
+            background: white;
+            border-radius: 12px;
             padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             text-align: center;
-            border-left: 4px solid #28a745;
         }
 
-        .allocation-title {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .allocation-percentage {
-            font-size: 2rem;
+        .stat-value {
+            font-size: 1.8rem;
             font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
-        .allocation-amount {
-            font-size: 0.9rem;
+        .stat-value.income {
+            color: #28a745;
+        }
+
+        .stat-value.expense {
+            color: #dc3545;
+        }
+
+        .stat-value.balance {
             color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .transactions-table {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .table th {
+            background: #f8f9fa;
             font-weight: 600;
+            color: #333;
+        }
+
+        .transaction-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .transaction-type.income {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .transaction-type.expense {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .amount {
+            font-weight: 600;
+        }
+
+        .amount.income {
+            color: #28a745;
+        }
+
+        .amount.expense {
+            color: #dc3545;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .transaction-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .type-option:hover {
+            border-color: #667eea;
+        }
+
+        .type-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
         }
 
         .chart-container {
             position: relative;
             height: 300px;
-            margin-bottom: 20px;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .stat-item {
+        .empty-state {
             text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
+            padding: 60px 20px;
             color: #666;
-            text-transform: uppercase;
         }
 
-        .quick-actions {
-            display: grid;
-            gap: 15px;
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ccc;
         }
 
-        .action-btn {
-            display: block;
-            width: 100%;
-            padding: 15px 20px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
         }
 
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .action-btn.secondary {
-            background: #6c757d;
-        }
-
-        .action-btn.secondary:hover {
-            background: #5a6268;
-            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
-        }
-
-        .market-trends {
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
         }
 
-        .trend-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .trend-item:last-child {
-            border-bottom: none;
-        }
-
-        .trend-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .trend-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        .page-btn:hover, .page-btn.active {
             background: #667eea;
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .trend-details h4 {
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .trend-details p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .trend-change {
-            text-align: right;
-        }
-
-        .change-value {
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .change-positive {
-            color: #28a745;
-        }
-
-        .change-negative {
-            color: #dc3545;
-        }
-
-        .change-period {
-            font-size: 0.8rem;
-            color: #666;
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 50px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .tips-section {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 30px;
-        }
-
-        .tip-item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #17a2b8;
-        }
-
-        .tip-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .tip-title {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tip-content {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .allocation-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
+            border-color: #667eea;
         }
     </style>
 </head>
 <body>
-<div id="app">
-    <!-- 헤더 -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">🏦 FinMate</div>
-            <nav class="nav-menu">
-                <a href="/" class="nav-item">홈</a>
-                <a href="/dashboard.html" class="nav-item">대시보드</a>
-                <a href="/financial.html" class="nav-item">금융관리</a>
-                <a href="/investment.html" class="nav-item active">투자분석</a>
-                <a href="/mypage.html" class="nav-item">마이페이지</a>
-            </nav>
-            <div class="user-menu" v-if="user">
-                <div class="user-info" @click="goToPage('/mypage.html')">
-                    <div class="avatar">{{ user.userName ? user.userName.charAt(0) : 'U' }}</div>
-                    <span>{{ user.userName }}님</span>
+    <div id="app">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">FinMate</div>
+                <nav class="nav-menu">
+                    <a href="dashboard.html" class="nav-item">대시보드</a>
+                    <a href="financial.html" class="nav-item">목표 관리</a>
+                    <a href="portfolio.html" class="nav-item">포트폴리오</a>
+                    <a href="investment.html" class="nav-item active">거래 내역</a>
+                    <a href="education.html" class="nav-item">금융 교육</a>
+                    <a href="calculator.html" class="nav-item">계산기</a>
+                    <a href="mypage.html" class="nav-item">마이페이지</a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">거래 내역 관리</h1>
+                <button class="btn" @click="openTransactionModal()">+ 거래 추가</button>
+            </div>
+
+            <!-- 통계 카드 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value income">{{ formatCurrency(totalIncome) }}</div>
+                    <div class="stat-label">이번 달 수입</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value expense">{{ formatCurrency(totalExpense) }}</div>
+                    <div class="stat-label">이번 달 지출</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value balance">{{ formatCurrency(totalIncome - totalExpense) }}</div>
+                    <div class="stat-label">수지</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ transactions.length }}</div>
+                    <div class="stat-label">총 거래 건수</div>
                 </div>
             </div>
-        </div>
-    </header>
 
-    <!-- 메인 컨테이너 -->
-    <div class="container">
-        <!-- 페이지 헤더 -->
-        <div class="page-header">
-            <h1 class="page-title">투자분석</h1>
-            <p class="page-subtitle">개인 맞춤형 투자 전략과 포트폴리오를 분석하세요</p>
-        </div>
-
-        <!-- 로딩 상태 -->
-        <div v-if="isLoading" class="loading">
-            <div class="spinner"></div>
-        </div>
-
-        <!-- 메인 컨텐츠 -->
-        <div v-else>
-            <!-- 알림 메시지 -->
-            <div v-if="alertMessage" :class="['alert', 'alert-' + alertType]">
-                <span>{{ alertMessage }}</span>
+            <!-- 필터 섹션 -->
+            <div class="filters-section">
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label class="form-label">기간</label>
+                        <select class="form-select" v-model="selectedPeriod" @change="applyFilters">
+                            <option value="all">전체</option>
+                            <option value="thisMonth">이번 달</option>
+                            <option value="lastMonth">지난 달</option>
+                            <option value="thisYear">올해</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">유형</label>
+                        <select class="form-select" v-model="selectedType" @change="applyFilters">
+                            <option value="all">전체</option>
+                            <option value="income">수입</option>
+                            <option value="expense">지출</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">카테고리</label>
+                        <select class="form-select" v-model="selectedCategory" @change="applyFilters">
+                            <option value="all">전체</option>
+                            <option v-for="category in categories" :key="category" :value="category">
+                                {{ category }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">검색</label>
+                        <input type="text" class="form-input" v-model="searchQuery" @input="applyFilters" placeholder="설명 검색">
+                    </div>
+                </div>
             </div>
 
-            <!-- 금융 프로필 필요 알림 -->
-            <div v-if="!hasProfile" class="alert alert-warning">
-                <span>⚠️</span>
-                <span>투자 분석을 위해 먼저 금융 프로필을 설정해주세요.</span>
-                <a href="/financial.html" style="margin-left: 15px;" class="btn btn-primary">프로필 설정하기</a>
+            <!-- 차트 섹션 -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <h3 class="chart-title">월별 수입/지출</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">카테고리별 지출</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
             </div>
 
-            <!-- 컨텐츠 그리드 -->
-            <div v-else class="content-grid">
-                <!-- 메인 분석 영역 -->
-                <div>
-                    <!-- 투자 성향 분석 -->
-                    <div class="section risk-analysis">
-                        <h2 class="section-title">
-                            <span>🎯</span>
-                            투자 성향 분석
-                        </h2>
+            <!-- 거래 내역 테이블 -->
+            <div class="transactions-table">
+                <h3 style="margin-bottom: 16px;">거래 내역</h3>
 
-                        <div v-if="riskAnalysis" class="risk-card">
-                            <div class="risk-header">
-                                <div class="risk-type">{{ getRiskProfileText(riskAnalysis.riskProfile) }}</div>
-                                <span :class="['risk-level', getRiskLevelClass(riskAnalysis.riskProfile)]">
-                                    {{ riskAnalysis.characteristics?.riskLevel || '보통' }}
+                <div v-if="filteredTransactions.length === 0" class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>거래 내역이 없습니다</h3>
+                    <p>첫 번째 거래를 추가해보세요!</p>
+                </div>
+
+                <table v-else class="table">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>유형</th>
+                            <th>카테고리</th>
+                            <th>설명</th>
+                            <th>금액</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="transaction in paginatedTransactions" :key="transaction.id">
+                            <td>{{ formatDate(transaction.date) }}</td>
+                            <td>
+                                <span class="transaction-type" :class="transaction.type">
+                                    {{ transaction.type === 'income' ? '수입' : '지출' }}
                                 </span>
-                            </div>
+                            </td>
+                            <td>{{ transaction.category }}</td>
+                            <td>{{ transaction.description }}</td>
+                            <td class="amount" :class="transaction.type">
+                                {{ transaction.type === 'income' ? '+' : '-' }}{{ formatCurrency(transaction.amount) }}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" @click="editTransaction(transaction)">수정</button>
+                                <button class="btn btn-sm btn-danger" @click="deleteTransaction(transaction.id)">삭제</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                            <div class="risk-description">
-                                {{ riskAnalysis.characteristics?.description }}
-                            </div>
-
-                            <div v-if="riskAnalysis.characteristics?.recommendedAssets">
-                                <strong>추천 투자 상품:</strong>
-                                <ul class="recommendation-list">
-                                    <li v-for="asset in riskAnalysis.characteristics.recommendedAssets" :key="asset">
-                                        {{ asset }}
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 포트폴리오 추천 -->
-                    <div class="section portfolio-section">
-                        <h2 class="section-title">
-                            <span>📊</span>
-                            추천 포트폴리오
-                        </h2>
-
-                        <div v-if="portfolioRecommendation">
-                            <!-- 자산 배분 -->
-                            <div class="allocation-grid">
-                                <div v-for="(percentage, asset) in portfolioRecommendation.portfolio" :key="asset" class="allocation-card">
-                                    <div class="allocation-title">{{ asset }}</div>
-                                    <div class="allocation-percentage">{{ percentage }}%</div>
-                                    <div class="allocation-amount">
-                                        {{ formatCurrency(calculateAllocationAmount(percentage)) }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 차트 -->
-                            <div class="chart-container">
-                                <canvas id="portfolioChart"></canvas>
-                            </div>
-
-                            <!-- 투자 통계 -->
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <div class="stat-value">{{ formatCurrency(portfolioRecommendation.monthlyInvestment) }}</div>
-                                    <div class="stat-label">월 권장 투자액</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value">{{ riskAnalysis?.characteristics?.expectedReturn || 'N/A' }}</div>
-                                    <div class="stat-label">예상 수익률</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value">{{ getRiskLevel() }}</div>
-                                    <div class="stat-label">위험 수준</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value">{{ getInvestmentPeriod() }}</div>
-                                    <div class="stat-label">투자 기간</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 사이드바 -->
-                <div>
-                    <!-- 빠른 액션 -->
-                    <div class="section">
-                        <h2 class="section-title">
-                            <span>⚡</span>
-                            빠른 액션
-                        </h2>
-                        <div class="quick-actions">
-                            <button @click="refreshAnalysis" class="action-btn">
-                                🔄 분석 새로고침
-                            </button>
-                            <button @click="goToPage('/financial.html')" class="action-btn secondary">
-                                ⚙️ 프로필 수정
-                            </button>
-                            <button @click="downloadReport" class="action-btn secondary">
-                                📄 보고서 다운로드
-                            </button>
-                            <button @click="goToPage('/dashboard.html')" class="action-btn secondary">
-                                📈 대시보드로
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 시장 동향 -->
-                    <div class="section">
-                        <h2 class="section-title">
-                            <span>📈</span>
-                            시장 동향
-                        </h2>
-                        <div class="trend-item">
-                            <div class="trend-info">
-                                <div class="trend-icon">📊</div>
-                                <div class="trend-details">
-                                    <h4>코스피</h4>
-                                    <p>한국 주식시장</p>
-                                </div>
-                            </div>
-                            <div class="trend-change">
-                                <div class="change-value change-positive">+2.5%</div>
-                                <div class="change-period">오늘</div>
-                            </div>
-                        </div>
-
-                        <div class="trend-item">
-                            <div class="trend-info">
-                                <div class="trend-icon">🏛️</div>
-                                <div class="trend-details">
-                                    <h4>국고채 3년</h4>
-                                    <p>안전 자산</p>
-                                </div>
-                            </div>
-                            <div class="trend-change">
-                                <div class="change-value change-negative">-0.1%</div>
-                                <div class="change-period">이번 주</div>
-                            </div>
-                        </div>
-
-                        <div class="trend-item">
-                            <div class="trend-info">
-                                <div class="trend-icon">💱</div>
-                                <div class="trend-details">
-                                    <h4>원/달러</h4>
-                                    <p>환율</p>
-                                </div>
-                            </div>
-                            <div class="trend-change">
-                                <div class="change-value change-positive">+1.2%</div>
-                                <div class="change-period">이번 달</div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- 페이지네이션 -->
+                <div v-if="totalPages > 1" class="pagination">
+                    <button class="page-btn" @click="currentPage = 1" :disabled="currentPage === 1">첫 페이지</button>
+                    <button class="page-btn" @click="currentPage--" :disabled="currentPage === 1">이전</button>
+                    <span v-for="page in visiblePages" :key="page">
+                        <button class="page-btn" :class="{active: page === currentPage}" @click="currentPage = page">
+                            {{ page }}
+                        </button>
+                    </span>
+                    <button class="page-btn" @click="currentPage++" :disabled="currentPage === totalPages">다음</button>
+                    <button class="page-btn" @click="currentPage = totalPages" :disabled="currentPage === totalPages">마지막</button>
                 </div>
             </div>
+        </div>
 
-            <!-- 투자 팁 섹션 -->
-            <div v-if="hasProfile" class="tips-section">
-                <h2 class="section-title">
-                    <span>💡</span>
-                    투자 팁 & 조언
-                </h2>
-
-                <div v-if="portfolioRecommendation?.goalBasedRecommendation">
-                    <div class="tip-item">
-                        <div class="tip-title">
-                            <span>🎯</span>
-                            맞춤형 투자 전략
-                        </div>
-                        <div class="tip-content">
-                            {{ portfolioRecommendation.goalBasedRecommendation.strategy }}
-                        </div>
-                    </div>
-
-                    <div v-if="portfolioRecommendation.goalBasedRecommendation.tips" class="tip-item">
-                        <div class="tip-title">
-                            <span>✨</span>
-                            실용적인 투자 조언
-                        </div>
-                        <div class="tip-content">
-                            <ul>
-                                <li v-for="tip in portfolioRecommendation.goalBasedRecommendation.tips" :key="tip">
-                                    {{ tip }}
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+        <!-- 거래 추가/수정 모달 -->
+        <div v-if="showTransactionModal" class="modal" @click.self="closeTransactionModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">{{ editingTransaction ? '거래 수정' : '거래 추가' }}</h2>
+                    <button class="close-btn" @click="closeTransactionModal">&times;</button>
                 </div>
 
-                <div class="tip-item">
-                    <div class="tip-title">
-                        <span>📚</span>
-                        기본 투자 원칙
+                <form @submit.prevent="saveTransaction">
+                    <div class="form-group">
+                        <label class="form-label">거래 유형</label>
+                        <div class="transaction-type-selector">
+                            <div class="type-option"
+                                 :class="{selected: transactionForm.type === 'income'}"
+                                 @click="transactionForm.type = 'income'">
+                                <div style="font-size: 1.5rem; margin-bottom: 8px;">💰</div>
+                                <div>수입</div>
+                            </div>
+                            <div class="type-option"
+                                 :class="{selected: transactionForm.type === 'expense'}"
+                                 @click="transactionForm.type = 'expense'">
+                                <div style="font-size: 1.5rem; margin-bottom: 8px;">💸</div>
+                                <div>지출</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="tip-content">
-                        분산 투자를 통해 위험을 줄이고, 장기적인 관점에서 꾸준히 투자하세요.
-                        시장의 단기 변동에 일희일비하지 말고, 본인의 투자 목표와 성향에 맞는 전략을 유지하는 것이 중요합니다.
-                    </div>
-                </div>
 
-                <div class="tip-item">
-                    <div class="tip-title">
-                        <span>⚠️</span>
-                        위험 관리
+                    <div class="form-group">
+                        <label class="form-label">카테고리</label>
+                        <select class="form-select" v-model="transactionForm.category" required>
+                            <option value="">카테고리 선택</option>
+                            <option v-for="category in getAvailableCategories()" :key="category" :value="category">
+                                {{ category }}
+                            </option>
+                        </select>
                     </div>
-                    <div class="tip-content">
-                        투자 금액은 생활비와 비상금을 제외한 여유 자금으로 한정하세요.
-                        한 번에 큰 금액을 투자하기보다는 시간을 분산하여 정기적으로 투자하는 것이 안전합니다.
+
+                    <div class="form-group">
+                        <label class="form-label">금액</label>
+                        <input type="number" class="form-input" v-model="transactionForm.amount" required min="0">
                     </div>
-                </div>
+
+                    <div class="form-group">
+                        <label class="form-label">날짜</label>
+                        <input type="date" class="form-input" v-model="transactionForm.date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">설명</label>
+                        <input type="text" class="form-input" v-model="transactionForm.description" required>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" @click="closeTransactionModal">취소</button>
+                        <button type="submit" class="btn">{{ editingTransaction ? '수정' : '추가' }}</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    const { createApp, ref, reactive, onMounted, computed } = Vue;
+    <script>
+        const { createApp } = Vue;
 
-    createApp({
-        setup() {
-            const isLoading = ref(true);
-            const user = ref(null);
-            const alertMessage = ref('');
-            const alertType = ref('info');
-            const hasProfile = ref(false);
-            const riskAnalysis = ref(null);
-            const portfolioRecommendation = ref(null);
+        createApp({
+            data() {
+                return {
+                    transactions: [
+                        {
+                            id: 1,
+                            type: 'income',
+                            category: '급여',
+                            amount: 3500000,
+                            date: '2024-01-25',
+                            description: '1월 급여'
+                        },
+                        {
+                            id: 2,
+                            type: 'expense',
+                            category: '식비',
+                            amount: 150000,
+                            date: '2024-01-24',
+                            description: '마트 장보기'
+                        },
+                        {
+                            id: 3,
+                            type: 'expense',
+                            category: '교통비',
+                            amount: 80000,
+                            date: '2024-01-23',
+                            description: '지하철 정기권'
+                        },
+                        {
+                            id: 4,
+                            type: 'expense',
+                            category: '주거비',
+                            amount: 800000,
+                            date: '2024-01-01',
+                            description: '월세'
+                        },
+                        {
+                            id: 5,
+                            type: 'income',
+                            category: '부업',
+                            amount: 500000,
+                            date: '2024-01-15',
+                            description: '프리랜싱'
+                        }
+                    ],
+                    filteredTransactions: [],
+                    showTransactionModal: false,
+                    editingTransaction: null,
+                    transactionForm: {
+                        type: 'expense',
+                        category: '',
+                        amount: 0,
+                        date: '',
+                        description: ''
+                    },
+                    selectedPeriod: 'thisMonth',
+                    selectedType: 'all',
+                    selectedCategory: 'all',
+                    searchQuery: '',
+                    currentPage: 1,
+                    itemsPerPage: 10,
+                    incomeCategories: ['급여', '부업', '투자수익', '기타수입'],
+                    expenseCategories: ['식비', '교통비', '주거비', '의료비', '쇼핑', '문화생활', '기타지출']
+                };
+            },
+            computed: {
+                categories() {
+                    return [...this.incomeCategories, ...this.expenseCategories];
+                },
+                totalIncome() {
+                    return this.transactions
+                        .filter(t => t.type === 'income')
+                        .reduce((sum, t) => sum + t.amount, 0);
+                },
+                totalExpense() {
+                    return this.transactions
+                        .filter(t => t.type === 'expense')
+                        .reduce((sum, t) => sum + t.amount, 0);
+                },
+                totalPages() {
+                    return Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
+                },
+                paginatedTransactions() {
+                    const start = (this.currentPage - 1) * this.itemsPerPage;
+                    const end = start + this.itemsPerPage;
+                    return this.filteredTransactions.slice(start, end);
+                },
+                visiblePages() {
+                    const pages = [];
+                    const start = Math.max(1, this.currentPage - 2);
+                    const end = Math.min(this.totalPages, this.currentPage + 2);
 
-            let portfolioChart = null;
-
-            // API 기본 설정
-            const API_BASE_URL = '/api';
-            axios.defaults.baseURL = API_BASE_URL;
-
-            // 토큰 설정
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            } else {
-                window.location.href = '/member.html';
-                return;
-            }
-
-            // 알림 표시
-            const showAlert = (message, type = 'info', duration = 5000) => {
-                alertMessage.value = message;
-                alertType.value = type;
-                setTimeout(() => {
-                    alertMessage.value = '';
-                }, duration);
-            };
-
-            // 사용자 정보 로드
-            const loadUserInfo = async () => {
-                try {
-                    const response = await axios.get('/auth/me');
-                    if (response.data.success) {
-                        user.value = response.data.data;
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
                     }
-                } catch (error) {
-                    console.error('사용자 정보 로드 실패:', error);
-                    localStorage.removeItem('accessToken');
-                    window.location.href = '/member.html';
+                    return pages;
                 }
-            };
+            },
+            methods: {
+                formatCurrency(amount) {
+                    return new Intl.NumberFormat('ko-KR', {
+                        style: 'currency',
+                        currency: 'KRW'
+                    }).format(amount);
+                },
+                formatDate(dateString) {
+                    return new Date(dateString).toLocaleDateString('ko-KR');
+                },
+                openTransactionModal(transaction = null) {
+                    this.editingTransaction = transaction;
+                    if (transaction) {
+                        this.transactionForm = { ...transaction };
+                    } else {
+                        this.transactionForm = {
+                            type: 'expense',
+                            category: '',
+                            amount: 0,
+                            date: new Date().toISOString().split('T')[0],
+                            description: ''
+                        };
+                    }
+                    this.showTransactionModal = true;
+                },
+                closeTransactionModal() {
+                    this.showTransactionModal = false;
+                    this.editingTransaction = null;
+                },
+                editTransaction(transaction) {
+                    this.openTransactionModal(transaction);
+                },
+                async saveTransaction() {
+                    try {
+                        if (this.editingTransaction) {
+                            // 수정
+                            const index = this.transactions.findIndex(t => t.id === this.editingTransaction.id);
+                            this.transactions[index] = { ...this.transactionForm };
+                        } else {
+                            // 새로 추가
+                            const newTransaction = {
+                                ...this.transactionForm,
+                                id: Date.now()
+                            };
+                            this.transactions.push(newTransaction);
+                        }
 
-            // 금융 프로필 확인
-            const checkProfile = async () => {
-                try {
-                    const response = await axios.get('/financial/profile');
-                    if (response.data.success) {
-                        hasProfile.value = response.data.data.hasProfile;
-                        if (!hasProfile.value) {
-                            showAlert('투자 분석을 위해 먼저 금융 프로필을 설정해주세요.', 'warning');
+                        this.applyFilters();
+                        this.closeTransactionModal();
+                        this.updateCharts();
+
+                        // API 호출
+                        // await axios.post('/api/transactions', this.transactionForm);
+                    } catch (error) {
+                        console.error('거래 저장 실패:', error);
+                        alert('거래 저장에 실패했습니다.');
+                    }
+                },
+                async deleteTransaction(transactionId) {
+                    if (confirm('정말로 이 거래를 삭제하시겠습니까?')) {
+                        try {
+                            this.transactions = this.transactions.filter(t => t.id !== transactionId);
+                            this.applyFilters();
+                            this.updateCharts();
+                            // await axios.delete(`/api/transactions/${transactionId}`);
+                        } catch (error) {
+                            console.error('거래 삭제 실패:', error);
+                            alert('거래 삭제에 실패했습니다.');
                         }
                     }
-                } catch (error) {
-                    hasProfile.value = false;
-                    showAlert('금융 프로필 확인 중 오류가 발생했습니다.', 'error');
-                }
-            };
+                },
+                getAvailableCategories() {
+                    return this.transactionForm.type === 'income' ? this.incomeCategories : this.expenseCategories;
+                },
+                applyFilters() {
+                    let filtered = [...this.transactions];
 
-            // 투자 성향 분석 로드
-            const loadRiskAnalysis = async () => {
-                try {
-                    const response = await axios.get('/financial/risk-analysis');
-                    if (response.data.success) {
-                        riskAnalysis.value = response.data.data;
+                    // 기간 필터
+                    if (this.selectedPeriod !== 'all') {
+                        const now = new Date();
+                        let startDate, endDate;
+
+                        switch (this.selectedPeriod) {
+                            case 'thisMonth':
+                                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                                break;
+                            case 'lastMonth':
+                                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                                endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+                                break;
+                            case 'thisYear':
+                                startDate = new Date(now.getFullYear(), 0, 1);
+                                endDate = new Date(now.getFullYear(), 11, 31);
+                                break;
+                        }
+
+                        filtered = filtered.filter(t => {
+                            const date = new Date(t.date);
+                            return date >= startDate && date <= endDate;
+                        });
                     }
-                } catch (error) {
-                    showAlert('투자 성향 분석 데이터를 불러오는 데 실패했습니다.', 'error');
-                }
-            };
 
-            // 포트폴리오 추천 로드
-            const loadPortfolioRecommendation = async () => {
-                try {
-                    const response = await axios.get('/financial/portfolio-recommendation');
-                    if (response.data.success) {
-                        portfolioRecommendation.value = response.data.data;
+                    // 유형 필터
+                    if (this.selectedType !== 'all') {
+                        filtered = filtered.filter(t => t.type === this.selectedType);
                     }
-                } catch (error) {
-                    showAlert('포트폴리오 추천 정보를 불러오는 데 실패했습니다.', 'error');
-                }
-            };
 
-            // 포트폴리오 차트 생성
-            const createPortfolioChart = () => {
-                const ctx = document.getElementById('portfolioChart');
-                if (!ctx || !portfolioRecommendation.value) return;
+                    // 카테고리 필터
+                    if (this.selectedCategory !== 'all') {
+                        filtered = filtered.filter(t => t.category === this.selectedCategory);
+                    }
 
-                const data = {
-                    labels: Object.keys(portfolioRecommendation.value.portfolio),
-                    datasets: [{
-                        data: Object.values(portfolioRecommendation.value.portfolio),
-                        backgroundColor: [
-                            '#667eea',
-                            '#764ba2',
-                            '#f093fb',
-                            '#f5576c',
-                            '#4facfe',
-                            '#00f2fe'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                };
+                    // 검색 필터
+                    if (this.searchQuery) {
+                        filtered = filtered.filter(t =>
+                            t.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+                        );
+                    }
 
-                portfolioChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: data,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true
+                    // 날짜순 정렬 (최신순)
+                    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    this.filteredTransactions = filtered;
+                    this.currentPage = 1;
+                },
+                initCharts() {
+                    this.initMonthlyChart();
+                    this.initCategoryChart();
+                },
+                initMonthlyChart() {
+                    const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+                    // 최근 6개월 데이터
+                    const months = [];
+                    const incomeData = [];
+                    const expenseData = [];
+
+                    for (let i = 5; i >= 0; i--) {
+                        const date = new Date();
+                        date.setMonth(date.getMonth() - i);
+                        months.push(`${date.getMonth() + 1}월`);
+
+                        const monthTransactions = this.transactions.filter(t => {
+                            const tDate = new Date(t.date);
+                            return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear();
+                        });
+
+                        incomeData.push(monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0));
+                        expenseData.push(monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0));
+                    }
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: months,
+                            datasets: [
+                                {
+                                    label: '수입',
+                                    data: incomeData,
+                                    borderColor: '#28a745',
+                                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                                    tension: 0.4
+                                },
+                                {
+                                    label: '지출',
+                                    data: expenseData,
+                                    borderColor: '#dc3545',
+                                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                    tension: 0.4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return new Intl.NumberFormat('ko-KR', {
+                                                style: 'currency',
+                                                currency: 'KRW'
+                                            }).format(value);
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                });
-            };
+                    });
+                },
+                initCategoryChart() {
+                    const ctx = document.getElementById('categoryChart').getContext('2d');
 
-            // 통화 포맷
-            const formatCurrency = (amount) => {
-                if (amount == null) return '₩0';
-                return new Intl.NumberFormat('ko-KR', {
-                    style: 'currency',
-                    currency: 'KRW',
-                    minimumFractionDigits: 0
-                }).format(amount);
-            };
+                    const categoryData = {};
+                    this.transactions.filter(t => t.type === 'expense').forEach(t => {
+                        categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
+                    });
 
-            // 위험 성향 텍스트
-            const getRiskProfileText = (riskProfile) => {
-                const texts = {
-                    CONSERVATIVE: '안정형 투자자',
-                    MODERATE: '중도형 투자자',
-                    AGGRESSIVE: '공격형 투자자'
-                };
-                return texts[riskProfile] || riskProfile;
-            };
+                    const labels = Object.keys(categoryData);
+                    const data = Object.values(categoryData);
+                    const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
 
-            // 위험 수준 클래스
-            const getRiskLevelClass = (riskProfile) => {
-                const classes = {
-                    CONSERVATIVE: 'risk-low',
-                    MODERATE: 'risk-medium',
-                    AGGRESSIVE: 'risk-high'
-                };
-                return classes[riskProfile] || 'risk-medium';
-            };
-
-            // 자산 배분 금액 계산
-            const calculateAllocationAmount = (percentage) => {
-                if (!portfolioRecommendation.value?.monthlyInvestment) return 0;
-                return portfolioRecommendation.value.monthlyInvestment * (percentage / 100);
-            };
-
-            // 위험 수준 텍스트
-            const getRiskLevel = () => {
-                return riskAnalysis.value?.characteristics?.riskLevel || '보통';
-            };
-
-            // 투자 기간 텍스트
-            const getInvestmentPeriod = () => {
-                return '장기 (5년+)';
-            };
-
-            // 분석 새로고침
-            const refreshAnalysis = async () => {
-                isLoading.value = true;
-                showAlert('분석을 새로고침하고 있습니다...', 'info');
-
-                try {
-                    await Promise.all([
-                        loadRiskAnalysis(),
-                        loadPortfolioRecommendation()
-                    ]);
-
-                    // 차트 재생성
-                    if (portfolioChart) {
-                        portfolioChart.destroy();
-                    }
-                    setTimeout(createPortfolioChart, 100);
-
-                    showAlert('분석이 업데이트되었습니다.', 'success');
-                } catch (error) {
-                    showAlert('분석 새로고침에 실패했습니다.', 'error');
-                } finally {
-                    isLoading.value = false;
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data,
+                                backgroundColor: colors.slice(0, labels.length),
+                                borderWidth: 2,
+                                borderColor: '#fff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                },
+                updateCharts() {
+                    this.$nextTick(() => {
+                        this.initCharts();
+                    });
                 }
-            };
-
-            // 보고서 다운로드
-            const downloadReport = () => {
-                showAlert('보고서 다운로드 기능은 준비 중입니다.', 'info');
-            };
-
-            // 페이지 이동
-            const goToPage = (url) => {
-                window.location.href = url;
-            };
-
-            // 초기화
-            const initialize = async () => {
-                isLoading.value = true;
-                try {
-                    await loadUserInfo();
-                    await checkProfile();
-
-                    if (hasProfile.value) {
-                        await Promise.all([
-                            loadRiskAnalysis(),
-                            loadPortfolioRecommendation()
-                        ]);
-
-                        // 차트는 DOM이 업데이트된 후 생성
-                        setTimeout(createPortfolioChart, 100);
-                    }
-                } finally {
-                    isLoading.value = false;
-                }
-            };
-
-            onMounted(initialize);
-
-            return {
-                isLoading,
-                user,
-                alertMessage,
-                alertType,
-                hasProfile,
-                riskAnalysis,
-                portfolioRecommendation,
-                showAlert,
-                formatCurrency,
-                getRiskProfileText,
-                getRiskLevelClass,
-                calculateAllocationAmount,
-                getRiskLevel,
-                getInvestmentPeriod,
-                refreshAnalysis,
-                downloadReport,
-                goToPage
-            };
-        }
-    }).mount('#app');
-</script>
-</script>
-</script>
+            },
+            mounted() {
+                this.applyFilters();
+                this.initCharts();
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>
