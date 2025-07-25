@@ -5,8 +5,8 @@ import com.example.finmate.auth.service.AuthService;
 import com.example.finmate.auth.service.RefreshTokenService;
 import com.example.finmate.common.dto.ApiResponse;
 import com.example.finmate.common.util.IPUtils;
-import com.example.finmate.member.dto.MemberLoginDTO;
 import com.example.finmate.member.domain.MemberVO;
+import com.example.finmate.member.dto.MemberLoginDTO;
 import com.example.finmate.member.mapper.MemberMapper;
 import com.example.finmate.security.util.JwtProcessor;
 import io.swagger.annotations.Api;
@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
@@ -114,6 +115,35 @@ public class LoginController {
                     .body(ApiResponse.error("로그인에 실패했습니다. 사용자 ID와 비밀번호를 확인해주세요.", "AUTHENTICATION_FAILED"));
         }
     }
+
+    @ApiOperation(value = "로그아웃", notes = "현재 로그인한 사용자를 로그아웃하고 토큰을 비활성화합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        String clientIP = IPUtils.getClientIP(request);
+        String authHeader = request.getHeader(jwtProcessor.getHeader());
+        String token = jwtProcessor.extractTokenFromHeader(authHeader);
+
+        if (token != null && jwtProcessor.validateAccessToken(token)) {
+            String userId = jwtProcessor.getUserIdFromToken(token);
+            log.info("로그아웃: {} from {}", userId, IPUtils.maskIP(clientIP));
+
+            // 1. Access Token을 블랙리스트에 추가하여 즉시 만료
+            jwtProcessor.blacklistToken(token);
+
+            // 2. 사용자의 모든 Refresh Token을 무효화 (보안 강화)
+            refreshTokenService.invalidateAllRefreshTokens(userId);
+
+
+            // 3. 보안 이벤트 기록
+            authService.recordSecurityEvent(userId, "LOGOUT", clientIP);
+
+            // 4. Spring Security Context 초기화
+            SecurityContextHolder.clearContext();
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("로그아웃되었습니다.", null));
+    }
+
 
     @ApiOperation(value = "토큰 갱신", notes = "Refresh Token을 사용하여 새로운 Access Token을 발급받습니다.")
     @PostMapping("/refresh")
@@ -226,45 +256,6 @@ public class LoginController {
             validationInfo.put("reason", "토큰 검증 중 오류가 발생했습니다.");
             return ResponseEntity.ok(ApiResponse.success("토큰 검증 결과", validationInfo));
         }
-    }
-
-    @ApiOperation(value = "로그아웃", notes = "현재 사용자를 로그아웃하고 모든 토큰을 무효화합니다.")
-    @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(
-            HttpServletRequest request,
-            @RequestBody(required = false) Map<String, String> requestBody) {
-
-        String authHeader = request.getHeader(jwtProcessor.getHeader());
-        String accessToken = jwtProcessor.extractTokenFromHeader(authHeader);
-        String clientIP = IPUtils.getClientIP(request);
-        String refreshToken = null;
-
-        // 요청 본문에서 Refresh Token 추출 (선택적)
-        if (requestBody != null) {
-            refreshToken = requestBody.get("refreshToken");
-        }
-
-        if (accessToken != null && jwtProcessor.validateAccessToken(accessToken)) {
-            String userId = jwtProcessor.getUserIdFromToken(accessToken);
-
-            // Access Token 블랙리스트 추가
-            jwtProcessor.blacklistToken(accessToken);
-
-            // 특정 Refresh Token이 제공된 경우 해당 토큰만 무효화
-            if (refreshToken != null) {
-                refreshTokenService.invalidateRefreshToken(refreshToken);
-            } else {
-                // 사용자의 모든 Refresh Token 무효화
-                refreshTokenService.invalidateAllRefreshTokens(userId);
-            }
-
-            // 보안 이벤트 기록
-            authService.recordSecurityEvent(userId, "LOGOUT", clientIP);
-
-            log.info("로그아웃: {} from {}", userId, IPUtils.maskIP(clientIP));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("로그아웃되었습니다.", null));
     }
 
     @ApiOperation(value = "토큰 폐기", notes = "현재 Access Token을 무효화합니다.")

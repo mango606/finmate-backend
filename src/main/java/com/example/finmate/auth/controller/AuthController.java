@@ -1,13 +1,14 @@
 package com.example.finmate.auth.controller;
 
-import com.example.finmate.auth.dto.PasswordResetRequestDTO;
-import com.example.finmate.auth.dto.PasswordResetDTO;
 import com.example.finmate.auth.dto.EmailVerificationDTO;
+import com.example.finmate.auth.dto.PasswordResetDTO;
+import com.example.finmate.auth.dto.PasswordResetRequestDTO;
 import com.example.finmate.auth.service.AuthService;
 import com.example.finmate.common.dto.ApiResponse;
 import com.example.finmate.common.service.EmailService;
 import com.example.finmate.common.util.IPUtils;
 import com.example.finmate.common.util.SecurityUtils;
+import com.example.finmate.security.util.JwtProcessor;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,31 +32,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailService emailService;
+    private final JwtProcessor jwtProcessor;
 
-    @ApiOperation(value = "로그아웃", notes = "현재 로그인한 사용자를 로그아웃합니다.")
-    @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(
-            Authentication authentication,
-            HttpServletRequest request) {
-
-        String clientIP = IPUtils.getClientIP(request);
-
-        if (authentication != null) {
-            String userId = authentication.getName();
-            log.info("로그아웃: {} from {}", userId, IPUtils.maskIP(clientIP));
-
-            // 보안 이벤트 기록
-            authService.recordSecurityEvent(userId, "LOGOUT", clientIP);
-
-            // 세션 삭제
-            authService.deleteSession(userId);
-        }
-
-        // JWT 토큰 기반이므로 서버에서는 단순히 클라이언트에게 토큰 삭제를 알림
-        SecurityContextHolder.clearContext();
-
-        return ResponseEntity.ok(ApiResponse.success("로그아웃되었습니다.", null));
-    }
 
     @ApiOperation(value = "토큰 유효성 확인", notes = "현재 토큰의 유효성을 확인합니다.")
     @PostMapping("/verify")

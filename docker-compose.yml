@@ -25,10 +25,12 @@ services:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
       --default-time-zone='+09:00'
+      --innodb-buffer-pool-size=256M
+      --max-connections=200
     networks:
       - finmate-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "finmate", "-p1234"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,6 +47,7 @@ services:
       PMA_USER: finmate
       PMA_PASSWORD: 1234
       MYSQL_ROOT_PASSWORD: root1234
+      UPLOAD_LIMIT: 100M
     ports:
       - "8081:80"
     depends_on:
@@ -53,7 +56,7 @@ services:
     networks:
       - finmate-network
 
-  # Redis (캐시용)
+  # Redis (캐시용) - 선택사항
   redis:
     image: redis:7-alpine
     container_name: finmate-redis
@@ -65,6 +68,11 @@ services:
       - redis_data:/data
     networks:
       - finmate-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
 volumes:
   mysql_data:
