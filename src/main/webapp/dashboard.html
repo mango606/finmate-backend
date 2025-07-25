@@ -55,7 +55,7 @@
             border-radius: 8px;
         }
 
-        .nav-item:hover {
+        .nav-item:hover, .nav-item.active {
             background: rgba(255,255,255,0.2);
             transform: translateY(-2px);
         }
@@ -72,6 +72,7 @@
             padding: 10px 15px;
             border-radius: 8px;
             transition: all 0.3s;
+            position: relative;
         }
 
         .user-info:hover {
@@ -87,6 +88,39 @@
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
         }
 
         .container {
@@ -403,18 +437,26 @@
     <!-- 헤더 -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">🏦 FinMate</div>
+            <div class="logo" @click="goToPage('/')">🏦 FinMate</div>
             <nav class="nav-menu">
                 <a href="/" class="nav-item">홈</a>
-                <a href="/dashboard.html" class="nav-item">대시보드</a>
+                <a href="/dashboard.html" class="nav-item active">대시보드</a>
                 <a href="/financial.html" class="nav-item">금융관리</a>
                 <a href="/investment.html" class="nav-item">투자분석</a>
+                <a href="/portfolio.html" class="nav-item">포트폴리오</a>
+                <a href="/education.html" class="nav-item">학습센터</a>
                 <a href="/mypage.html" class="nav-item">마이페이지</a>
             </nav>
             <div class="user-menu" v-if="user">
                 <div class="user-info" @click="toggleUserMenu">
                     <div class="avatar">{{ user.userName ? user.userName.charAt(0) : 'U' }}</div>
                     <span>{{ user.userName }}님</span>
+                </div>
+                <div :class="['user-dropdown', { show: showUserMenu }]">
+                    <a href="/mypage.html" class="dropdown-item">👤 마이페이지</a>
+                    <a href="/financial.html" class="dropdown-item">💰 금융관리</a>
+                    <a v-if="isAdmin" href="/admindashboard.html" class="dropdown-item">🛠️ 관리자</a>
+                    <a href="#" @click="logout" class="dropdown-item">🚪 로그아웃</a>
                 </div>
             </div>
         </div>
@@ -509,11 +551,14 @@
                     <button @click="goToPage('/investment.html')" class="action-btn">
                         📊 투자 분석
                     </button>
+                    <button @click="goToPage('/portfolio.html')" class="action-btn secondary">
+                        💼 포트폴리오
+                    </button>
+                    <button @click="goToPage('/education.html')" class="action-btn secondary">
+                        📚 학습센터
+                    </button>
                     <button @click="updateProfile" class="action-btn secondary">
                         🔄 프로필 업데이트
-                    </button>
-                    <button @click="goToPage('/mypage.html')" class="action-btn secondary">
-                        ⚙️ 설정
                     </button>
                 </div>
             </div>
@@ -560,6 +605,7 @@
         setup() {
             const isLoading = ref(true);
             const user = ref(null);
+            const showUserMenu = ref(false);
             const dashboard = reactive({
                 totalAssets: 25000000,
                 activeGoals: [],
@@ -680,6 +726,11 @@
                 }).format(amount);
             };
 
+            // 관리자 권한 확인
+            const isAdmin = computed(() => {
+                return user.value?.authorities?.includes('ROLE_ADMIN') || false;
+            });
+
             // 페이지 이동
             const goToPage = (url) => {
                 window.location.href = url;
@@ -697,7 +748,29 @@
 
             // 사용자 메뉴 토글
             const toggleUserMenu = () => {
-                // 사용자 메뉴 토글 로직 (드롭다운 등)
+                showUserMenu.value = !showUserMenu.value;
+            };
+
+            // 로그아웃
+            const logout = async () => {
+                try {
+                    await axios.post('/auth/logout');
+                } catch (error) {
+                    console.warn('로그아웃 API 호출 실패:', error);
+                } finally {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    delete axios.defaults.headers.common['Authorization'];
+                    window.location.href = '/member.html';
+                }
+            };
+
+            // 클릭 외부 영역 감지
+            const handleClickOutside = (event) => {
+                const userMenu = document.querySelector('.user-menu');
+                if (userMenu && !userMenu.contains(event.target)) {
+                    showUserMenu.value = false;
+                }
             };
 
             // 초기화
@@ -713,6 +786,9 @@
                     // 차트는 DOM이 업데이트된 후 생성
                     setTimeout(createAssetChart, 100);
                 }
+
+                // 클릭 외부 영역 감지 리스너 추가
+                document.addEventListener('click', handleClickOutside);
             };
 
             onMounted(initialize);
@@ -720,11 +796,14 @@
             return {
                 isLoading,
                 user,
+                showUserMenu,
                 dashboard,
+                isAdmin,
                 formatCurrency,
                 goToPage,
                 updateProfile,
-                toggleUserMenu
+                toggleUserMenu,
+                logout
             };
         }
     }).mount('#app');
