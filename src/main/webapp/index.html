@@ -49,7 +49,7 @@
 
         .nav-menu {
             display: flex;
-            gap: 30px;
+            gap: 25px;
         }
 
         .nav-item {
@@ -59,6 +59,7 @@
             transition: all 0.3s;
             padding: 10px 15px;
             border-radius: 8px;
+            font-size: 0.9rem;
         }
 
         .nav-item:hover {
@@ -177,8 +178,8 @@
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
         }
 
         .feature-card {
@@ -189,6 +190,7 @@
             text-align: center;
             transition: all 0.3s;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
         }
 
         .feature-card:hover {
@@ -283,6 +285,7 @@
             .nav-menu {
                 flex-wrap: wrap;
                 justify-content: center;
+                gap: 15px;
             }
 
             .hero-title {
@@ -302,6 +305,10 @@
                 margin: 20px 10px;
                 padding: 40px 20px;
             }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -314,7 +321,7 @@
             <nav class="nav-menu">
                 <a href="#features" class="nav-item">서비스</a>
                 <a href="#about" class="nav-item">소개</a>
-                <a href="/swagger-ui/index.html" class="nav-item">API</a>
+                <a href="/swagger-ui/index.html" class="nav-item" target="_blank">API</a>
             </nav>
             <div class="auth-buttons">
                 <div v-if="user" class="user-info" @click="goToPage('/dashboard.html')">
@@ -377,6 +384,14 @@
             <div id="features" class="features-section">
                 <h2 class="features-title">핵심 서비스</h2>
                 <div class="features-grid">
+                    <div class="feature-card" @click="goToPage('/dashboard.html')">
+                        <span class="feature-icon">📊</span>
+                        <h3 class="feature-title">대시보드</h3>
+                        <p class="feature-description">
+                            한눈에 보는 자산 현황과 목표 달성 진행률을 확인하세요.
+                        </p>
+                    </div>
+
                     <div class="feature-card" @click="goToPage('/financial.html')">
                         <span class="feature-icon">💰</span>
                         <h3 class="feature-title">금융 관리</h3>
@@ -394,7 +409,7 @@
                     </div>
 
                     <div class="feature-card" @click="goToPage('/portfolio.html')">
-                        <span class="feature-icon">📊</span>
+                        <span class="feature-icon">💼</span>
                         <h3 class="feature-title">포트폴리오</h3>
                         <p class="feature-description">
                             실시간 자산 현황과 수익률을 한눈에 확인하고 관리하세요.
@@ -422,6 +437,14 @@
                         <h3 class="feature-title">학습 센터</h3>
                         <p class="feature-description">
                             투자 전문 강의와 퀴즈로 금융 지식을 체계적으로 쌓아가세요.
+                        </p>
+                    </div>
+
+                    <div class="feature-card" @click="goToPage('/mypage.html')">
+                        <span class="feature-icon">👤</span>
+                        <h3 class="feature-title">마이페이지</h3>
+                        <p class="feature-description">
+                            개인정보 관리와 보안 설정을 안전하게 관리하세요.
                         </p>
                     </div>
                 </div>
@@ -464,7 +487,14 @@
             // 페이지 이동
             const goToPage = (url) => {
                 // 로그인이 필요한 페이지들
-                const protectedPages = ['/dashboard.html', '/financial.html', '/investment.html', '/portfolio.html', '/mypage.html'];
+                const protectedPages = [
+                    '/dashboard.html',
+                    '/financial.html',
+                    '/investment.html',
+                    '/portfolio.html',
+                    '/mypage.html',
+                    '/admindashboard.html'
+                ];
 
                 if (protectedPages.includes(url) && !user.value) {
                     window.location.href = '/member.html';
