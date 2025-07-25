@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 금융관리</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .user-info:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .goal-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #28a745;
+            transition: all 0.3s;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .goal-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .goal-priority {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #fff5f5;
+            color: #c53030;
+        }
+
+        .priority-medium {
+            background: #fffaf0;
+            color: #dd6b20;
+        }
+
+        .priority-low {
+            background: #f0fff4;
+            color: #38a169;
+        }
+
+        .goal-amount {
+            margin-bottom: 15px;
+        }
+
+        .goal-amount .current {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .goal-amount .target {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .progress-container {
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .goal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🏦 FinMate</div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item">홈</a>
+                <a href="/dashboard.html" class="nav-item">대시보드</a>
+                <a href="/financial.html" class="nav-item active">금융관리</a>
+                <a href="/investment.html" class="nav-item">투자분석</a>
+                <a href="/mypage.html" class="nav-item">마이페이지</a>
+            </nav>
+            <div class="user-menu" v-if="user">
+                <div class="user-info" @click="goToPage('/mypage.html')">
+                    <div class="avatar">{{ user.userName ? user.userName.charAt(0) : 'U' }}</div>
+                    <span>{{ user.userName }}님</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <div class="container">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <h1 class="page-title">금융관리</h1>
+            <p class="page-subtitle">개인 금융 프로필과 목표를 설정하고 관리하세요</p>
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div v-if="isLoading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- 메인 컨텐츠 -->
+        <div v-else>
+            <!-- 알림 메시지 -->
+            <div v-if="alertMessage" :class="['alert', 'alert-' + alertType]">
+                <span>{{ alertMessage }}</span>
+            </div>
+
+            <!-- 금융 프로필 섹션 -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span>👤</span>
+                    금융 프로필
+                </h2>
+
+                <!-- 프로필 요약 -->
+                <div v-if="profile.hasProfile" class="profile-summary">
+                    <div class="summary-card">
+                        <div class="summary-label">월 소득</div>
+                        <div class="summary-value">{{ formatCurrency(profile.profile.monthlyIncome) }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">월 지출</div>
+                        <div class="summary-value">{{ formatCurrency(profile.profile.monthlyExpense) }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">총 자산</div>
+                        <div class="summary-value">{{ formatCurrency(profile.profile.totalAssets) }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">투자 성향</div>
+                        <div class="summary-value">{{ getRiskProfileText(profile.profile.riskProfile) }}</div>
+                    </div>
+                </div>
+
+                <!-- 프로필 폼 -->
+                <div class="form-container">
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: #333;">기본 정보</h3>
+                        <form @submit.prevent="saveProfile">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">소득 구간</label>
+                                    <select v-model="profileForm.incomeRange" class="form-control" required>
+                                        <option value="">선택하세요</option>
+                                        <option value="LOW">낮음 (3천만원 이하)</option>
+                                        <option value="MEDIUM">보통 (3천-7천만원)</option>
+                                        <option value="HIGH">높음 (7천만원 이상)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">직업 유형</label>
+                                    <select v-model="profileForm.jobType" class="form-control" required>
+                                        <option value="">선택하세요</option>
+                                        <option value="EMPLOYEE">직장인</option>
+                                        <option value="SELF_EMPLOYED">자영업</option>
+                                        <option value="FREELANCER">프리랜서</option>
+                                        <option value="STUDENT">학생</option>
+                                        <option value="RETIRED">은퇴</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">월 소득 (원)</label>
+                                    <input v-model.number="profileForm.monthlyIncome" type="number" class="form-control" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">월 지출 (원)</label>
+                                    <input v-model.number="profileForm.monthlyExpense" type="number" class="form-control" min="0" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">총 자산 (원)</label>
+                                    <input v-model.number="profileForm.totalAssets" type="number" class="form-control" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">총 부채 (원)</label>
+                                    <input v-model.number="profileForm.totalDebt" type="number" class="form-control" min="0">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">비상금 (원)</label>
+                                <input v-model.number="profileForm.emergencyFund" type="number" class="form-control" min="0">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">프로필 저장</button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: #333;">투자 정보</h3>
+                        <div class="form-group">
+                            <label class="form-label">투자 성향</label>
+                            <select v-model="profileForm.riskProfile" class="form-control" required>
+                                <option value="">선택하세요</option>
+                                <option value="CONSERVATIVE">안정형 (원금 보장 선호)</option>
+                                <option value="MODERATE">중도형 (적절한 위험 감수)</option>
+                                <option value="AGGRESSIVE">공격형 (높은 수익 추구)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">투자 목표</label>
+                            <select v-model="profileForm.investmentGoal" class="form-control" required>
+                                <option value="">선택하세요</option>
+                                <option value="SAVING">안전한 저축</option>
+                                <option value="RETIREMENT">은퇴 준비</option>
+                                <option value="EDUCATION">교육비 마련</option>
+                                <option value="HOUSE">주택 구매</option>
+                                <option value="BUSINESS">사업 자금</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">투자 기간 (개월)</label>
+                            <input v-model.number="profileForm.investmentPeriod" type="number" class="form-control" min="1" max="600" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">신용등급</label>
+                            <select v-model="profileForm.creditScore" class="form-control">
+                                <option value="">선택하세요</option>
+                                <option value="EXCELLENT">우수 (1-2등급)</option>
+                                <option value="GOOD">양호 (3-4등급)</option>
+                                <option value="FAIR">보통 (5-6등급)</option>
+                                <option value="POOR">낮음 (7등급 이하)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 금융 목표 섹션 -->
+            <div class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="section-title">
+                        <span>🎯</span>
+                        금융 목표
+                    </h2>
+                    <button @click="showGoalModal = true" class="btn btn-primary">새 목표 추가</button>
+                </div>
+
+                <!-- 목표 목록 -->
+                <div v-if="goals.length > 0" class="goals-grid">
+                    <div v-for="goal in goals" :key="goal.goalId" class="goal-card">
+                        <div class="goal-header">
+                            <div class="goal-name">{{ goal.goalName }}</div>
+                            <span :class="['goal-priority', 'priority-' + goal.priority.toLowerCase()]">
+                                {{ getPriorityText(goal.priority) }}
+                            </span>
+                        </div>
+
+                        <div class="goal-amount">
+                            <div class="current">{{ formatCurrency(goal.currentAmount) }}</div>
+                            <div class="target">목표: {{ formatCurrency(goal.targetAmount) }}</div>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="{ width: Math.min(goal.progressPercentage || 0, 100) + '%' }"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span>{{ Math.round(goal.progressPercentage || 0) }}%</span>
+                                <span>{{ goal.expectedMonths ? goal.expectedMonths + '개월 예상' : '' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="goal-actions">
+                            <button @click="editGoal(goal)" class="btn btn-outline btn-small">수정</button>
+                            <button @click="deleteGoal(goal.goalId)" class="btn btn-secondary btn-small">삭제</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="alert alert-info">
+                    <span>💡</span>
+                    <span>아직 설정된 목표가 없습니다. 새로운 목표를 추가해보세요!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 목표 추가/수정 모달 -->
+        <div v-if="showGoalModal" class="modal-overlay" @click.self="closeGoalModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ editingGoal ? '목표 수정' : '새 목표 추가' }}</h3>
+                    <button @click="closeGoalModal" class="close-btn">&times;</button>
+                </div>
+
+                <form @submit.prevent="saveGoal">
+                    <div class="form-group">
+                        <label class="form-label">목표명</label>
+                        <input v-model="goalForm.goalName" type="text" class="form-control" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">목표 유형</label>
+                            <select v-model="goalForm.goalType" class="form-control" required>
+                                <option value="">선택하세요</option>
+                                <option value="SAVING">저축</option>
+                                <option value="INVESTMENT">투자</option>
+                                <option value="DEBT_REPAYMENT">부채 상환</option>
+                                <option value="HOUSE_PURCHASE">주택 구매</option>
+                                <option value="RETIREMENT">은퇴 준비</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">우선순위</label>
+                            <select v-model="goalForm.priority" class="form-control" required>
+                                <option value="HIGH">높음</option>
+                                <option value="MEDIUM">보통</option>
+                                <option value="LOW">낮음</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">목표 금액 (원)</label>
+                            <input v-model.number="goalForm.targetAmount" type="number" class="form-control" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">현재 금액 (원)</label>
+                            <input v-model.number="goalForm.currentAmount" type="number" class="form-control" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">월 적립액 (원)</label>
+                            <input v-model.number="goalForm.monthlyContribution" type="number" class="form-control" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">목표 달성일</label>
+                            <input v-model="goalForm.targetDate" type="date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">시작일</label>
+                        <input v-model="goalForm.startDate" type="date" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">설명 (선택)</label>
+                        <textarea v-model="goalForm.description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button type="button" @click="closeGoalModal" class="btn btn-secondary">취소</button>
+                        <button type="submit" class="btn btn-primary">
+                            {{ editingGoal ? '수정' : '추가' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, reactive, onMounted, computed } = Vue;
+
+    createApp({
+        setup() {
+            const isLoading = ref(true);
+            const user = ref(null);
+            const alertMessage = ref('');
+            const alertType = ref('info');
+            const showGoalModal = ref(false);
+            const editingGoal = ref(null);
+
+            const profile = reactive({
+                hasProfile: false,
+                profile: null
+            });
+
+            const goals = ref([]);
+
+            const profileForm = reactive({
+                incomeRange: '',
+                jobType: '',
+                monthlyIncome: 0,
+                monthlyExpense: 0,
+                totalAssets: 0,
+                totalDebt: 0,
+                riskProfile: '',
+                investmentGoal: '',
+                investmentPeriod: 12,
+                emergencyFund: 0,
+                creditScore: ''
+            });
+
+            const goalForm = reactive({
+                goalName: '',
+                goalType: '',
+                targetAmount: 0,
+                currentAmount: 0,
+                monthlyContribution: 0,
+                targetDate: '',
+                startDate: '',
+                priority: 'MEDIUM',
+                description: ''
+            });
+
+            // API 기본 설정
+            const API_BASE_URL = '/api';
+            axios.defaults.baseURL = API_BASE_URL;
+
+            // 토큰 설정
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            } else {
+                window.location.href = '/member.html';
+                return;
+            }
+
+            // 알림 표시
+            const showAlert = (message, type = 'info', duration = 5000) => {
+                alertMessage.value = message;
+                alertType.value = type;
+                setTimeout(() => {
+                    alertMessage.value = '';
+                }, duration);
+            };
+
+            // 사용자 정보 로드
+            const loadUserInfo = async () => {
+                try {
+                    const response = await axios.get('/auth/me');
+                    if (response.data.success) {
+                        user.value = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('사용자 정보 로드 실패:', error);
+                    localStorage.removeItem('accessToken');
+                    window.location.href = '/member.html';
+                }
+            };
+
+            // 금융 프로필 로드
+            const loadProfile = async () => {
+                try {
+                    const response = await axios.get('/financial/profile');
+                    if (response.data.success) {
+                        Object.assign(profile, response.data.data);
+                        if (profile.hasProfile) {
+                            Object.assign(profileForm, profile.profile);
+                        }
+                    }
+                } catch (error) {
+                    console.error('프로필 로드 실패:', error);
+                }
+            };
+
+            // 금융 목표 로드
+            const loadGoals = async () => {
+                try {
+                    const response = await axios.get('/financial/goals');
+                    if (response.data.success) {
+                        goals.value = response.data.data.goals || [];
+                    }
+                } catch (error) {
+                    console.error('목표 로드 실패:', error);
+                }
+            };
+
+            // 프로필 저장
+            const saveProfile = async () => {
+                try {
+                    const response = await axios.post('/financial/profile', profileForm);
+                    if (response.data.success) {
+                        showAlert('금융 프로필이 저장되었습니다.', 'success');
+                        await loadProfile();
+                    }
+                } catch (error) {
+                    console.error('프로필 저장 실패:', error);
+                    showAlert(error.response?.data?.message || '프로필 저장에 실패했습니다.', 'error');
+                }
+            };
+
+            // 목표 저장
+            const saveGoal = async () => {
+                try {
+                    if (editingGoal.value) {
+                        const response = await axios.put(`/financial/goals/${editingGoal.value.goalId}`, goalForm);
+                        if (response.data.success) {
+                            showAlert('목표가 수정되었습니다.', 'success');
+                        }
+                    } else {
+                        const response = await axios.post('/financial/goals', goalForm);
+                        if (response.data.success) {
+                            showAlert('새 목표가 추가되었습니다.', 'success');
+                        }
+                    }
+
+                    closeGoalModal();
+                    await loadGoals();
+                } catch (error) {
+                    console.error('목표 저장 실패:', error);
+                    showAlert(error.response?.data?.message || '목표 저장에 실패했습니다.', 'error');
+                }
+            };
+
+            // 목표 수정
+            const editGoal = (goal) => {
+                editingGoal.value = goal;
+                Object.assign(goalForm, {
+                    goalName: goal.goalName,
+                    goalType: goal.goalType,
+                    targetAmount: goal.targetAmount,
+                    currentAmount: goal.currentAmount,
+                    monthlyContribution: goal.monthlyContribution,
+                    targetDate: goal.targetDate ? goal.targetDate.split('T')[0] : '',
+                    startDate: goal.startDate ? goal.startDate.split('T')[0] : '',
+                    priority: goal.priority,
+                    description: goal.description || ''
+                });
+                showGoalModal.value = true;
+            };
+
+            // 목표 삭제
+            const deleteGoal = async (goalId) => {
+                if (!confirm('정말로 이 목표를 삭제하시겠습니까?')) return;
+
+                try {
+                    const response = await axios.delete(`/financial/goals/${goalId}`);
+                    if (response.data.success) {
+                        showAlert('목표가 삭제되었습니다.', 'success');
+                        await loadGoals();
+                    }
+                } catch (error) {
+                    console.error('목표 삭제 실패:', error);
+                    showAlert('목표 삭제에 실패했습니다.', 'error');
+                }
+            };
+
+            // 목표 모달 닫기
+            const closeGoalModal = () => {
+                showGoalModal.value = false;
+                editingGoal.value = null;
+                Object.keys(goalForm).forEach(key => {
+                    if (typeof goalForm[key] === 'number') {
+                        goalForm[key] = 0;
+                    } else {
+                        goalForm[key] = key === 'priority' ? 'MEDIUM' : '';
+                    }
+                });
+            };
+
+            // 통화 포맷
+            const formatCurrency = (amount) => {
+                if (amount == null) return '₩0';
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            };
+
+            // 위험 성향 텍스트
+            const getRiskProfileText = (riskProfile) => {
+                const texts = {
+                    CONSERVATIVE: '안정형',
+                    MODERATE: '중도형',
+                    AGGRESSIVE: '공격형'
+                };
+                return texts[riskProfile] || riskProfile;
+            };
+
+            // 우선순위 텍스트
+            const getPriorityText = (priority) => {
+                const texts = {
+                    HIGH: '높음',
+                    MEDIUM: '보통',
+                    LOW: '낮음'
+                };
+                return texts[priority] || priority;
+            };
+
+            // 페이지 이동
+            const goToPage = (url) => {
+                window.location.href = url;
+            };
+
+            // 초기화
+            const initialize = async () => {
+                isLoading.value = true;
+                try {
+                    await Promise.all([
+                        loadUserInfo(),
+                        loadProfile(),
+                        loadGoals()
+                    ]);
+
+                    // 오늘 날짜를 기본값으로 설정
+                    const today = new Date().toISOString().split('T')[0];
+                    goalForm.startDate = today;
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            onMounted(initialize);
+
+            return {
+                isLoading,
+                user,
+                alertMessage,
+                alertType,
+                showGoalModal,
+                editingGoal,
+                profile,
+                goals,
+                profileForm,
+                goalForm,
+                showAlert,
+                saveProfile,
+                saveGoal,
+                editGoal,
+                deleteGoal,
+                closeGoalModal,
+                formatCurrency,
+                getRiskProfileText,
+                getPriorityText,
+                goToPage
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
