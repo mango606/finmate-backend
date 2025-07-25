@@ -12,26 +12,6 @@
 
     <!-- 어노테이션 기반 핸들러 매핑 및 어댑터 등록 -->
     <annotation-driven>
-        <message-converters>
-            <!-- String 메시지 컨버터 (UTF-8 설정) -->
-            <beans:bean class="org.springframework.http.converter.StringHttpMessageConverter">
-                <beans:constructor-arg value="UTF-8"/>
-                <beans:property name="writeAcceptCharset" value="false"/>
-            </beans:bean>
-
-            <!-- JSON 메시지 컨버터 -->
-            <beans:bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
-                <beans:property name="objectMapper">
-                    <beans:bean class="com.fasterxml.jackson.databind.ObjectMapper">
-                        <beans:property name="dateFormat">
-                            <beans:bean class="java.text.SimpleDateFormat">
-                                <beans:constructor-arg value="yyyy-MM-dd HH:mm:ss"/>
-                            </beans:bean>
-                        </beans:property>
-                    </beans:bean>
-                </beans:property>
-            </beans:bean>
-        </message-converters>
     </annotation-driven>
 
     <!-- 정적 리소스 핸들링 -->
@@ -49,6 +29,7 @@
     <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <beans:property name="prefix" value="/WEB-INF/views/"/>
         <beans:property name="suffix" value=".jsp"/>
+        <beans:property name="contentType" value="text/html; charset=UTF-8"/>
     </beans:bean>
 
     <!-- 컨트롤러 스캔 -->
@@ -72,5 +53,10 @@
 
     <!-- Swagger 설정 -->
     <beans:bean class="com.example.finmate.config.SwaggerConfig"/>
+
+    <!-- 뷰 컨트롤러 매핑 -->
+    <view-controller path="/" view-name="forward:/index.html"/>
+    <view-controller path="/member" view-name="forward:/member.html"/>
+    <view-controller path="/login" view-name="forward:/member.html"/>
 
 </beans:beans>

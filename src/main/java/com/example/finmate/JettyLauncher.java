@@ -18,17 +18,7 @@ import java.nio.charset.StandardCharsets;
 public class JettyLauncher {
 
     public static void main(String[] args) throws Exception {
-        // UTF-8 시스템 프로퍼티 설정
-        System.setProperty("file.encoding", "UTF-8");
-        System.setProperty("user.timezone", "Asia/Seoul");
-        System.setProperty("console.encoding", "UTF-8");
-        System.setProperty("java.awt.headless", "true");
-        System.setProperty("user.language", "ko");
-        System.setProperty("user.country", "KR");
-
-        // JVM 인코딩 강제 설정
-        System.setProperty("sun.jnu.encoding", "UTF-8");
-        System.setProperty("file.encoding.pkg", "sun.io");
+        forceUtf8Encoding();
 
         // 서버 생성 (포트 8080)
         Server server = new Server();
@@ -45,8 +35,14 @@ public class JettyLauncher {
         String webappPath = System.getProperty("user.dir") + "/src/main/webapp";
         File webappDir = new File(webappPath);
 
-        System.out.println("웹앱 디렉토리: " + webappDir.getAbsolutePath());
-        System.out.println("웹앱 디렉토리 존재: " + webappDir.exists());
+        System.out.println("==========================================");
+        System.out.println("🚀 FinMate 서버 시작 중...");
+        System.out.println("==========================================");
+        System.out.println("📂 웹앱 디렉토리: " + webappDir.getAbsolutePath());
+        System.out.println("📂 웹앱 디렉토리 존재: " + webappDir.exists());
+        System.out.println("🌏 시스템 인코딩: " + System.getProperty("file.encoding"));
+        System.out.println("🕐 시스템 타임존: " + System.getProperty("user.timezone"));
+        System.out.println("🌍 시스템 언어: " + System.getProperty("user.language"));
 
         if (webappDir.exists()) {
             webapp.setWar(webappDir.getAbsolutePath());
@@ -93,15 +89,26 @@ public class JettyLauncher {
             // 서버 시작
             server.start();
 
-            System.out.println("=================================");
-            System.out.println("🚀 FinMate 서버가 시작되었습니다!");
-            System.out.println("📍 URL: http://localhost:8080");
+            System.out.println("==========================================");
+            System.out.println("🎉 FinMate 서버가 성공적으로 시작되었습니다!");
+            System.out.println("==========================================");
+            System.out.println("📍 메인 URL: http://localhost:8080");
             System.out.println("👥 회원 페이지: http://localhost:8080/member.html");
             System.out.println("📖 API 문서: http://localhost:8080/swagger-ui/index.html");
-            System.out.println("🔧 관리자 계정: admin / finmate123!");
-            System.out.println("👤 테스트 계정: testuser / finmate123!");
-            System.out.println("=================================");
-            System.out.println("서버를 중지하려면 Ctrl+C를 누르세요.");
+            System.out.println("🏓 Ping 테스트: http://localhost:8080/ping");
+            System.out.println("❤️ Health 체크: http://localhost:8080/api/member/health");
+            System.out.println("==========================================");
+            System.out.println("🔧 테스트 계정:");
+            System.out.println("   관리자: admin / finmate123!");
+            System.out.println("   일반사용자: testuser / finmate123!");
+            System.out.println("==========================================");
+            System.out.println("💾 데이터베이스 정보:");
+            System.out.println("   URL: localhost:3306/finmate_db");
+            System.out.println("   사용자: finmate / 1234");
+            System.out.println("   관리도구: http://localhost:8081 (phpMyAdmin)");
+            System.out.println("==========================================");
+            System.out.println("🛑 서버를 중지하려면 Ctrl+C를 누르세요.");
+            System.out.println("==========================================");
 
             // 서버 대기
             server.join();
@@ -111,6 +118,39 @@ public class JettyLauncher {
             if (server.isStarted()) {
                 server.stop();
             }
+            System.exit(1);
         }
+    }
+
+    /**
+     * UTF-8 인코딩을 강제로 설정하는 메서드
+     */
+    private static void forceUtf8Encoding() {
+        // 시스템 프로퍼티로 UTF-8 강제 설정
+        System.setProperty("file.encoding", "UTF-8");
+        System.setProperty("user.timezone", "Asia/Seoul");
+        System.setProperty("console.encoding", "UTF-8");
+        System.setProperty("java.awt.headless", "true");
+        System.setProperty("user.language", "ko");
+        System.setProperty("user.country", "KR");
+        System.setProperty("sun.jnu.encoding", "UTF-8");
+        System.setProperty("sun.stderr.encoding", "UTF-8");
+        System.setProperty("sun.stdout.encoding", "UTF-8");
+
+        // 기본 문자셋을 UTF-8로 설정 (reflection 사용)
+        try {
+            System.setProperty("file.encoding", "UTF-8");
+            java.lang.reflect.Field charset = java.nio.charset.Charset.class.getDeclaredField("defaultCharset");
+            charset.setAccessible(true);
+            charset.set(null, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println("⚠️ UTF-8 인코딩 강제 설정 실패: " + e.getMessage());
+        }
+
+        System.out.println("🔤 현재 파일 인코딩: " + System.getProperty("file.encoding"));
+        System.out.println("🔤 기본 문자셋: " + java.nio.charset.Charset.defaultCharset());
+        System.out.println("🔤 JNU 인코딩: " + System.getProperty("sun.jnu.encoding"));
+
+        System.out.println("🧪 한글 테스트: 안녕하세요! FinMate 서버입니다. 🚀");
     }
 }

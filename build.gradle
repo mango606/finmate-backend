@@ -24,8 +24,34 @@ ext {
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.docEncoding = 'UTF-8'
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
+}
+
+tasks.withType(Test) {
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'user.timezone', 'Asia/Seoul'
+    systemProperty 'user.language', 'ko'
+    systemProperty 'user.country', 'KR'
+    environment 'LANG', 'ko_KR.UTF-8'
+    environment 'LC_ALL', 'ko_KR.UTF-8'
 }
 
 dependencies {
@@ -67,9 +93,6 @@ dependencies {
     implementation 'org.slf4j:jcl-over-slf4j:2.0.7'
     implementation 'org.slf4j:jul-to-slf4j:2.0.7'
 
-    // P6Spy 제거 - 디버깅이 필요할 때 추가
-    // implementation 'p6spy:p6spy:3.9.1'
-
     // Swagger
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
 
@@ -77,7 +100,7 @@ dependencies {
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    // Jackson - JSON 처리
+    // Jackson - JSON 처리 (LocalDate 지원 포함)
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
@@ -172,11 +195,15 @@ test {
             '-XX:MaxMetaspaceSize=512m',
             '-Dfile.encoding=UTF-8',
             '-Duser.timezone=Asia/Seoul',
-            '-Djava.awt.headless=true'
+            '-Djava.awt.headless=true',
+            '-Duser.language=ko',
+            '-Duser.country=KR'
     ]
 
     // 테스트 환경 설정
     systemProperty 'spring.profiles.active', 'test'
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'user.timezone', 'Asia/Seoul'
 
     // 성능 설정
     maxParallelForks = 1
@@ -194,17 +221,7 @@ test {
     }
 }
 
-// 컴파일 옵션
-compileJava {
-    options.compilerArgs += ['-parameters']
-    options.encoding = 'UTF-8'
-}
-
-compileTestJava {
-    options.compilerArgs += ['-parameters']
-    options.encoding = 'UTF-8'
-}
-
+// 서버 실행 태스크 (UTF-8 인코딩 강화)
 task runServer(type: JavaExec) {
     group = 'application'
     description = 'FinMate 서버 실행'
@@ -219,7 +236,10 @@ task runServer(type: JavaExec) {
     systemProperty 'user.language', 'ko'
     systemProperty 'user.country', 'KR'
     systemProperty 'sun.jnu.encoding', 'UTF-8'
+    systemProperty 'sun.stderr.encoding', 'UTF-8'
+    systemProperty 'sun.stdout.encoding', 'UTF-8'
 
+    // JVM 옵션에도 UTF-8 설정 추가
     jvmArgs = [
             '-Xmx1024m',
             '-Xms512m',
@@ -228,14 +248,24 @@ task runServer(type: JavaExec) {
             '-Duser.language=ko',
             '-Duser.country=KR',
             '-Dsun.jnu.encoding=UTF-8',
+            '-Dsun.stderr.encoding=UTF-8',
+            '-Dsun.stdout.encoding=UTF-8',
             '-Djava.awt.headless=true'
     ]
+
+    // 환경 변수로도 UTF-8 설정
+    environment 'LANG', 'ko_KR.UTF-8'
+    environment 'LC_ALL', 'ko_KR.UTF-8'
+    environment 'JAVA_TOOL_OPTIONS', '-Dfile.encoding=UTF-8'
 
     doFirst {
         println "🚀 FinMate 서버를 시작합니다..."
         println "📍 URL: http://localhost:8080"
         println "👥 회원 페이지: http://localhost:8080/member.html"
         println "📖 API 문서: http://localhost:8080/swagger-ui/index.html"
+        println "🔧 관리자 계정: admin / finmate123!"
+        println "👤 테스트 계정: testuser / finmate123!"
+        println "💾 데이터베이스: localhost:3306/finmate_db"
     }
 }
 
@@ -254,15 +284,23 @@ task runServerNoTest {
     finalizedBy 'runServer'
 }
 
-// 직접 실행 태스크 (의존성 포함)
+// Jetty 서버 직접 실행
 task runJetty(type: JavaExec) {
     group = 'application'
     description = 'Jetty 서버 직접 실행'
     mainClass = 'com.example.finmate.JettyLauncher'
     classpath = sourceSets.main.runtimeClasspath + sourceSets.main.output
+
     systemProperty 'file.encoding', 'UTF-8'
     systemProperty 'user.timezone', 'Asia/Seoul'
-    jvmArgs = ['-Xmx1024m', '-Xms512m']
+    systemProperty 'user.language', 'ko'
+    systemProperty 'user.country', 'KR'
+
+    jvmArgs = [
+            '-Xmx1024m',
+            '-Xms512m',
+            '-Dfile.encoding=UTF-8'
+    ]
 
     doFirst {
         println "🚀 Jetty 서버를 시작합니다..."
@@ -292,23 +330,27 @@ task fatJar(type: Jar) {
     with jar
 }
 
-// Fat JAR 실행 태스크
-task runFatJar(type: Exec) {
-    group = 'application'
-    description = 'Fat JAR로 서버 실행'
-    dependsOn fatJar
-
-    commandLine 'java', '-jar', 'build/libs/finmate-server.jar'
-
-    doFirst {
-        println "🚀 Fat JAR로 서버를 시작합니다..."
-    }
-}
-
 // 테스트 리포트 설정
 tasks.register('testReport', TestReport) {
     group = 'reporting'
     description = '통합 테스트 리포트 생성'
     destinationDirectory = file("$buildDir/reports/allTests")
     testResults.from(file("$buildDir/test-results/test"))
+}
+
+// 데이터베이스 초기화 도움말 태스크
+task dbHelp {
+    group = 'help'
+    description = 'DB 초기화 가이드'
+    doLast {
+        println "🗄️ 데이터베이스 초기화 방법:"
+        println "1. docker-compose up -d  # MySQL 컨테이너 시작"
+        println "2. 브라우저에서 http://localhost:8081 (phpMyAdmin) 접속"
+        println "3. 사용자: finmate, 비밀번호: 1234로 로그인"
+        println "4. 또는 ./gradlew runServer 실행 후 테스트"
+        println ""
+        println "🔑 테스트 계정:"
+        println "- admin / finmate123!"
+        println "- testuser / finmate123!"
+    }
 }
