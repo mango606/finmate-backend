@@ -844,10 +844,13 @@
                     const response = await axios.get('/financial/profile');
                     if (response.data.success) {
                         hasProfile.value = response.data.data.hasProfile;
+                        if (!hasProfile.value) {
+                            showAlert('투자 분석을 위해 먼저 금융 프로필을 설정해주세요.', 'warning');
+                        }
                     }
                 } catch (error) {
-                    console.error('프로필 확인 실패:', error);
                     hasProfile.value = false;
+                    showAlert('금융 프로필 확인 중 오류가 발생했습니다.', 'error');
                 }
             };
 
@@ -859,17 +862,7 @@
                         riskAnalysis.value = response.data.data;
                     }
                 } catch (error) {
-                    console.error('위험 분석 로드 실패:', error);
-                    // 모의 데이터 사용
-                    riskAnalysis.value = {
-                        riskProfile: 'MODERATE',
-                        characteristics: {
-                            description: '적절한 위험을 감수하여 안정적인 수익을 추구합니다.',
-                            recommendedAssets: ['혼합형 펀드', '주식형 펀드', 'ETF', '리츠'],
-                            riskLevel: '보통',
-                            expectedReturn: '5-8%'
-                        }
-                    };
+                    showAlert('투자 성향 분석 데이터를 불러오는 데 실패했습니다.', 'error');
                 }
             };
 
@@ -881,27 +874,7 @@
                         portfolioRecommendation.value = response.data.data;
                     }
                 } catch (error) {
-                    console.error('포트폴리오 추천 로드 실패:', error);
-                    // 모의 데이터 사용
-                    portfolioRecommendation.value = {
-                        portfolio: {
-                            '예금/적금': 20,
-                            '채권': 30,
-                            '혼합형 펀드': 30,
-                            '주식': 20
-                        },
-                        monthlyInvestment: 500000,
-                        monthlyAllocation: {
-                            '예금/적금': 100000,
-                            '채권': 150000,
-                            '혼합형 펀드': 150000,
-                            '주식': 100000
-                        },
-                        goalBasedRecommendation: {
-                            strategy: '장기 투자',
-                            tips: ['조기 시작', '복리 효과 활용', '세제 혜택 상품 활용']
-                        }
-                    };
+                    showAlert('포트폴리오 추천 정보를 불러오는 데 실패했습니다.', 'error');
                 }
             };
 
@@ -1071,6 +1044,8 @@
             };
         }
     }).mount('#app');
+</script>
+</script>
 </script>
 </body>
 </html>

@@ -651,23 +651,8 @@
                     }
                 } catch (error) {
                     console.error('대시보드 로드 실패:', error);
-                    // 모의 데이터 사용
-                    dashboard.activeGoals = [
-                        {
-                            goalId: 1,
-                            goalName: '내 집 마련',
-                            targetAmount: 300000000,
-                            currentAmount: 75000000,
-                            progressPercentage: 25
-                        },
-                        {
-                            goalId: 2,
-                            goalName: '여행 자금',
-                            targetAmount: 5000000,
-                            currentAmount: 3200000,
-                            progressPercentage: 64
-                        }
-                    ];
+                    dashboard.activeGoals = [];
+                    dashboard.profile = { totalAssets: 0, monthlyIncome: 0, monthlyExpense: 0 };
                 }
             };
 
