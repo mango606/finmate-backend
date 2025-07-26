@@ -21,10 +21,11 @@
         }
 
         .header {
-            background: linear-gradient(45deg, #dc3545, #6f42c1);
-            color: white;
+            background: #ffffff;
+            color: #333;
             padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .header-content {
@@ -39,14 +40,17 @@
         .logo {
             font-size: 1.8rem;
             font-weight: bold;
+            color: #667eea;
         }
 
         .admin-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.8rem;
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
             margin-left: 10px;
+            font-weight: 600;
         }
 
         .nav-menu {
@@ -55,7 +59,7 @@
         }
 
         .nav-item {
-            color: white;
+            color: #666;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s;
@@ -64,8 +68,8 @@
         }
 
         .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
+            background: #f1f3f4;
+            color: #667eea;
         }
 
         .user-menu {
@@ -83,18 +87,20 @@
         }
 
         .user-info:hover {
-            background: rgba(255,255,255,0.2);
+            background: #f1f3f4;
         }
 
         .avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
+            background: #667eea;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+            font-weight: 600;
         }
 
         .container {
@@ -105,10 +111,11 @@
 
         .page-header {
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
         }
 
         .page-title {
@@ -134,34 +141,65 @@
 
         .stat-card {
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 20px;
             text-align: center;
-            border-left: 4px solid;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
         }
 
-        .stat-card.users { border-left-color: #007bff; }
-        .stat-card.transactions { border-left-color: #28a745; }
-        .stat-card.revenue { border-left-color: #ffc107; }
-        .stat-card.active { border-left-color: #17a2b8; }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .stat-card.users {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .stat-card.transactions {
+            background: white;
+            border-left: 4px solid #28a745;
+        }
+        .stat-card.revenue {
+            background: white;
+            border-left: 4px solid #ffc107;
+        }
+        .stat-card.active {
+            background: white;
+            border-left: 4px solid #764ba2;
+        }
 
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
-            color: #333;
             margin-bottom: 5px;
+        }
+
+        .stat-card.users .stat-value {
+            color: white;
         }
 
         .stat-label {
             font-size: 0.9rem;
             color: #666;
             text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-card.users .stat-label {
+            color: rgba(255,255,255,0.9);
         }
 
         .stat-change {
             font-size: 0.8rem;
             margin-top: 8px;
             font-weight: 600;
+        }
+
+        .stat-card.users .stat-change {
+            color: rgba(255,255,255,0.8);
         }
 
         .change-positive { color: #28a745; }
@@ -176,9 +214,10 @@
 
         .section {
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
         }
 
         .section-title {
@@ -188,6 +227,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
         }
 
         .chart-container {
@@ -255,12 +295,12 @@
         }
 
         .btn-edit {
-            background: #007bff;
+            background: #667eea;
             color: white;
         }
 
         .btn-edit:hover {
-            background: #0056b3;
+            background: #5a6fd8;
         }
 
         .btn-delete {
@@ -296,7 +336,7 @@
         }
 
         .activity-icon.login { background: #28a745; }
-        .activity-icon.transaction { background: #007bff; }
+        .activity-icon.transaction { background: #667eea; }
         .activity-icon.error { background: #dc3545; }
         .activity-icon.system { background: #6c757d; }
 
@@ -324,7 +364,7 @@
         .alert-panel {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -362,7 +402,7 @@
             padding: 15px 20px;
             background: white;
             border: 2px solid #e9ecef;
-            border-radius: 10px;
+            border-radius: 12px;
             text-decoration: none;
             color: #333;
             font-weight: 600;
@@ -371,10 +411,13 @@
         }
 
         .tool-button:hover {
-            border-color: #dc3545;
-            background: #dc3545;
-            color: white;
+            border-color: #667eea;
+            background: #f8f9fa;
             transform: translateY(-2px);
+        }
+
+        .tool-button:nth-child(4n+1):hover {
+            border-color: #764ba2;
         }
 
         .tool-icon {
@@ -393,7 +436,7 @@
             width: 40px;
             height: 40px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #dc3545;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -459,13 +502,13 @@
                 관리자 대시보드
             </h1>
             <p class="page-subtitle">FinMate 시스템 전반의 현황을 모니터링하고 관리하세요</p>
-            
+
             <!-- 빠른 통계 -->
             <div class="quick-stats">
                 <div class="stat-card users">
                     <div class="stat-value">{{ dashboardData.totalUsers.toLocaleString() }}</div>
                     <div class="stat-label">총 회원수</div>
-                    <div class="stat-change change-positive">+{{ dashboardData.newUsersToday }} 오늘 가입</div>
+                    <div class="stat-change">+{{ dashboardData.newUsersToday }} 오늘 가입</div>
                 </div>
                 <div class="stat-card transactions">
                     <div class="stat-value">{{ dashboardData.totalTransactions.toLocaleString() }}</div>
@@ -500,7 +543,7 @@
                         <span>📈</span>
                         사용자 증가 추이
                     </h2>
-                    
+
                     <div class="chart-container">
                         <canvas id="userGrowthChart"></canvas>
                     </div>
@@ -512,36 +555,36 @@
                         <span>👥</span>
                         최근 가입 회원
                     </h2>
-                    
+
                     <table class="data-table">
                         <thead>
-                            <tr>
-                                <th>회원ID</th>
-                                <th>이름</th>
-                                <th>이메일</th>
-                                <th>가입일</th>
-                                <th>상태</th>
-                                <th>관리</th>
-                            </tr>
+                        <tr>
+                            <th>회원ID</th>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>가입일</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="member in recentMembers" :key="member.userId">
-                                <td>{{ member.userId }}</td>
-                                <td>{{ member.userName }}</td>
-                                <td>{{ member.userEmail }}</td>
-                                <td>{{ formatDate(member.regDate) }}</td>
-                                <td>
+                        <tr v-for="member in recentMembers" :key="member.userId">
+                            <td>{{ member.userId }}</td>
+                            <td>{{ member.userName }}</td>
+                            <td>{{ member.userEmail }}</td>
+                            <td>{{ formatDate(member.regDate) }}</td>
+                            <td>
                                     <span :class="['status-badge', member.isActive ? 'status-active' : 'status-inactive']">
                                         {{ member.isActive ? '활성' : '비활성' }}
                                     </span>
-                                </td>
-                                <td>
-                                    <button @click="editMember(member.userId)" class="action-button btn-edit">수정</button>
-                                    <button @click="toggleMemberStatus(member.userId)" class="action-button btn-delete">
-                                        {{ member.isActive ? '비활성화' : '활성화' }}
-                                    </button>
-                                </td>
-                            </tr>
+                            </td>
+                            <td>
+                                <button @click="editMember(member.userId)" class="action-button btn-edit">수정</button>
+                                <button @click="toggleMemberStatus(member.userId)" class="action-button btn-delete">
+                                    {{ member.isActive ? '비활성화' : '활성화' }}
+                                </button>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -555,7 +598,7 @@
                         <span>⚠️</span>
                         시스템 알림
                     </h2>
-                    
+
                     <div class="alert-panel">
                         <div class="alert-title">
                             <span>🔴</span>
@@ -576,7 +619,7 @@
                         <span>🛠️</span>
                         관리 도구
                     </h2>
-                    
+
                     <div class="management-tools">
                         <a href="/admin/users.html" class="tool-button">
                             <span class="tool-icon">👥</span>
@@ -607,7 +650,7 @@
                         <span>📊</span>
                         최근 활동
                     </h2>
-                    
+
                     <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
                         <div :class="['activity-icon', activity.type]">
                             {{ activity.icon }}
@@ -743,12 +786,12 @@
                 // 모의 데이터 생성
                 const labels = [];
                 const data = [];
-                
+
                 for (let i = 30; i >= 0; i--) {
                     const date = new Date();
                     date.setDate(date.getDate() - i);
                     labels.push(date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }));
-                    
+
                     // 성장 추세 데이터
                     const baseUsers = 15000;
                     const dailyGrowth = Math.floor(Math.random() * 50) + 10;
@@ -762,8 +805,8 @@
                         datasets: [{
                             label: '총 회원수',
                             data: data,
-                            borderColor: '#dc3545',
-                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
                             tension: 0.4,
                             fill: true
                         }]
@@ -817,7 +860,7 @@
                 const diff = now - date;
                 const minutes = Math.floor(diff / (1000 * 60));
                 const hours = Math.floor(diff / (1000 * 60 * 60));
-                
+
                 if (minutes < 60) {
                     return `${minutes}분 전`;
                 } else if (hours < 24) {
@@ -829,7 +872,6 @@
 
             // 회원 수정
             const editMember = (userId) => {
-                // 실제 구현에서는 회원 수정 모달이나 페이지로 이동
                 alert(`회원 ${userId} 수정 페이지로 이동합니다.`);
             };
 
@@ -840,8 +882,6 @@
                     if (member) {
                         const action = member.isActive ? '비활성화' : '활성화';
                         if (confirm(`정말로 ${userId}를 ${action}하시겠습니까?`)) {
-                            // TODO: API 호출
-                            // await axios.put(`/admin/members/${userId}/status`, { isActive: !member.isActive });
                             member.isActive = !member.isActive;
                             alert(`${userId}가 ${action}되었습니다.`);
                         }
@@ -888,7 +928,6 @@
                     await loadAdminInfo();
                 } finally {
                     isLoading.value = false;
-                    // 차트는 DOM이 업데이트된 후 생성
                     setTimeout(createUserGrowthChart, 100);
                 }
             };

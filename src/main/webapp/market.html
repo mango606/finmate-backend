@@ -21,10 +21,11 @@
         }
 
         .header {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
+            background: #ffffff;
+            color: #333;
             padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .header-content {
@@ -40,6 +41,7 @@
             font-size: 1.8rem;
             font-weight: bold;
             cursor: pointer;
+            color: #667eea;
         }
 
         .nav-menu {
@@ -48,7 +50,7 @@
         }
 
         .nav-item {
-            color: white;
+            color: #666;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s;
@@ -57,8 +59,8 @@
         }
 
         .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
+            background: #f1f3f4;
+            color: #667eea;
         }
 
         .user-info {
@@ -72,18 +74,20 @@
         }
 
         .user-info:hover {
-            background: rgba(255,255,255,0.2);
+            background: #f1f3f4;
         }
 
         .avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
+            background: #667eea;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+            font-weight: 600;
         }
 
         .container {
@@ -94,11 +98,12 @@
 
         .page-header {
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             text-align: center;
+            border: 1px solid #e9ecef;
         }
 
         .page-title {
@@ -121,22 +126,30 @@
 
         .market-card {
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             transition: all 0.3s;
-            border-left: 4px solid;
+            border: 1px solid #e9ecef;
         }
 
         .market-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         }
 
-        .market-card.kospi { border-left-color: #dc3545; }
-        .market-card.kosdaq { border-left-color: #28a745; }
-        .market-card.exchange { border-left-color: #ffc107; }
-        .market-card.crypto { border-left-color: #17a2b8; }
+        .market-card:nth-child(1) {
+            border-left: 4px solid #667eea;
+        }
+        .market-card:nth-child(2) {
+            border-left: 4px solid #28a745;
+        }
+        .market-card:nth-child(3) {
+            border-left: 4px solid #ffc107;
+        }
+        .market-card:nth-child(4) {
+            border-left: 4px solid #764ba2;
+        }
 
         .market-header {
             display: flex;
@@ -187,10 +200,11 @@
 
         .section {
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             margin-bottom: 30px;
+            border: 1px solid #e9ecef;
         }
 
         .section-title {
@@ -200,6 +214,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
         }
 
         .chart-container {
@@ -220,7 +235,7 @@
             background: #f8f9fa;
             margin: 0 -20px;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
         }
 
         .news-item:last-child {
@@ -231,7 +246,7 @@
             width: 100px;
             height: 70px;
             border-radius: 8px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: #667eea;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -328,9 +343,22 @@
 
         .indicator-item {
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 20px;
             border-left: 4px solid #667eea;
+            border: 1px solid #e9ecef;
+        }
+
+        .indicator-item:nth-child(2) {
+            border-left-color: #28a745;
+        }
+
+        .indicator-item:nth-child(3) {
+            border-left-color: #ffc107;
+        }
+
+        .indicator-item:nth-child(4) {
+            border-left-color: #764ba2;
         }
 
         .indicator-header {
@@ -360,8 +388,9 @@
             display: flex;
             margin-bottom: 20px;
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 5px;
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid #e9ecef;
         }
 
         .market-tab {
@@ -376,10 +405,14 @@
             font-weight: 500;
         }
 
+        .market-tab:hover {
+            background: white;
+        }
+
         .market-tab.active {
             background: #667eea;
             color: white;
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
         .loading {
@@ -405,17 +438,27 @@
 
         .alert {
             padding: 15px 20px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            border: 1px solid #e9ecef;
         }
 
         .alert-info {
             background: #d1ecf1;
             color: #0c5460;
-            border: 1px solid #bee5eb;
+            border-color: #bee5eb;
+        }
+
+        .special-highlight {
+            background: #764ba2;
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -480,7 +523,7 @@
         <div v-else>
             <!-- 시장 요약 -->
             <div class="market-summary">
-                <div class="market-card kospi">
+                <div class="market-card">
                     <div class="market-header">
                         <div class="market-title">
                             <span class="market-icon">📊</span>
@@ -496,7 +539,7 @@
                     </div>
                 </div>
 
-                <div class="market-card kosdaq">
+                <div class="market-card">
                     <div class="market-header">
                         <div class="market-title">
                             <span class="market-icon">📈</span>
@@ -512,7 +555,7 @@
                     </div>
                 </div>
 
-                <div class="market-card exchange">
+                <div class="market-card">
                     <div class="market-header">
                         <div class="market-title">
                             <span class="market-icon">💱</span>
@@ -528,7 +571,7 @@
                     </div>
                 </div>
 
-                <div class="market-card crypto">
+                <div class="market-card">
                     <div class="market-header">
                         <div class="market-title">
                             <span class="market-icon">₿</span>
@@ -593,6 +636,11 @@
                                     <span>{{ news.category }}</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="special-highlight">
+                            <h3>🔥 주목할 만한 소식</h3>
+                            <p>AI 관련 기업들의 실적 호조가 지속되고 있습니다</p>
                         </div>
                     </div>
                 </div>
@@ -864,10 +912,6 @@
             // 시장 데이터 로드
             const loadMarketData = async () => {
                 try {
-                    // TODO: 외부 API에서 데이터를 가져옴
-                    // const response = await axios.get('/market/data');
-
-                    // 모의 데이터 업데이트
                     setTimeout(() => {
                         hasNews.value = true;
                     }, 1000);
@@ -960,12 +1004,12 @@
             // 차트 색상 반환
             const getChartColor = (tab) => {
                 const colors = {
-                    kospi: '#dc3545',
+                    kospi: '#667eea',
                     kosdaq: '#28a745',
                     exchange: '#ffc107',
-                    crypto: '#17a2b8'
+                    crypto: '#764ba2'
                 };
-                return colors[tab] || '#dc3545';
+                return colors[tab] || '#667eea';
             };
 
             // 차트 값 포맷
@@ -1028,7 +1072,6 @@
             // 시장 데이터 자동 업데이트 (30초마다)
             const startAutoUpdate = () => {
                 setInterval(() => {
-                    // TODO: API 호출
                     console.log('시장 데이터 업데이트');
                 }, 30000);
             };
@@ -1043,7 +1086,6 @@
                     ]);
                 } finally {
                     isLoading.value = false;
-                    // 차트는 DOM이 업데이트된 후 생성
                     setTimeout(createMarketChart, 100);
                     startAutoUpdate();
                 }
