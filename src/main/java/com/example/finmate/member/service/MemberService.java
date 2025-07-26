@@ -176,6 +176,29 @@ public class MemberService {
         }
     }
 
+    // 비밀번호 확인 (개인정보 수정용)
+    public boolean verifyPassword(String userId, String password) {
+        log.info("비밀번호 확인: {}", userId);
+
+        try {
+            MemberVO member = memberMapper.getMemberByUserId(userId);
+            if (member == null) {
+                throw new MemberNotFoundException("회원을 찾을 수 없습니다: " + userId);
+            }
+
+            boolean isValid = passwordEncoder.matches(password, member.getUserPassword());
+            log.info("비밀번호 확인 결과: {} - {}", userId, isValid);
+
+            return isValid;
+
+        } catch (MemberNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("비밀번호 확인 실패: {}", userId, e);
+            return false;
+        }
+    }
+
     // 비밀번호 변경
     @Transactional
     public boolean updateMemberPassword(String userId, String currentPassword, String newPassword) {

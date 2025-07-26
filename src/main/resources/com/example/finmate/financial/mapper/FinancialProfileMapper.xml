@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.finmate.financial.mapper.FinancialProfileMapper">
+
+    <!-- 금융 프로필 결과 맵 -->
+    <resultMap id="FinancialProfileResultMap" type="com.example.finmate.financial.domain.FinancialProfileVO">
+        <id property="profileId" column="profile_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="incomeRange" column="income_range"/>
+        <result property="jobType" column="job_type"/>
+        <result property="monthlyIncome" column="monthly_income"/>
+        <result property="monthlyExpense" column="monthly_expense"/>
+        <result property="totalAssets" column="total_assets"/>
+        <result property="totalDebt" column="total_debt"/>
+        <result property="riskProfile" column="risk_profile"/>
+        <result property="investmentGoal" column="investment_goal"/>
+        <result property="investmentPeriod" column="investment_period"/>
+        <result property="emergencyFund" column="emergency_fund"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="regDate" column="reg_date"/>
+        <result property="updateDate" column="update_date"/>
+    </resultMap>
+
+    <!-- 금융 프로필 등록 -->
+    <insert id="insertFinancialProfile" parameterType="com.example.finmate.financial.domain.FinancialProfileVO">
+        INSERT INTO tbl_financial_profile (
+            user_id,
+            income_range,
+            job_type,
+            monthly_income,
+            monthly_expense,
+            total_assets,
+            total_debt,
+            risk_profile,
+            investment_goal,
+            investment_period,
+            emergency_fund,
+            credit_score,
+            reg_date,
+            update_date
+        ) VALUES (
+                     #{userId},
+                     #{incomeRange},
+                     #{jobType},
+                     #{monthlyIncome},
+                     #{monthlyExpense},
+                     #{totalAssets},
+                     #{totalDebt},
+                     #{riskProfile},
+                     #{investmentGoal},
+                     #{investmentPeriod},
+                     #{emergencyFund},
+                     #{creditScore},
+                     NOW(),
+                     NOW()
+                 )
+    </insert>
+
+    <!-- 사용자 ID로 금융 프로필 조회 -->
+    <select id="getFinancialProfileByUserId" parameterType="string" resultMap="FinancialProfileResultMap">
+        SELECT
+            profile_id,
+            user_id,
+            income_range,
+            job_type,
+            monthly_income,
+            monthly_expense,
+            total_assets,
+            total_debt,
+            risk_profile,
+            investment_goal,
+            investment_period,
+            emergency_fund,
+            credit_score,
+            reg_date,
+            update_date
+        FROM tbl_financial_profile
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 금융 프로필 수정 -->
+    <update id="updateFinancialProfile" parameterType="com.example.finmate.financial.domain.FinancialProfileVO">
+        UPDATE tbl_financial_profile
+        SET
+            income_range = #{incomeRange},
+            job_type = #{jobType},
+            monthly_income = #{monthlyIncome},
+            monthly_expense = #{monthlyExpense},
+            total_assets = #{totalAssets},
+            total_debt = #{totalDebt},
+            risk_profile = #{riskProfile},
+            investment_goal = #{investmentGoal},
+            investment_period = #{investmentPeriod},
+            emergency_fund = #{emergencyFund},
+            credit_score = #{creditScore},
+            update_date = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 금융 프로필 삭제 -->
+    <delete id="deleteFinancialProfile" parameterType="string">
+        DELETE FROM tbl_financial_profile
+        WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 금융 프로필 존재 여부 확인 -->
+    <select id="checkFinancialProfileExists" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_financial_profile
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 투자 성향별 사용자 수 조회 -->
+    <select id="getUserCountByRiskProfile" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_financial_profile
+        WHERE risk_profile = #{riskProfile}
+    </select>
+
+    <!-- 소득 구간별 사용자 수 조회 -->
+    <select id="getUserCountByIncomeRange" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_financial_profile
+        WHERE income_range = #{incomeRange}
+    </select>
+
+</mapper>

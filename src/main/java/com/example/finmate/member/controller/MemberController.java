@@ -144,6 +144,35 @@ public class MemberController {
         }
     }
 
+    @ApiOperation(value = "비밀번호 확인", notes = "개인정보 수정 시 현재 비밀번호를 확인합니다.")
+    @PostMapping("/verify-password")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Void>> verifyPassword(
+            @RequestBody Map<String, String> passwordData,
+            Authentication authentication) {
+
+        String userId = SecurityUtils.getCurrentUserId();
+        String password = passwordData.get("password");
+
+        log.info("비밀번호 확인: {}", userId);
+
+        try {
+            boolean isValid = memberService.verifyPassword(userId, password);
+
+            if (isValid) {
+                return ResponseEntity.ok(ApiResponse.success("비밀번호가 확인되었습니다.", null));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("비밀번호가 일치하지 않습니다.", "PASSWORD_MISMATCH"));
+            }
+
+        } catch (Exception e) {
+            log.error("비밀번호 확인 실패: {}", userId, e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("비밀번호 확인에 실패했습니다.", "PASSWORD_VERIFY_ERROR"));
+        }
+    }
+
     @ApiOperation(value = "비밀번호 변경", notes = "로그인한 사용자의 비밀번호를 변경합니다.")
     @PutMapping("/password")
     @PreAuthorize("hasRole('USER')")

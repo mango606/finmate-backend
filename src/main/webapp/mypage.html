@@ -6,6 +6,7 @@
     <title>FinMate - 마이페이지</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <script src="/js/common.js"></script>
     <style>
         * {
             margin: 0;
@@ -30,7 +31,7 @@
         }
 
         .header-content {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
@@ -68,8 +69,42 @@
             background-color: rgba(102, 126, 234, 0.08);
         }
 
+        .user-menu-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .user-info:hover {
+            background-color: #f8f9fa;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 24px 20px;
         }
@@ -106,10 +141,12 @@
             display: flex;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
+            overflow-x: auto;
         }
 
         .tab-btn {
             flex: 1;
+            min-width: 180px;
             padding: 20px;
             background: transparent;
             border: none;
@@ -119,6 +156,7 @@
             color: #666;
             transition: all 0.2s;
             position: relative;
+            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -157,7 +195,7 @@
             margin-bottom: 20px;
         }
 
-        .avatar {
+        .profile-avatar {
             width: 120px;
             height: 120px;
             border-radius: 50%;
@@ -170,6 +208,13 @@
             margin: 0 auto;
             border: 4px solid white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .avatar-upload {
@@ -256,6 +301,11 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        .form-control.modified {
+            border-color: #ffc107;
+            background-color: #fff3cd;
+        }
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -275,12 +325,17 @@
             text-align: center;
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background: #667eea;
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: #5a6fd8;
             transform: translateY(-1px);
         }
@@ -302,6 +357,16 @@
 
         .btn-danger:hover {
             background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
             transform: translateY(-1px);
         }
 
@@ -473,6 +538,212 @@
             line-height: 1.5;
         }
 
+        /* 금융 프로필 스타일 */
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .financial-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .financial-card h3 {
+            color: #667eea;
+            margin-bottom: 16px;
+            font-size: 1.25rem;
+        }
+
+        .financial-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .financial-description {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .risk-assessment {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .risk-assessment h3 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .question-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-item:hover {
+            border-color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .option-item.selected {
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+
+        .option-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .option-item.selected .option-radio {
+            border-color: #667eea;
+        }
+
+        .option-item.selected .option-radio::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .confirmation-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .confirmation-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .confirmation-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .confirmation-message {
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .confirmation-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .recommendation-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #28a745;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .recommendation-description {
+            color: #666;
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+        }
+
+        .recommendation-return {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .recommendation-return .return {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .recommendation-return .risk {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -496,6 +767,14 @@
             .tab-header {
                 flex-direction: column;
             }
+
+            .tab-btn {
+                min-width: auto;
+            }
+
+            .financial-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -512,6 +791,7 @@
                 <a href="/investment.html" class="nav-item">투자분석</a>
                 <a href="/mypage.html" class="nav-item active">마이페이지</a>
             </nav>
+            <div class="user-menu-container"></div>
         </div>
     </header>
 
@@ -520,7 +800,7 @@
         <!-- 페이지 헤더 -->
         <div class="page-header">
             <h1 class="page-title">마이페이지</h1>
-            <p class="page-subtitle">개인정보 및 보안 설정을 관리하세요</p>
+            <p class="page-subtitle">개인정보, 보안 설정 및 금융 프로필을 관리하세요</p>
         </div>
 
         <!-- 탭 컨테이너 -->
@@ -532,6 +812,9 @@
                 </button>
                 <button @click="activeTab = 'security'" :class="['tab-btn', { active: activeTab === 'security' }]">
                     🔒 보안설정
+                </button>
+                <button @click="activeTab = 'financial'" :class="['tab-btn', { active: activeTab === 'financial' }]">
+                    💰 금융프로필
                 </button>
                 <button @click="activeTab = 'activity'" :class="['tab-btn', { active: activeTab === 'activity' }]">
                     📊 활동내역
@@ -560,8 +843,9 @@
                         <!-- 아바타 섹션 -->
                         <div class="avatar-section">
                             <div class="avatar-container">
-                                <div class="avatar">
-                                    {{ user?.userName ? user.userName.charAt(0) : 'U' }}
+                                <div class="profile-avatar">
+                                    <img v-if="profileImage" :src="profileImage" alt="프로필 이미지">
+                                    <span v-else>{{ user?.userName ? user.userName.charAt(0) : 'U' }}</span>
                                 </div>
                                 <div class="avatar-upload" @click="$refs.avatarInput.click()">
                                     📷
@@ -589,26 +873,44 @@
                     </div>
 
                     <!-- 정보 수정 폼 -->
-                    <form @submit.prevent="updateUserInfo">
+                    <form @submit.prevent="showPasswordConfirmation">
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">이름</label>
-                                <input v-model="editForm.userName" type="text" class="form-control" required>
+                                <input
+                                        v-model="editForm.userName"
+                                        type="text"
+                                        class="form-control"
+                                        :class="{ modified: isFieldModified('userName') }"
+                                        required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">이메일</label>
-                                <input v-model="editForm.userEmail" type="email" class="form-control" required>
+                                <input
+                                        v-model="editForm.userEmail"
+                                        type="email"
+                                        class="form-control"
+                                        :class="{ modified: isFieldModified('userEmail') }"
+                                        required>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">전화번호</label>
-                                <input v-model="editForm.userPhone" type="tel" class="form-control" placeholder="010-1234-5678">
+                                <input
+                                        v-model="editForm.userPhone"
+                                        type="tel"
+                                        class="form-control"
+                                        :class="{ modified: isFieldModified('userPhone') }"
+                                        placeholder="010-1234-5678">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">성별</label>
-                                <select v-model="editForm.gender" class="form-control">
+                                <select
+                                        v-model="editForm.gender"
+                                        class="form-control"
+                                        :class="{ modified: isFieldModified('gender') }">
                                     <option value="">선택하세요</option>
                                     <option value="M">남성</option>
                                     <option value="F">여성</option>
@@ -618,11 +920,17 @@
 
                         <div class="form-group">
                             <label class="form-label">생년월일</label>
-                            <input v-model="editForm.birthDate" type="date" class="form-control">
+                            <input
+                                    v-model="editForm.birthDate"
+                                    type="date"
+                                    class="form-control"
+                                    :class="{ modified: isFieldModified('birthDate') }">
                         </div>
 
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">정보 업데이트</button>
+                            <button type="submit" class="btn btn-primary" :disabled="!hasChanges">
+                                정보 업데이트
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -701,6 +1009,186 @@
                     </div>
                 </div>
 
+                <!-- 금융프로필 탭 -->
+                <div v-else-if="activeTab === 'financial'">
+                    <div v-if="!showRiskAssessment && !financialProfile">
+                        <!-- 금융 프로필 등록 안내 -->
+                        <div class="risk-assessment">
+                            <h3>💰 금융 프로필 설정</h3>
+                            <p>맞춤형 금융 서비스를 위해 투자 성향을 파악해보세요.</p>
+                            <button @click="startRiskAssessment" class="btn btn-success" style="margin-top: 20px;">
+                                투자 성향 테스트 시작
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 투자 성향 테스트 -->
+                    <div v-if="showRiskAssessment">
+                        <div class="risk-assessment">
+                            <h3>투자 성향 테스트</h3>
+                            <p>{{ currentQuestionIndex + 1 }} / {{ riskQuestions.length }}</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="{ width: ((currentQuestionIndex + 1) / riskQuestions.length * 100) + '%' }"></div>
+                            </div>
+                        </div>
+
+                        <div v-if="riskQuestions.length > 0" class="question-card">
+                            <div class="question-title">
+                                {{ riskQuestions[currentQuestionIndex]?.question }}
+                            </div>
+                            <div class="question-options">
+                                <div
+                                        v-for="option in riskQuestions[currentQuestionIndex]?.options"
+                                        :key="option.score"
+                                        @click="selectAnswer(riskQuestions[currentQuestionIndex].id, option.score)"
+                                        :class="['option-item', { selected: riskAnswers[riskQuestions[currentQuestionIndex].id] === option.score }]">
+                                    <div class="option-radio"></div>
+                                    <span>{{ option.text }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                            <button @click="prevQuestion" class="btn btn-secondary" :disabled="currentQuestionIndex === 0">
+                                이전
+                            </button>
+                            <button v-if="currentQuestionIndex < riskQuestions.length - 1" @click="nextQuestion" class="btn btn-primary" :disabled="!riskAnswers[riskQuestions[currentQuestionIndex]?.id]">
+                                다음
+                            </button>
+                            <button v-else @click="submitRiskAssessment" class="btn btn-success" :disabled="!allQuestionsAnswered">
+                                테스트 완료
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 기존 금융 프로필 표시 -->
+                    <div v-if="financialProfile && !showRiskAssessment">
+                        <!-- 금융 현황 요약 -->
+                        <div class="financial-grid">
+                            <div class="financial-card">
+                                <h3>순자산</h3>
+                                <div class="financial-value">{{ formatCurrency(financialProfile.netWorth) }}</div>
+                                <div class="financial-description">총 자산 - 총 부채</div>
+                            </div>
+                            <div class="financial-card">
+                                <h3>월 여유자금</h3>
+                                <div class="financial-value">{{ formatCurrency(financialProfile.monthlySurplus) }}</div>
+                                <div class="financial-description">월 소득 - 월 지출</div>
+                            </div>
+                            <div class="financial-card">
+                                <h3>투자 성향</h3>
+                                <div class="financial-value">{{ getRiskProfileName(financialProfile.riskProfile) }}</div>
+                                <div class="financial-description">{{ financialProfile.riskProfile }}</div>
+                            </div>
+                            <div class="financial-card">
+                                <h3>재정 건전성</h3>
+                                <div class="financial-value">{{ financialProfile.financialHealthGrade }}등급</div>
+                                <div class="financial-description">종합 평가</div>
+                            </div>
+                        </div>
+
+                        <!-- 추천 투자 상품 -->
+                        <div v-if="recommendations.length > 0">
+                            <h3 style="margin-bottom: 20px;">🎯 맞춤형 투자 상품 추천</h3>
+                            <div v-for="product in recommendations" :key="product.name" class="recommendation-card">
+                                <div class="recommendation-title">{{ product.name }}</div>
+                                <div class="recommendation-description">{{ product.description }}</div>
+                                <div class="recommendation-return">
+                                    <span>예상 수익률: <span class="return">{{ product.expectedReturn }}</span></span>
+                                    <span>위험도: <span class="risk">{{ product.riskLevel }}</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 금융 프로필 수정 폼 -->
+                        <form @submit.prevent="saveFinancialProfile" style="margin-top: 32px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">소득 구간</label>
+                                    <select v-model="financialForm.incomeRange" class="form-control" required>
+                                        <option value="">선택하세요</option>
+                                        <option value="LOW">3천만원 미만</option>
+                                        <option value="MEDIUM">3천만원~7천만원</option>
+                                        <option value="HIGH">7천만원 이상</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">직업</label>
+                                    <input v-model="financialForm.jobType" type="text" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">월 소득 (원)</label>
+                                    <input v-model="financialForm.monthlyIncome" type="number" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">월 지출 (원)</label>
+                                    <input v-model="financialForm.monthlyExpense" type="number" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">총 자산 (원)</label>
+                                    <input v-model="financialForm.totalAssets" type="number" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">총 부채 (원)</label>
+                                    <input v-model="financialForm.totalDebt" type="number" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">투자 목표</label>
+                                    <select v-model="financialForm.investmentGoal" class="form-control" required>
+                                        <option value="">선택하세요</option>
+                                        <option value="SAVING">안전한 저축</option>
+                                        <option value="RETIREMENT">은퇴 준비</option>
+                                        <option value="HOUSE_PURCHASE">주택 구입</option>
+                                        <option value="EDUCATION">교육비 마련</option>
+                                        <option value="WEALTH_GROWTH">자산 증식</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">투자 기간 (개월)</label>
+                                    <input v-model="financialForm.investmentPeriod" type="number" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">비상금 (원)</label>
+                                    <input v-model="financialForm.emergencyFund" type="number" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">신용등급</label>
+                                    <select v-model="financialForm.creditScore" class="form-control">
+                                        <option value="">선택하세요</option>
+                                        <option value="1">1등급 (우수)</option>
+                                        <option value="2">2등급</option>
+                                        <option value="3">3등급</option>
+                                        <option value="4">4등급</option>
+                                        <option value="5">5등급</option>
+                                        <option value="6">6등급</option>
+                                        <option value="7">7등급</option>
+                                        <option value="8">8등급</option>
+                                        <option value="9">9등급</option>
+                                        <option value="10">10등급 (불량)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">금융 프로필 저장</button>
+                                <button type="button" @click="startRiskAssessment" class="btn btn-secondary">투자 성향 재테스트</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- 활동내역 탭 -->
                 <div v-else-if="activeTab === 'activity'">
                     <div v-if="loginHistory.length > 0">
@@ -712,6 +1200,7 @@
                                 <div class="activity-details">
                                     <h4>{{ activity.loginSuccess ? '로그인 성공' : '로그인 실패' }}</h4>
                                     <p>IP: {{ activity.ipAddress }}</p>
+                                    <p v-if="activity.failureReason">사유: {{ activity.failureReason }}</p>
                                 </div>
                             </div>
                             <div class="activity-time">
@@ -753,10 +1242,34 @@
             </div>
         </div>
     </div>
+
+    <!-- 비밀번호 확인 모달 -->
+    <div v-if="showPasswordModal" class="confirmation-modal">
+        <div class="confirmation-content">
+            <div class="confirmation-title">비밀번호 확인</div>
+            <div class="confirmation-message">
+                개인정보 변경을 위해 현재 비밀번호를 입력해주세요.
+            </div>
+            <form @submit.prevent="confirmPasswordAndUpdate">
+                <div class="form-group">
+                    <input
+                            v-model="passwordConfirmation"
+                            type="password"
+                            class="form-control"
+                            placeholder="현재 비밀번호"
+                            required>
+                </div>
+                <div class="confirmation-actions">
+                    <button type="button" @click="showPasswordModal = false" class="btn btn-secondary">취소</button>
+                    <button type="submit" class="btn btn-primary">확인</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
-    const { createApp, ref, reactive, onMounted, watch } = Vue;
+    const { createApp, ref, reactive, onMounted, watch, computed } = Vue;
 
     createApp({
         setup() {
@@ -766,12 +1279,15 @@
             const alertType = ref('info');
 
             const user = ref(null);
+            const profileImage = ref('');
             const securitySettings = reactive({
                 emailVerified: false,
                 twoFactorEnabled: false
             });
             const loginHistory = ref([]);
 
+            // 원본 데이터 보관용
+            const originalEditForm = ref({});
             const editForm = reactive({
                 userName: '',
                 userEmail: '',
@@ -786,11 +1302,36 @@
                 confirmPassword: ''
             });
 
-            // API 기본 설정
-            const API_BASE_URL = '/api';
-            axios.defaults.baseURL = API_BASE_URL;
+            // 금융 프로필 관련
+            const financialProfile = ref(null);
+            const financialForm = reactive({
+                incomeRange: '',
+                jobType: '',
+                monthlyIncome: 0,
+                monthlyExpense: 0,
+                totalAssets: 0,
+                totalDebt: 0,
+                riskProfile: '',
+                investmentGoal: '',
+                investmentPeriod: 12,
+                emergencyFund: 0,
+                creditScore: ''
+            });
 
-            // 토큰 설정
+            // 투자 성향 테스트 관련
+            const showRiskAssessment = ref(false);
+            const riskQuestions = ref([]);
+            const currentQuestionIndex = ref(0);
+            const riskAnswers = reactive({});
+
+            // 추천 상품
+            const recommendations = ref([]);
+
+            // 비밀번호 확인 모달
+            const showPasswordModal = ref(false);
+            const passwordConfirmation = ref('');
+
+            // API 기본 설정
             const token = localStorage.getItem('accessToken');
             if (token) {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -798,6 +1339,21 @@
                 window.location.href = '/member.html';
                 return;
             }
+
+            // 변경사항 감지
+            const hasChanges = computed(() => {
+                return Object.keys(editForm).some(key =>
+                    editForm[key] !== originalEditForm.value[key]
+                );
+            });
+
+            const isFieldModified = (fieldName) => {
+                return editForm[fieldName] !== originalEditForm.value[fieldName];
+            };
+
+            const allQuestionsAnswered = computed(() => {
+                return riskQuestions.value.every(q => riskAnswers[q.id] !== undefined);
+            });
 
             // 알림 표시
             const showAlert = (message, type = 'info', duration = 5000) => {
@@ -814,13 +1370,15 @@
                     const response = await axios.get('/member/info');
                     if (response.data.success) {
                         user.value = response.data.data.basic;
-                        Object.assign(editForm, {
+                        const userData = {
                             userName: user.value.userName,
                             userEmail: user.value.userEmail,
                             userPhone: user.value.userPhone || '',
                             gender: user.value.gender || '',
                             birthDate: user.value.birthDate || ''
-                        });
+                        };
+                        Object.assign(editForm, userData);
+                        originalEditForm.value = { ...userData };
                     }
                 } catch (error) {
                     console.error('사용자 정보 로드 실패:', error);
@@ -849,6 +1407,92 @@
                     }
                 } catch (error) {
                     console.error('로그인 이력 로드 실패:', error);
+                }
+            };
+
+            // 금융 프로필 로드
+            const loadFinancialProfile = async () => {
+                try {
+                    const response = await axios.get('/financial/profile');
+                    if (response.data.success && response.data.data) {
+                        financialProfile.value = response.data.data;
+                        // 폼에 데이터 설정
+                        Object.assign(financialForm, {
+                            incomeRange: financialProfile.value.incomeRange || '',
+                            jobType: financialProfile.value.jobType || '',
+                            monthlyIncome: financialProfile.value.monthlyIncome || 0,
+                            monthlyExpense: financialProfile.value.monthlyExpense || 0,
+                            totalAssets: financialProfile.value.totalAssets || 0,
+                            totalDebt: financialProfile.value.totalDebt || 0,
+                            riskProfile: financialProfile.value.riskProfile || '',
+                            investmentGoal: financialProfile.value.investmentGoal || '',
+                            investmentPeriod: financialProfile.value.investmentPeriod || 12,
+                            emergencyFund: financialProfile.value.emergencyFund || 0,
+                            creditScore: financialProfile.value.creditScore || ''
+                        });
+
+                        // 추천 상품 로드
+                        await loadRecommendations();
+                    }
+                } catch (error) {
+                    console.error('금융 프로필 로드 실패:', error);
+                }
+            };
+
+            // 투자 성향 테스트 질문 로드
+            const loadRiskQuestions = async () => {
+                try {
+                    const response = await axios.get('/financial/risk-questions');
+                    if (response.data.success) {
+                        riskQuestions.value = response.data.data.questions || [];
+                    }
+                } catch (error) {
+                    console.error('투자 성향 테스트 질문 로드 실패:', error);
+                }
+            };
+
+            // 추천 상품 로드
+            const loadRecommendations = async () => {
+                try {
+                    const response = await axios.get('/financial/recommendations');
+                    if (response.data.success) {
+                        recommendations.value = response.data.data.products || [];
+                    }
+                } catch (error) {
+                    console.error('추천 상품 로드 실패:', error);
+                }
+            };
+
+            // 비밀번호 확인 표시
+            const showPasswordConfirmation = () => {
+                if (!hasChanges.value) {
+                    showAlert('변경된 내용이 없습니다.', 'warning');
+                    return;
+                }
+                showPasswordModal.value = true;
+                passwordConfirmation.value = '';
+            };
+
+            // 비밀번호 확인 후 업데이트
+            const confirmPasswordAndUpdate = async () => {
+                try {
+                    // 먼저 비밀번호 확인
+                    const verifyResponse = await axios.post('/member/verify-password', {
+                        password: passwordConfirmation.value
+                    });
+
+                    if (!verifyResponse.data.success) {
+                        showAlert('비밀번호가 일치하지 않습니다.', 'error');
+                        return;
+                    }
+
+                    // 비밀번호가 맞으면 정보 업데이트
+                    await updateUserInfo();
+                    showPasswordModal.value = false;
+
+                } catch (error) {
+                    console.error('비밀번호 확인 실패:', error);
+                    showAlert('비밀번호 확인에 실패했습니다.', 'error');
                 }
             };
 
@@ -923,6 +1567,66 @@
                 }
             };
 
+            // 투자 성향 테스트 시작
+            const startRiskAssessment = async () => {
+                await loadRiskQuestions();
+                showRiskAssessment.value = true;
+                currentQuestionIndex.value = 0;
+                Object.keys(riskAnswers).forEach(key => delete riskAnswers[key]);
+            };
+
+            // 답변 선택
+            const selectAnswer = (questionId, score) => {
+                riskAnswers[questionId] = score;
+            };
+
+            // 다음 질문
+            const nextQuestion = () => {
+                if (currentQuestionIndex.value < riskQuestions.value.length - 1) {
+                    currentQuestionIndex.value++;
+                }
+            };
+
+            // 이전 질문
+            const prevQuestion = () => {
+                if (currentQuestionIndex.value > 0) {
+                    currentQuestionIndex.value--;
+                }
+            };
+
+            // 투자 성향 테스트 제출
+            const submitRiskAssessment = async () => {
+                try {
+                    const response = await axios.post('/financial/risk-assessment', riskAnswers);
+                    if (response.data.success) {
+                        const result = response.data.data;
+                        financialForm.riskProfile = result.riskProfile;
+                        showRiskAssessment.value = false;
+                        showAlert(`투자 성향이 '${getRiskProfileName(result.riskProfile)}'로 분석되었습니다.`, 'success');
+
+                        // 테스트 완료 후 금융 프로필 폼 표시
+                        activeTab.value = 'financial';
+                    }
+                } catch (error) {
+                    console.error('투자 성향 테스트 제출 실패:', error);
+                    showAlert('투자 성향 테스트 제출에 실패했습니다.', 'error');
+                }
+            };
+
+            // 금융 프로필 저장
+            const saveFinancialProfile = async () => {
+                try {
+                    const response = await axios.post('/financial/profile', financialForm);
+                    if (response.data.success) {
+                        showAlert('금융 프로필이 저장되었습니다.', 'success');
+                        await loadFinancialProfile();
+                    }
+                } catch (error) {
+                    console.error('금융 프로필 저장 실패:', error);
+                    showAlert(error.response?.data?.message || '금융 프로필 저장에 실패했습니다.', 'error');
+                }
+            };
+
             // 계정 삭제 확인
             const confirmDeleteAccount = () => {
                 if (confirm('정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
@@ -961,6 +1665,13 @@
                         return;
                     }
 
+                    // 미리보기 생성
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        profileImage.value = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+
                     uploadProfileImage(file);
                 }
             };
@@ -991,6 +1702,26 @@
                 document.querySelector('.upload-input').click();
             };
 
+            // 투자 성향 이름 변환
+            const getRiskProfileName = (riskProfile) => {
+                const names = {
+                    'CONSERVATIVE': '보수적',
+                    'MODERATE': '중간',
+                    'AGGRESSIVE': '공격적'
+                };
+                return names[riskProfile] || riskProfile;
+            };
+
+            // 통화 포맷
+            const formatCurrency = (amount) => {
+                if (amount == null) return '₩0';
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            };
+
             // 날짜 포맷
             const formatDate = (dateString) => {
                 if (!dateString) return '';
@@ -1009,6 +1740,8 @@
                     await loadSecuritySettings();
                 } else if (newTab === 'activity') {
                     await loadLoginHistory();
+                } else if (newTab === 'financial') {
+                    await loadFinancialProfile();
                 }
             });
 
@@ -1017,6 +1750,12 @@
                 isLoading.value = true;
                 try {
                     await loadUserInfo();
+
+                    // 사용자 메뉴 업데이트
+                    const userMenuContainer = document.querySelector('.user-menu-container');
+                    if (userMenuContainer && user.value) {
+                        finmate.createUserMenu(user.value, userMenuContainer);
+                    }
                 } finally {
                     isLoading.value = false;
                 }
@@ -1030,18 +1769,41 @@
                 alertMessage,
                 alertType,
                 user,
+                profileImage,
                 editForm,
                 passwordForm,
                 securitySettings,
                 loginHistory,
+                financialProfile,
+                financialForm,
+                showRiskAssessment,
+                riskQuestions,
+                currentQuestionIndex,
+                riskAnswers,
+                recommendations,
+                showPasswordModal,
+                passwordConfirmation,
+                hasChanges,
+                allQuestionsAnswered,
+                isFieldModified,
                 showAlert,
+                showPasswordConfirmation,
+                confirmPasswordAndUpdate,
                 updateUserInfo,
                 changePassword,
                 toggleTwoFactor,
                 sendEmailVerification,
+                startRiskAssessment,
+                selectAnswer,
+                nextQuestion,
+                prevQuestion,
+                submitRiskAssessment,
+                saveFinancialProfile,
                 confirmDeleteAccount,
                 handleAvatarUpload,
                 updateProfileImage,
+                getRiskProfileName,
+                formatCurrency,
                 formatDate,
                 formatDateTime
             };

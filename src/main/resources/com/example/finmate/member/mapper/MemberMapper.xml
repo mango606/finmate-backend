@@ -4,8 +4,8 @@
 
 <mapper namespace="com.example.finmate.member.mapper.MemberMapper">
 
-    <!-- 결과 매핑 -->
-    <resultMap id="MemberMap" type="com.example.finmate.member.domain.MemberVO">
+    <!-- 회원 정보 결과 맵 -->
+    <resultMap id="MemberResultMap" type="com.example.finmate.member.domain.MemberVO">
         <id property="userId" column="user_id"/>
         <result property="userPassword" column="user_password"/>
         <result property="userName" column="user_name"/>
@@ -16,10 +16,10 @@
         <result property="regDate" column="reg_date"/>
         <result property="updateDate" column="update_date"/>
         <result property="isActive" column="is_active"/>
-        <collection property="authList" resultMap="AuthMap"/>
     </resultMap>
 
-    <resultMap id="AuthMap" type="com.example.finmate.member.domain.MemberAuthVO">
+    <!-- 회원 권한 결과 맵 -->
+    <resultMap id="MemberAuthResultMap" type="com.example.finmate.member.domain.MemberAuthVO">
         <result property="userId" column="user_id"/>
         <result property="auth" column="auth"/>
     </resultMap>
@@ -27,49 +27,85 @@
     <!-- 회원 등록 -->
     <insert id="insertMember" parameterType="com.example.finmate.member.domain.MemberVO">
         INSERT INTO tbl_member (
-            user_id, user_password, user_name, user_email, user_phone,
-            birth_date, gender, reg_date, update_date, is_active
+            user_id,
+            user_password,
+            user_name,
+            user_email,
+            user_phone,
+            birth_date,
+            gender,
+            reg_date,
+            update_date,
+            is_active
         ) VALUES (
-                     #{userId}, #{userPassword}, #{userName}, #{userEmail}, #{userPhone},
-                     #{birthDate}, #{gender}, NOW(), NOW(), #{isActive}
+                     #{userId},
+                     #{userPassword},
+                     #{userName},
+                     #{userEmail},
+                     #{userPhone},
+                     #{birthDate},
+                     #{gender},
+                     NOW(),
+                     NOW(),
+                     #{isActive}
                  )
     </insert>
 
     <!-- 회원 권한 등록 -->
     <insert id="insertMemberAuth" parameterType="com.example.finmate.member.domain.MemberAuthVO">
-        INSERT INTO tbl_member_auth (user_id, auth)
-        VALUES (#{userId}, #{auth})
+        INSERT INTO tbl_member_auth (
+            user_id,
+            auth
+        ) VALUES (
+                     #{userId},
+                     #{auth}
+                 )
     </insert>
 
-    <!-- 사용자 ID로 회원 조회 (권한 포함) -->
-    <select id="getMemberByUserId" parameterType="string" resultMap="MemberMap">
+    <!-- 사용자 ID로 회원 조회 (로그인용) -->
+    <select id="getMemberByUserId" parameterType="string" resultMap="MemberResultMap">
         SELECT
-            m.user_id, m.user_password, m.user_name, m.user_email, m.user_phone,
-            m.birth_date, m.gender, m.reg_date, m.update_date, m.is_active,
-            a.auth
-        FROM tbl_member m
-                 LEFT JOIN tbl_member_auth a ON m.user_id = a.user_id
-        WHERE m.user_id = #{userId}
-          AND m.is_active = true
+            user_id,
+            user_password,
+            user_name,
+            user_email,
+            user_phone,
+            birth_date,
+            gender,
+            reg_date,
+            update_date,
+            is_active
+        FROM tbl_member
+        WHERE user_id = #{userId}
+          AND is_active = TRUE
     </select>
 
     <!-- 사용자 ID로 권한 조회 -->
-    <select id="getMemberAuthByUserId" parameterType="string" resultType="com.example.finmate.member.domain.MemberAuthVO">
-        SELECT user_id, auth
+    <select id="getMemberAuthByUserId" parameterType="string" resultMap="MemberAuthResultMap">
+        SELECT
+            user_id,
+            auth
         FROM tbl_member_auth
         WHERE user_id = #{userId}
+        ORDER BY auth
     </select>
 
     <!-- 이메일로 회원 조회 -->
-    <select id="getMemberByUserEmail" parameterType="string" resultMap="MemberMap">
+    <select id="getMemberByUserEmail" parameterType="string" resultMap="MemberResultMap">
         SELECT
-            m.user_id, m.user_password, m.user_name, m.user_email, m.user_phone,
-            m.birth_date, m.gender, m.reg_date, m.update_date, m.is_active,
-            a.auth
-        FROM tbl_member m
-                 LEFT JOIN tbl_member_auth a ON m.user_id = a.user_id
-        WHERE m.user_email = #{userEmail}
-          AND m.is_active = true
+            user_id,
+            user_password,
+            user_name,
+            user_email,
+            user_phone,
+            birth_date,
+            gender,
+            reg_date,
+            update_date,
+            is_active
+        FROM tbl_member
+        WHERE user_email = #{userEmail}
+          AND is_active = TRUE
     </select>
 
     <!-- 회원 정보 수정 -->
@@ -86,7 +122,7 @@
     </update>
 
     <!-- 비밀번호 변경 -->
-    <update id="updateMemberPassword" parameterType="map">
+    <update id="updateMemberPassword">
         UPDATE tbl_member
         SET
             user_password = #{userPassword},
@@ -94,17 +130,17 @@
         WHERE user_id = #{userId}
     </update>
 
-    <!-- 회원 비활성화 -->
+    <!-- 회원 삭제 (실제로는 비활성화) -->
     <update id="deleteMember" parameterType="string">
         UPDATE tbl_member
         SET
-            is_active = false,
+            is_active = FALSE,
             update_date = NOW()
         WHERE user_id = #{userId}
     </update>
 
     <!-- 회원 활성화/비활성화 -->
-    <update id="updateMemberActive" parameterType="map">
+    <update id="updateMemberActive">
         UPDATE tbl_member
         SET
             is_active = #{isActive},
@@ -124,6 +160,87 @@
         SELECT COUNT(*)
         FROM tbl_member
         WHERE user_email = #{userEmail}
+          AND is_active = TRUE
+    </select>
+
+    <!-- 회원 통계 쿼리들 (관리자용) -->
+    <select id="getTotalMemberCount" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_member
+        WHERE is_active = TRUE
+    </select>
+
+    <select id="getNewMemberCountToday" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_member
+        WHERE DATE(reg_date) = CURDATE()
+          AND is_active = TRUE
+    </select>
+
+    <select id="getNewMemberCountThisMonth" resultType="int">
+        SELECT COUNT(*)
+        FROM tbl_member
+        WHERE YEAR(reg_date) = YEAR(CURDATE())
+          AND MONTH(reg_date) = MONTH(CURDATE())
+          AND is_active = TRUE
+    </select>
+
+    <!-- 회원 검색 (관리자용) -->
+    <select id="searchMembers" resultMap="MemberResultMap">
+        SELECT
+        user_id,
+        user_name,
+        user_email,
+        user_phone,
+        birth_date,
+        gender,
+        reg_date,
+        update_date,
+        is_active
+        FROM tbl_member
+        <where>
+            <if test="searchType == 'userId' and searchValue != null">
+                user_id LIKE CONCAT('%', #{searchValue}, '%')
+            </if>
+            <if test="searchType == 'userName' and searchValue != null">
+                user_name LIKE CONCAT('%', #{searchValue}, '%')
+            </if>
+            <if test="searchType == 'userEmail' and searchValue != null">
+                user_email LIKE CONCAT('%', #{searchValue}, '%')
+            </if>
+        </where>
+        ORDER BY reg_date DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 성별별 회원 수 조회 -->
+    <select id="getMemberCountByGender" resultType="map">
+        SELECT
+            gender,
+            COUNT(*) as count
+        FROM tbl_member
+        WHERE is_active = TRUE
+          AND gender IS NOT NULL
+        GROUP BY gender
+    </select>
+
+    <!-- 연령대별 회원 수 조회 -->
+    <select id="getMemberCountByAgeGroup" resultType="map">
+        SELECT
+            CASE
+                WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 20 AND 29 THEN '20대'
+                WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 30 AND 39 THEN '30대'
+                WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 40 AND 49 THEN '40대'
+                WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 50 AND 59 THEN '50대'
+                WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) >= 60 THEN '60대 이상'
+                ELSE '기타'
+                END as age_group,
+            COUNT(*) as count
+        FROM tbl_member
+        WHERE is_active = TRUE
+          AND birth_date IS NOT NULL
+        GROUP BY age_group
+        ORDER BY age_group
     </select>
 
 </mapper>
