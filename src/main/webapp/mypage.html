@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 마이페이지</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-item {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.08);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .tab-container {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .tab-header {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            padding: 32px;
+        }
+
+        .profile-section {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .avatar-section {
+            text-align: center;
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            margin: 0 auto;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .avatar-upload {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 0.875rem;
+        }
+
+        .avatar-upload:hover {
+            transform: scale(1.1);
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: #333;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .security-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border-left: 4px solid #28a745;
+        }
+
+        .security-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .security-title {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1rem;
+        }
+
+        .security-status {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .activity-details h4 {
+            margin-bottom: 4px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .activity-details p {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .activity-time {
+            color: #999;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-actions {
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .delete-account-section {
+            background: #fff;
+            border: 2px solid #dc3545;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .delete-title {
+            color: #dc3545;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .security-description {
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .profile-section {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">FinMate</div>
+            <nav class="nav-menu">
+                <a href="/" class="nav-item">홈</a>
+                <a href="/dashboard.html" class="nav-item">대시보드</a>
+                <a href="/financial.html" class="nav-item">금융관리</a>
+                <a href="/investment.html" class="nav-item">투자분석</a>
+                <a href="/mypage.html" class="nav-item active">마이페이지</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <div class="container">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <h1 class="page-title">마이페이지</h1>
+            <p class="page-subtitle">개인정보 및 보안 설정을 관리하세요</p>
+        </div>
+
+        <!-- 탭 컨테이너 -->
+        <div class="tab-container">
+            <!-- 탭 헤더 -->
+            <div class="tab-header">
+                <button @click="activeTab = 'profile'" :class="['tab-btn', { active: activeTab === 'profile' }]">
+                    👤 개인정보
+                </button>
+                <button @click="activeTab = 'security'" :class="['tab-btn', { active: activeTab === 'security' }]">
+                    🔒 보안설정
+                </button>
+                <button @click="activeTab = 'activity'" :class="['tab-btn', { active: activeTab === 'activity' }]">
+                    📊 활동내역
+                </button>
+                <button @click="activeTab = 'account'" :class="['tab-btn', { active: activeTab === 'account' }]">
+                    ⚙️ 계정관리
+                </button>
+            </div>
+
+            <!-- 탭 컨텐츠 -->
+            <div class="tab-content">
+                <!-- 로딩 상태 -->
+                <div v-if="isLoading" class="loading">
+                    <div class="spinner"></div>
+                </div>
+
+                <!-- 개인정보 탭 -->
+                <div v-else-if="activeTab === 'profile'">
+                    <!-- 알림 메시지 -->
+                    <div v-if="alertMessage" :class="['alert', 'alert-' + alertType]">
+                        <span>{{ alertMessage }}</span>
+                    </div>
+
+                    <!-- 프로필 섹션 -->
+                    <div class="profile-section">
+                        <!-- 아바타 섹션 -->
+                        <div class="avatar-section">
+                            <div class="avatar-container">
+                                <div class="avatar">
+                                    {{ user?.userName ? user.userName.charAt(0) : 'U' }}
+                                </div>
+                                <div class="avatar-upload" @click="$refs.avatarInput.click()">
+                                    📷
+                                </div>
+                                <input ref="avatarInput" type="file" class="upload-input" @change="handleAvatarUpload" accept="image/*">
+                            </div>
+                            <button @click="updateProfileImage" class="btn btn-secondary">프로필 사진 변경</button>
+                        </div>
+
+                        <!-- 정보 그리드 -->
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">사용자 ID</span>
+                                <div class="info-value">{{ user?.userId }}</div>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">가입일</span>
+                                <div class="info-value">{{ formatDate(user?.regDate) }}</div>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">권한</span>
+                                <div class="info-value">{{ user?.authorities?.join(', ') || '일반사용자' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 정보 수정 폼 -->
+                    <form @submit.prevent="updateUserInfo">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">이름</label>
+                                <input v-model="editForm.userName" type="text" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">이메일</label>
+                                <input v-model="editForm.userEmail" type="email" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">전화번호</label>
+                                <input v-model="editForm.userPhone" type="tel" class="form-control" placeholder="010-1234-5678">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">성별</label>
+                                <select v-model="editForm.gender" class="form-control">
+                                    <option value="">선택하세요</option>
+                                    <option value="M">남성</option>
+                                    <option value="F">여성</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">생년월일</label>
+                            <input v-model="editForm.birthDate" type="date" class="form-control">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">정보 업데이트</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 보안설정 탭 -->
+                <div v-else-if="activeTab === 'security'">
+                    <!-- 알림 메시지 -->
+                    <div v-if="alertMessage" :class="['alert', 'alert-' + alertType]">
+                        <span>{{ alertMessage }}</span>
+                    </div>
+
+                    <!-- 비밀번호 변경 -->
+                    <div class="security-card">
+                        <div class="security-header">
+                            <div class="security-title">
+                                <span>🔐</span>
+                                비밀번호 변경
+                            </div>
+                        </div>
+                        <p class="security-description">보안을 위해 정기적으로 비밀번호를 변경해주세요.</p>
+                        <form @submit.prevent="changePassword">
+                            <div class="form-group">
+                                <label class="form-label">현재 비밀번호</label>
+                                <input v-model="passwordForm.currentPassword" type="password" class="form-control" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">새 비밀번호</label>
+                                    <input v-model="passwordForm.newPassword" type="password" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">새 비밀번호 확인</label>
+                                    <input v-model="passwordForm.confirmPassword" type="password" class="form-control" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">비밀번호 변경</button>
+                        </form>
+                    </div>
+
+                    <!-- 2단계 인증 -->
+                    <div class="security-card">
+                        <div class="security-header">
+                            <div class="security-title">
+                                <span>🛡️</span>
+                                2단계 인증
+                            </div>
+                            <span :class="['security-status', securitySettings.twoFactorEnabled ? 'status-enabled' : 'status-disabled']">
+                                {{ securitySettings.twoFactorEnabled ? '활성화' : '비활성화' }}
+                            </span>
+                        </div>
+                        <p class="security-description">
+                            계정 보안을 강화하기 위해 2단계 인증을 설정하세요.
+                        </p>
+                        <button @click="toggleTwoFactor" class="btn btn-primary">
+                            {{ securitySettings.twoFactorEnabled ? '비활성화' : '활성화' }}
+                        </button>
+                    </div>
+
+                    <!-- 이메일 인증 -->
+                    <div class="security-card">
+                        <div class="security-header">
+                            <div class="security-title">
+                                <span>📧</span>
+                                이메일 인증
+                            </div>
+                            <span :class="['security-status', securitySettings.emailVerified ? 'status-enabled' : 'status-disabled']">
+                                {{ securitySettings.emailVerified ? '인증완료' : '인증대기' }}
+                            </span>
+                        </div>
+                        <p class="security-description">
+                            이메일 인증을 통해 계정의 신뢰성을 높이세요.
+                        </p>
+                        <button v-if="!securitySettings.emailVerified" @click="sendEmailVerification" class="btn btn-primary">
+                            인증 이메일 발송
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 활동내역 탭 -->
+                <div v-else-if="activeTab === 'activity'">
+                    <div v-if="loginHistory.length > 0">
+                        <div v-for="activity in loginHistory" :key="activity.historyId" class="activity-item">
+                            <div class="activity-info">
+                                <div class="activity-icon">
+                                    {{ activity.loginSuccess ? '✅' : '❌' }}
+                                </div>
+                                <div class="activity-details">
+                                    <h4>{{ activity.loginSuccess ? '로그인 성공' : '로그인 실패' }}</h4>
+                                    <p>IP: {{ activity.ipAddress }}</p>
+                                </div>
+                            </div>
+                            <div class="activity-time">
+                                {{ formatDateTime(activity.loginTime) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="alert alert-warning">
+                        <span>📝</span>
+                        <span>활동 내역이 없습니다.</span>
+                    </div>
+                </div>
+
+                <!-- 계정관리 탭 -->
+                <div v-else-if="activeTab === 'account'">
+                    <div class="alert alert-warning">
+                        <span>⚠️</span>
+                        <span>계정 삭제는 복구할 수 없습니다. 신중하게 결정해주세요.</span>
+                    </div>
+
+                    <div class="delete-account-section">
+                        <div class="delete-title">
+                            <span>🗑️</span>
+                            계정 삭제
+                        </div>
+                        <p class="security-description">
+                            계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.<br>
+                            이 작업은 되돌릴 수 없으니 신중하게 결정해주세요.
+                        </p>
+                        <button @click="confirmDeleteAccount" class="btn btn-danger">
+                            계정 삭제
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 40px; text-align: center;">
+                        <a href="/dashboard.html" class="btn btn-secondary">대시보드로 돌아가기</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, reactive, onMounted, watch } = Vue;
+
+    createApp({
+        setup() {
+            const activeTab = ref('profile');
+            const isLoading = ref(true);
+            const alertMessage = ref('');
+            const alertType = ref('info');
+
+            const user = ref(null);
+            const securitySettings = reactive({
+                emailVerified: false,
+                twoFactorEnabled: false
+            });
+            const loginHistory = ref([]);
+
+            const editForm = reactive({
+                userName: '',
+                userEmail: '',
+                userPhone: '',
+                gender: '',
+                birthDate: ''
+            });
+
+            const passwordForm = reactive({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+
+            // API 기본 설정
+            const API_BASE_URL = '/api';
+            axios.defaults.baseURL = API_BASE_URL;
+
+            // 토큰 설정
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            } else {
+                window.location.href = '/member.html';
+                return;
+            }
+
+            // 알림 표시
+            const showAlert = (message, type = 'info', duration = 5000) => {
+                alertMessage.value = message;
+                alertType.value = type;
+                setTimeout(() => {
+                    alertMessage.value = '';
+                }, duration);
+            };
+
+            // 사용자 정보 로드
+            const loadUserInfo = async () => {
+                try {
+                    const response = await axios.get('/member/info');
+                    if (response.data.success) {
+                        user.value = response.data.data.basic;
+                        Object.assign(editForm, {
+                            userName: user.value.userName,
+                            userEmail: user.value.userEmail,
+                            userPhone: user.value.userPhone || '',
+                            gender: user.value.gender || '',
+                            birthDate: user.value.birthDate || ''
+                        });
+                    }
+                } catch (error) {
+                    console.error('사용자 정보 로드 실패:', error);
+                    showAlert('사용자 정보를 불러오는데 실패했습니다.', 'error');
+                }
+            };
+
+            // 보안 설정 로드
+            const loadSecuritySettings = async () => {
+                try {
+                    const response = await axios.get('/member/security-settings');
+                    if (response.data.success) {
+                        Object.assign(securitySettings, response.data.data);
+                    }
+                } catch (error) {
+                    console.error('보안 설정 로드 실패:', error);
+                }
+            };
+
+            // 로그인 이력 로드
+            const loadLoginHistory = async () => {
+                try {
+                    const response = await axios.get('/auth/login-history');
+                    if (response.data.success) {
+                        loginHistory.value = response.data.data.histories || [];
+                    }
+                } catch (error) {
+                    console.error('로그인 이력 로드 실패:', error);
+                }
+            };
+
+            // 사용자 정보 업데이트
+            const updateUserInfo = async () => {
+                try {
+                    const response = await axios.put('/member/info', editForm);
+                    if (response.data.success) {
+                        showAlert('정보가 성공적으로 업데이트되었습니다.', 'success');
+                        await loadUserInfo();
+                    }
+                } catch (error) {
+                    console.error('정보 업데이트 실패:', error);
+                    showAlert(error.response?.data?.message || '정보 업데이트에 실패했습니다.', 'error');
+                }
+            };
+
+            // 비밀번호 변경
+            const changePassword = async () => {
+                if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+                    showAlert('새 비밀번호가 일치하지 않습니다.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await axios.put('/member/password', {
+                        currentPassword: passwordForm.currentPassword,
+                        newPassword: passwordForm.newPassword
+                    });
+
+                    if (response.data.success) {
+                        showAlert('비밀번호가 성공적으로 변경되었습니다.', 'success');
+                        Object.keys(passwordForm).forEach(key => {
+                            passwordForm[key] = '';
+                        });
+                    }
+                } catch (error) {
+                    console.error('비밀번호 변경 실패:', error);
+                    showAlert(error.response?.data?.message || '비밀번호 변경에 실패했습니다.', 'error');
+                }
+            };
+
+            // 2단계 인증 토글
+            const toggleTwoFactor = async () => {
+                try {
+                    const enabled = !securitySettings.twoFactorEnabled;
+                    const response = await axios.post(`/member/two-factor-auth?enabled=${enabled}`);
+
+                    if (response.data.success) {
+                        securitySettings.twoFactorEnabled = enabled;
+                        showAlert(`2단계 인증이 ${enabled ? '활성화' : '비활성화'}되었습니다.`, 'success');
+                    }
+                } catch (error) {
+                    console.error('2단계 인증 설정 실패:', error);
+                    showAlert('2단계 인증 설정에 실패했습니다.', 'error');
+                }
+            };
+
+            // 이메일 인증 발송
+            const sendEmailVerification = async () => {
+                try {
+                    const response = await axios.post('/auth/email-verification/request', null, {
+                        params: { userEmail: user.value.userEmail }
+                    });
+
+                    if (response.data.success) {
+                        showAlert('인증 이메일이 발송되었습니다.', 'success');
+                    }
+                } catch (error) {
+                    console.error('이메일 인증 발송 실패:', error);
+                    showAlert('이메일 인증 발송에 실패했습니다.', 'error');
+                }
+            };
+
+            // 계정 삭제 확인
+            const confirmDeleteAccount = () => {
+                if (confirm('정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                    deleteAccount();
+                }
+            };
+
+            // 계정 삭제
+            const deleteAccount = async () => {
+                try {
+                    const response = await axios.delete('/member/withdraw');
+                    if (response.data.success) {
+                        alert('계정이 삭제되었습니다.');
+                        localStorage.clear();
+                        window.location.href = '/';
+                    }
+                } catch (error) {
+                    console.error('계정 삭제 실패:', error);
+                    showAlert('계정 삭제에 실패했습니다.', 'error');
+                }
+            };
+
+            // 아바타 업로드 처리
+            const handleAvatarUpload = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    // 파일 크기 검증 (5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showAlert('파일 크기는 5MB 이하여야 합니다.', 'error');
+                        return;
+                    }
+
+                    // 파일 형식 검증
+                    if (!file.type.startsWith('image/')) {
+                        showAlert('이미지 파일만 업로드 가능합니다.', 'error');
+                        return;
+                    }
+
+                    uploadProfileImage(file);
+                }
+            };
+
+            // 프로필 이미지 업로드
+            const uploadProfileImage = async (file) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await axios.post('/member/profile-image', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    if (response.data.success) {
+                        showAlert('프로필 이미지가 업로드되었습니다.', 'success');
+                    }
+                } catch (error) {
+                    console.error('프로필 이미지 업로드 실패:', error);
+                    showAlert('프로필 이미지 업로드에 실패했습니다.', 'error');
+                }
+            };
+
+            // 프로필 이미지 업데이트 버튼
+            const updateProfileImage = () => {
+                document.querySelector('.upload-input').click();
+            };
+
+            // 날짜 포맷
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                return new Date(dateString).toLocaleDateString('ko-KR');
+            };
+
+            // 날짜시간 포맷
+            const formatDateTime = (dateString) => {
+                if (!dateString) return '';
+                return new Date(dateString).toLocaleString('ko-KR');
+            };
+
+            // 탭 변경 시 데이터 로드
+            watch(activeTab, async (newTab) => {
+                if (newTab === 'security') {
+                    await loadSecuritySettings();
+                } else if (newTab === 'activity') {
+                    await loadLoginHistory();
+                }
+            });
+
+            // 초기화
+            const initialize = async () => {
+                isLoading.value = true;
+                try {
+                    await loadUserInfo();
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            onMounted(initialize);
+
+            return {
+                activeTab,
+                isLoading,
+                alertMessage,
+                alertType,
+                user,
+                editForm,
+                passwordForm,
+                securitySettings,
+                loginHistory,
+                showAlert,
+                updateUserInfo,
+                changePassword,
+                toggleTwoFactor,
+                sendEmailVerification,
+                confirmDeleteAccount,
+                handleAvatarUpload,
+                updateProfileImage,
+                formatDate,
+                formatDateTime
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

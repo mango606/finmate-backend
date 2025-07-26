@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 거래 내역 관리</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-item {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.08);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.income {
+            color: #28a745;
+        }
+
+        .stat-value.expense {
+            color: #dc3545;
+        }
+
+        .stat-value.balance {
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e9ecef;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .transactions-table {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 32px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 16px 12px;
+            text-align: left;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-type {
+            padding: 4px 8px;
+        }
+
+        /* 테이블 액션 버튼들 간격 조정 */
+        .table td .btn + .btn {
+            margin-left: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.income {
+            color: #28a745;
+        }
+
+        .stat-value.expense {
+            color: #dc3545;
+        }
+
+        .stat-value.balance {
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e9ecef;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .transactions-table {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 32px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 16px 12px;
+            text-align: left;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-type {
+            padding: 4px 8px;
+        }
+
+        /* 테이블 액션 버튼들 간격 조정 */
+        .table td .btn + .btn {
+            margin-left: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            padding: 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .type-option:hover {
+            border-color: #667eea;
+        }
+
+        .type-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .type-option-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .type-option-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #e9ecef;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .empty-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover, .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">FinMate</div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-item">대시보드</a>
+                <a href="financial.html" class="nav-item">목표 관리</a>
+                <a href="portfolio.html" class="nav-item">포트폴리오</a>
+                <a href="investment.html" class="nav-item active">거래 내역</a>
+                <a href="education.html" class="nav-item">금융 교육</a>
+                <a href="calculator.html" class="nav-item">계산기</a>
+                <a href="mypage.html" class="nav-item">마이페이지</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">거래 내역 관리</h1>
+            <button class="btn" @click="openTransactionModal()">+ 거래 추가</button>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value income">{{ formatCurrency(totalIncome) }}</div>
+                <div class="stat-label">이번 달 수입</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value expense">{{ formatCurrency(totalExpense) }}</div>
+                <div class="stat-label">이번 달 지출</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value balance">{{ formatCurrency(totalIncome - totalExpense) }}</div>
+                <div class="stat-label">수지</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ transactions.length }}</div>
+                <div class="stat-label">총 거래 건수</div>
+            </div>
+        </div>
+
+        <!-- 필터 섹션 -->
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="form-group">
+                    <label class="form-label">기간</label>
+                    <select class="form-select" v-model="selectedPeriod" @change="applyFilters">
+                        <option value="all">전체</option>
+                        <option value="thisMonth">이번 달</option>
+                        <option value="lastMonth">지난 달</option>
+                        <option value="thisYear">올해</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">유형</label>
+                    <select class="form-select" v-model="selectedType" @change="applyFilters">
+                        <option value="all">전체</option>
+                        <option value="income">수입</option>
+                        <option value="expense">지출</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">카테고리</label>
+                    <select class="form-select" v-model="selectedCategory" @change="applyFilters">
+                        <option value="all">전체</option>
+                        <option v-for="category in categories" :key="category" :value="category">
+                            {{ category }}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">검색</label>
+                    <input type="text" class="form-input" v-model="searchQuery" @input="applyFilters" placeholder="설명 검색">
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 섹션 -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3 class="chart-title">월별 수입/지출</h3>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">카테고리별 지출</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 거래 내역 테이블 -->
+        <div class="transactions-table">
+            <h3 style="margin-bottom: 16px; font-size: 1.125rem; font-weight: 600;">거래 내역</h3>
+
+            <div v-if="filteredTransactions.length === 0" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3 class="empty-title">거래 내역이 없습니다</h3>
+                <p>첫 번째 거래를 추가해보세요!</p>
+            </div>
+
+            <table v-else class="table">
+                <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>유형</th>
+                    <th>카테고리</th>
+                    <th>설명</th>
+                    <th>금액</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="transaction in paginatedTransactions" :key="transaction.id">
+                    <td>{{ formatDate(transaction.date) }}</td>
+                    <td>
+                                <span class="transaction-type" :class="transaction.type">
+                                    {{ transaction.type === 'income' ? '수입' : '지출' }}
+                                </span>
+                    </td>
+                    <td>{{ transaction.category }}</td>
+                    <td>{{ transaction.description }}</td>
+                    <td class="amount" :class="transaction.type">
+                        {{ transaction.type === 'income' ? '+' : '-' }}{{ formatCurrency(transaction.amount) }}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @click="editTransaction(transaction)">수정</button>
+                        <button class="btn btn-sm btn-danger" @click="deleteTransaction(transaction.id)">삭제</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- 페이지네이션 -->
+            <div v-if="totalPages > 1" class="pagination">
+                <button class="page-btn" @click="currentPage = 1" :disabled="currentPage === 1">첫 페이지</button>
+                <button class="page-btn" @click="currentPage--" :disabled="currentPage === 1">이전</button>
+                <span v-for="page in visiblePages" :key="page">
+                        <button class="page-btn" :class="{active: page === currentPage}" @click="currentPage = page">
+                            {{ page }}
+                        </button>
+                    </span>
+                <button class="page-btn" @click="currentPage++" :disabled="currentPage === totalPages">다음</button>
+                <button class="page-btn" @click="currentPage = totalPages" :disabled="currentPage === totalPages">마지막</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 거래 추가/수정 모달 -->
+    <div v-if="showTransactionModal" class="modal" @click.self="closeTransactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">{{ editingTransaction ? '거래 수정' : '거래 추가' }}</h2>
+                <button class="close-btn" @click="closeTransactionModal">&times;</button>
+            </div>
+
+            <form @submit.prevent="saveTransaction">
+                <div class="form-group">
+                    <label class="form-label">거래 유형</label>
+                    <div class="transaction-type-selector">
+                        <div class="type-option"
+                             :class="{selected: transactionForm.type === 'income'}"
+                             @click="transactionForm.type = 'income'">
+                            <div class="type-option-icon">💰</div>
+                            <div class="type-option-name">수입</div>
+                        </div>
+                        <div class="type-option"
+                             :class="{selected: transactionForm.type === 'expense'}"
+                             @click="transactionForm.type = 'expense'">
+                            <div class="type-option-icon">💸</div>
+                            <div class="type-option-name">지출</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">카테고리</label>
+                    <select class="form-select" v-model="transactionForm.category" required>
+                        <option value="">카테고리 선택</option>
+                        <option v-for="category in getAvailableCategories()" :key="category" :value="category">
+                            {{ category }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">금액</label>
+                    <input type="number" class="form-input" v-model="transactionForm.amount" required min="0" placeholder="10,000">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">날짜</label>
+                    <input type="date" class="form-input" v-model="transactionForm.date" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">설명</label>
+                    <input type="text" class="form-input" v-model="transactionForm.description" required placeholder="거래 설명을 입력하세요">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" @click="closeTransactionModal">취소</button>
+                    <button type="submit" class="btn">{{ editingTransaction ? '수정' : '추가' }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                transactions: [
+                    {
+                        id: 1,
+                        type: 'income',
+                        category: '급여',
+                        amount: 3500000,
+                        date: '2024-01-25',
+                        description: '1월 급여'
+                    },
+                    {
+                        id: 2,
+                        type: 'expense',
+                        category: '식비',
+                        amount: 150000,
+                        date: '2024-01-24',
+                        description: '마트 장보기'
+                    },
+                    {
+                        id: 3,
+                        type: 'expense',
+                        category: '교통비',
+                        amount: 80000,
+                        date: '2024-01-23',
+                        description: '지하철 정기권'
+                    },
+                    {
+                        id: 4,
+                        type: 'expense',
+                        category: '주거비',
+                        amount: 800000,
+                        date: '2024-01-01',
+                        description: '월세'
+                    },
+                    {
+                        id: 5,
+                        type: 'income',
+                        category: '부업',
+                        amount: 500000,
+                        date: '2024-01-15',
+                        description: '프리랜싱'
+                    }
+                ],
+                filteredTransactions: [],
+                showTransactionModal: false,
+                editingTransaction: null,
+                transactionForm: {
+                    type: 'expense',
+                    category: '',
+                    amount: 0,
+                    date: '',
+                    description: ''
+                },
+                selectedPeriod: 'thisMonth',
+                selectedType: 'all',
+                selectedCategory: 'all',
+                searchQuery: '',
+                currentPage: 1,
+                itemsPerPage: 10,
+                incomeCategories: ['급여', '부업', '투자수익', '기타수입'],
+                expenseCategories: ['식비', '교통비', '주거비', '의료비', '쇼핑', '문화생활', '기타지출']
+            };
+        },
+        computed: {
+            categories() {
+                return [...this.incomeCategories, ...this.expenseCategories];
+            },
+            totalIncome() {
+                return this.transactions
+                    .filter(t => t.type === 'income')
+                    .reduce((sum, t) => sum + t.amount, 0);
+            },
+            totalExpense() {
+                return this.transactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((sum, t) => sum + t.amount, 0);
+            },
+            totalPages() {
+                return Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
+            },
+            paginatedTransactions() {
+                const start = (this.currentPage - 1) * this.itemsPerPage;
+                const end = start + this.itemsPerPage;
+                return this.filteredTransactions.slice(start, end);
+            },
+            visiblePages() {
+                const pages = [];
+                const start = Math.max(1, this.currentPage - 2);
+                const end = Math.min(this.totalPages, this.currentPage + 2);
+
+                for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+                return pages;
+            }
+        },
+        methods: {
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW'
+                }).format(amount);
+            },
+            formatDate(dateString) {
+                return new Date(dateString).toLocaleDateString('ko-KR', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+            },
+            openTransactionModal(transaction = null) {
+                this.editingTransaction = transaction;
+                if (transaction) {
+                    this.transactionForm = { ...transaction };
+                } else {
+                    this.transactionForm = {
+                        type: 'expense',
+                        category: '',
+                        amount: 0,
+                        date: new Date().toISOString().split('T')[0],
+                        description: ''
+                    };
+                }
+                this.showTransactionModal = true;
+            },
+            closeTransactionModal() {
+                this.showTransactionModal = false;
+                this.editingTransaction = null;
+            },
+            editTransaction(transaction) {
+                this.openTransactionModal(transaction);
+            },
+            async saveTransaction() {
+                try {
+                    if (this.editingTransaction) {
+                        // 수정
+                        const index = this.transactions.findIndex(t => t.id === this.editingTransaction.id);
+                        this.transactions[index] = { ...this.transactionForm };
+                    } else {
+                        // 새로 추가
+                        const newTransaction = {
+                            ...this.transactionForm,
+                            id: Date.now()
+                        };
+                        this.transactions.push(newTransaction);
+                    }
+
+                    this.applyFilters();
+                    this.closeTransactionModal();
+                    this.updateCharts();
+
+                    // API 호출
+                    // await axios.post('/api/transactions', this.transactionForm);
+                } catch (error) {
+                    console.error('거래 저장 실패:', error);
+                    alert('거래 저장에 실패했습니다.');
+                }
+            },
+            async deleteTransaction(transactionId) {
+                if (confirm('정말로 이 거래를 삭제하시겠습니까?')) {
+                    try {
+                        this.transactions = this.transactions.filter(t => t.id !== transactionId);
+                        this.applyFilters();
+                        this.updateCharts();
+                        // await axios.delete(`/api/transactions/${transactionId}`);
+                    } catch (error) {
+                        console.error('거래 삭제 실패:', error);
+                        alert('거래 삭제에 실패했습니다.');
+                    }
+                }
+            },
+            getAvailableCategories() {
+                return this.transactionForm.type === 'income' ? this.incomeCategories : this.expenseCategories;
+            },
+            applyFilters() {
+                let filtered = [...this.transactions];
+
+                // 기간 필터
+                if (this.selectedPeriod !== 'all') {
+                    const now = new Date();
+                    let startDate, endDate;
+
+                    switch (this.selectedPeriod) {
+                        case 'thisMonth':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                            break;
+                        case 'lastMonth':
+                            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+                            break;
+                        case 'thisYear':
+                            startDate = new Date(now.getFullYear(), 0, 1);
+                            endDate = new Date(now.getFullYear(), 11, 31);
+                            break;
+                    }
+
+                    filtered = filtered.filter(t => {
+                        const date = new Date(t.date);
+                        return date >= startDate && date <= endDate;
+                    });
+                }
+
+                // 유형 필터
+                if (this.selectedType !== 'all') {
+                    filtered = filtered.filter(t => t.type === this.selectedType);
+                }
+
+                // 카테고리 필터
+                if (this.selectedCategory !== 'all') {
+                    filtered = filtered.filter(t => t.category === this.selectedCategory);
+                }
+
+                // 검색 필터
+                if (this.searchQuery) {
+                    filtered = filtered.filter(t =>
+                        t.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+                    );
+                }
+
+                // 날짜순 정렬 (최신순)
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                this.filteredTransactions = filtered;
+                this.currentPage = 1;
+            },
+            initCharts() {
+                this.initMonthlyChart();
+                this.initCategoryChart();
+            },
+            initMonthlyChart() {
+                const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+                // 최근 6개월 데이터
+                const months = [];
+                const incomeData = [];
+                const expenseData = [];
+
+                for (let i = 5; i >= 0; i--) {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - i);
+                    months.push(`${date.getMonth() + 1}월`);
+
+                    const monthTransactions = this.transactions.filter(t => {
+                        const tDate = new Date(t.date);
+                        return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear();
+                    });
+
+                    incomeData.push(monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0));
+                    expenseData.push(monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0));
+                }
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: '수입',
+                                data: incomeData,
+                                borderColor: '#28a745',
+                                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointBackgroundColor: '#28a745',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5
+                            },
+                            {
+                                label: '지출',
+                                data: expenseData,
+                                borderColor: '#dc3545',
+                                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointBackgroundColor: '#dc3545',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f1f3f4'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('ko-KR', {
+                                            notation: 'compact'
+                                        }).format(value) + '원';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            initCategoryChart() {
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+
+                const categoryData = {};
+                this.transactions.filter(t => t.type === 'expense').forEach(t => {
+                    categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
+                });
+
+                const labels = Object.keys(categoryData);
+                const data = Object.values(categoryData);
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            updateCharts() {
+                this.$nextTick(() => {
+                    this.initCharts();
+                });
+            }
+        },
+        mounted() {
+            this.applyFilters();
+            this.initCharts();
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
+

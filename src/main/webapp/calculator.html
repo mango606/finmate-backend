@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 금융 계산기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-item {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.08);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 32px;
+        }
+
+        .calculators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .calculator-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .calculator-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+
+        .calculator-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .calculator-icon {
+            font-size: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+            border: 1px solid #e9ecef;
+        }
+
+        .result-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.125rem;
+        }
+
+        .result-value.highlight {
+            font-size: 1.375rem;
+            color: #28a745;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin-top: 24px;
+        }
+
+        .simulation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+
+        .simulation-table th,
+        .simulation-table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .simulation-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .simulation-table td:first-child,
+        .simulation-table th:first-child {
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-addon {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 12px;
+            color: #666;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .input-group .form-input {
+            border-radius: 8px 0 0 8px;
+            border-right: none;
+        }
+
+        .goal-progress {
+            background: #e9ecef;
+            border-radius: 20px;
+            height: 16px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.5s ease;
+            border-radius: 20px;
+        }
+
+        .tips-section {
+            background: rgba(102, 126, 234, 0.05);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-top: 24px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tips-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .tips-list {
+            list-style: none;
+            margin: 0;
+        }
+
+        .tips-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            color: #555;
+        }
+
+        .tips-list li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+
+        .calculator-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .calculator-description {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .important-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            color: #856404;
+        }
+
+        .important-note strong {
+            color: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .calculators-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">FinMate</div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-item">대시보드</a>
+                <a href="financial.html" class="nav-item">목표 관리</a>
+                <a href="portfolio.html" class="nav-item">포트폴리오</a>
+                <a href="investment.html" class="nav-item">거래 내역</a>
+                <a href="education.html" class="nav-item">금융 교육</a>
+                <a href="calculator.html" class="nav-item active">계산기</a>
+                <a href="mypage.html" class="nav-item">마이페이지</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="calculator-header">
+            <h1 class="page-title">금융 계산기</h1>
+            <p class="calculator-description">다양한 금융 계산을 통해 스마트한 재정 계획을 세워보세요</p>
+        </div>
+
+        <div class="calculators-grid">
+            <!-- 복리 계산기 -->
+            <div class="calculator-card">
+                <h2 class="calculator-title">
+                    <span class="calculator-icon">📈</span>
+                    복리 계산기
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">초기 투자금액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="compound.principal" placeholder="1,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">연 수익률</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="compound.rate" placeholder="7" step="0.1">
+                            <span class="input-addon">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">투자 기간</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="compound.years" placeholder="10">
+                            <span class="input-addon">년</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">월 추가 투자</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="compound.monthly" placeholder="100,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" @click="calculateCompound">계산하기</button>
+
+                <div v-if="compoundResult" class="result-section">
+                    <h3 class="result-title">계산 결과</h3>
+                    <div class="result-item">
+                        <span class="result-label">총 투자금액</span>
+                        <span class="result-value">{{ formatCurrency(compoundResult.totalInvested) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">최종 금액</span>
+                        <span class="result-value highlight">{{ formatCurrency(compoundResult.finalAmount) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">총 수익</span>
+                        <span class="result-value">{{ formatCurrency(compoundResult.totalProfit) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">수익률</span>
+                        <span class="result-value">{{ compoundResult.profitRate }}%</span>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="compoundChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <div class="tips-title">💡 복리 투자 팁</div>
+                    <ul class="tips-list">
+                        <li>일찍 시작할수록 복리 효과가 큽니다</li>
+                        <li>꾸준한 추가 투자가 중요합니다</li>
+                        <li>장기 투자할수록 유리합니다</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 목표 달성 시뮬레이터 -->
+            <div class="calculator-card">
+                <h2 class="calculator-title">
+                    <span class="calculator-icon">🎯</span>
+                    목표 달성 시뮬레이터
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">목표 금액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="goal.target" placeholder="50,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">현재 금액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="goal.current" placeholder="5,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">월 저축액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="goal.monthly" placeholder="500,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">연 수익률</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="goal.rate" placeholder="5" step="0.1">
+                            <span class="input-addon">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" @click="calculateGoal">시뮬레이션</button>
+
+                <div v-if="goalResult" class="result-section">
+                    <h3 class="result-title">달성 예상 결과</h3>
+
+                    <div class="goal-progress">
+                        <div class="goal-progress-fill" :style="{width: goalResult.progressPercent + '%'}"></div>
+                    </div>
+
+                    <div class="result-item">
+                        <span class="result-label">달성까지 필요 기간</span>
+                        <span class="result-value highlight">{{ goalResult.monthsNeeded }}개월</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">총 저축액</span>
+                        <span class="result-value">{{ formatCurrency(goalResult.totalSavings) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">투자 수익</span>
+                        <span class="result-value">{{ formatCurrency(goalResult.investmentGain) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">현재 진행률</span>
+                        <span class="result-value">{{ goalResult.progressPercent }}%</span>
+                    </div>
+
+                    <table class="simulation-table">
+                        <thead>
+                        <tr>
+                            <th>년도</th>
+                            <th>저축액</th>
+                            <th>누적 금액</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="year in goalResult.yearlyData.slice(0, 5)" :key="year.year">
+                            <td>{{ year.year }}년</td>
+                            <td>{{ formatCurrency(year.savings) }}</td>
+                            <td>{{ formatCurrency(year.total) }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="tips-section">
+                    <div class="tips-title">💡 목표 달성 팁</div>
+                    <ul class="tips-list">
+                        <li>구체적이고 현실적인 목표를 세우세요</li>
+                        <li>정기적인 저축 습관을 만드세요</li>
+                        <li>목표 달성 시기를 주기적으로 점검하세요</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 대출 상환 계산기 -->
+            <div class="calculator-card">
+                <h2 class="calculator-title">
+                    <span class="calculator-icon">🏠</span>
+                    대출 상환 계산기
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">대출 금액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="loan.principal" placeholder="300,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">연 이자율</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="loan.rate" placeholder="3.5" step="0.1">
+                            <span class="input-addon">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">상환 기간</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="loan.years" placeholder="20">
+                            <span class="input-addon">년</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">상환 방식</label>
+                        <select class="form-select" v-model="loan.type">
+                            <option value="equal">원리금균등상환</option>
+                            <option value="principal">원금균등상환</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn" @click="calculateLoan">계산하기</button>
+
+                <div v-if="loanResult" class="result-section">
+                    <h3 class="result-title">상환 계획</h3>
+                    <div class="result-item">
+                        <span class="result-label">월 상환액</span>
+                        <span class="result-value highlight">{{ formatCurrency(loanResult.monthlyPayment) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">총 상환액</span>
+                        <span class="result-value">{{ formatCurrency(loanResult.totalPayment) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">총 이자</span>
+                        <span class="result-value">{{ formatCurrency(loanResult.totalInterest) }}</span>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="loanChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <div class="tips-title">💡 대출 관리 팁</div>
+                    <ul class="tips-list">
+                        <li>가능하면 짧은 기간으로 설정하세요</li>
+                        <li>중도상환을 통해 이자를 절약하세요</li>
+                        <li>금리 비교를 통해 최적의 상품을 선택하세요</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 은퇴 자금 계산기 -->
+            <div class="calculator-card">
+                <h2 class="calculator-title">
+                    <span class="calculator-icon">🏖️</span>
+                    은퇴 자금 계산기
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">현재 나이</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="retirement.currentAge" placeholder="30">
+                            <span class="input-addon">세</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">은퇴 예정 나이</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="retirement.retireAge" placeholder="65">
+                            <span class="input-addon">세</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">현재 저축액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="retirement.currentSavings" placeholder="10,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">월 저축액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="retirement.monthlySavings" placeholder="1,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">연 수익률</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="retirement.rate" placeholder="6" step="0.1">
+                            <span class="input-addon">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">은퇴 후 월 생활비</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" v-model="retirement.monthlyExpense" placeholder="3,000,000">
+                            <span class="input-addon">원</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" @click="calculateRetirement">계산하기</button>
+
+                <div v-if="retirementResult" class="result-section">
+                    <h3 class="result-title">은퇴 자금 분석</h3>
+                    <div class="result-item">
+                        <span class="result-label">은퇴 시점 예상 자산</span>
+                        <span class="result-value highlight">{{ formatCurrency(retirementResult.totalAssets) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">생활 가능 기간</span>
+                        <span class="result-value">{{ retirementResult.yearsCanLive }}년</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">월 인출 가능 금액</span>
+                        <span class="result-value">{{ formatCurrency(retirementResult.monthlyWithdraw) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">부족/여유 자금</span>
+                        <span class="result-value" :style="{color: retirementResult.shortfall < 0 ? '#28a745' : '#dc3545'}">
+                                {{ retirementResult.shortfall < 0 ? '+' : '' }}{{ formatCurrency(Math.abs(retirementResult.shortfall)) }}
+                            </span>
+                    </div>
+
+                    <div v-if="retirementResult.shortfall > 0" class="important-note">
+                        <strong>권장사항:</strong> 월 {{ formatCurrency(retirementResult.recommendedSavings) }} 더 저축하시기 바랍니다.
+                    </div>
+                </div>
+
+                <div class="tips-section">
+                    <div class="tips-title">💡 은퇴 준비 팁</div>
+                    <ul class="tips-list">
+                        <li>가능한 빨리 시작하세요</li>
+                        <li>인플레이션을 고려하세요</li>
+                        <li>다양한 연금 상품을 활용하세요</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                compound: {
+                    principal: 10000000,
+                    rate: 7,
+                    years: 10,
+                    monthly: 1000000
+                },
+                goal: {
+                    target: 50000000,
+                    current: 5000000,
+                    monthly: 500000,
+                    rate: 5
+                },
+                loan: {
+                    principal: 300000000,
+                    rate: 3.5,
+                    years: 20,
+                    type: 'equal'
+                },
+                retirement: {
+                    currentAge: 30,
+                    retireAge: 65,
+                    currentSavings: 10000000,
+                    monthlySavings: 1000000,
+                    rate: 6,
+                    monthlyExpense: 3000000
+                },
+                compoundResult: null,
+                goalResult: null,
+                loanResult: null,
+                retirementResult: null
+            };
+        },
+        methods: {
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW'
+                }).format(amount);
+            },
+            calculateCompound() {
+                const P = Number(this.compound.principal);
+                const r = Number(this.compound.rate) / 100;
+                const t = Number(this.compound.years);
+                const PMT = Number(this.compound.monthly);
+
+                // 복리 계산: 초기금액 + 매월 적립
+                const futureValueInitial = P * Math.pow(1 + r, t);
+                const futureValueMonthly = PMT * 12 * (Math.pow(1 + r, t) - 1) / r;
+                const finalAmount = futureValueInitial + futureValueMonthly;
+
+                const totalInvested = P + (PMT * 12 * t);
+                const totalProfit = finalAmount - totalInvested;
+                const profitRate = ((totalProfit / totalInvested) * 100).toFixed(1);
+
+                this.compoundResult = {
+                    finalAmount,
+                    totalInvested,
+                    totalProfit,
+                    profitRate
+                };
+
+                this.$nextTick(() => {
+                    this.drawCompoundChart();
+                });
+            },
+            calculateGoal() {
+                const target = Number(this.goal.target);
+                const current = Number(this.goal.current);
+                const monthly = Number(this.goal.monthly);
+                const rate = Number(this.goal.rate) / 100 / 12;
+
+                let amount = current;
+                let months = 0;
+                const yearlyData = [];
+
+                while (amount < target && months < 600) { // 최대 50년
+                    amount = amount * (1 + rate) + monthly;
+                    months++;
+
+                    if (months % 12 === 0) {
+                        yearlyData.push({
+                            year: months / 12,
+                            savings: monthly * 12 * (months / 12),
+                            total: amount
+                        });
+                    }
+                }
+
+                const totalSavings = monthly * months;
+                const investmentGain = target - current - totalSavings;
+                const progressPercent = Math.min((current / target * 100), 100).toFixed(1);
+
+                this.goalResult = {
+                    monthsNeeded: months,
+                    totalSavings,
+                    investmentGain,
+                    progressPercent,
+                    yearlyData
+                };
+            },
+            calculateLoan() {
+                const P = Number(this.loan.principal);
+                const r = Number(this.loan.rate) / 100 / 12;
+                const n = Number(this.loan.years) * 12;
+
+                let monthlyPayment, totalPayment, totalInterest;
+
+                if (this.loan.type === 'equal') {
+                    // 원리금균등상환
+                    monthlyPayment = P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+                    totalPayment = monthlyPayment * n;
+                } else {
+                    // 원금균등상환 (첫 달 기준)
+                    const principalPayment = P / n;
+                    const firstInterest = P * r;
+                    monthlyPayment = principalPayment + firstInterest;
+                    totalPayment = P + (P * r * (n + 1) / 2);
+                }
+
+                totalInterest = totalPayment - P;
+
+                this.loanResult = {
+                    monthlyPayment,
+                    totalPayment,
+                    totalInterest
+                };
+
+                this.$nextTick(() => {
+                    this.drawLoanChart();
+                });
+            },
+            calculateRetirement() {
+                const currentAge = Number(this.retirement.currentAge);
+                const retireAge = Number(this.retirement.retireAge);
+                const currentSavings = Number(this.retirement.currentSavings);
+                const monthlySavings = Number(this.retirement.monthlySavings);
+                const rate = Number(this.retirement.rate) / 100;
+                const monthlyExpense = Number(this.retirement.monthlyExpense);
+
+                const yearsToRetire = retireAge - currentAge;
+
+                // 은퇴 시점 총 자산
+                const futureValueCurrent = currentSavings * Math.pow(1 + rate, yearsToRetire);
+                const futureValueMonthly = monthlySavings * 12 * (Math.pow(1 + rate, yearsToRetire) - 1) / rate;
+                const totalAssets = futureValueCurrent + futureValueMonthly;
+
+                // 생활 가능 기간 (4% 룰 적용)
+                const safeWithdrawRate = 0.04;
+                const monthlyWithdraw = totalAssets * safeWithdrawRate / 12;
+                const yearsCanLive = totalAssets / (monthlyExpense * 12);
+
+                const shortfall = (monthlyExpense - monthlyWithdraw) * 12 * 20; // 20년 기준
+                const recommendedSavings = shortfall > 0 ? shortfall / (yearsToRetire * 12) : 0;
+
+                this.retirementResult = {
+                    totalAssets,
+                    monthlyWithdraw,
+                    yearsCanLive: Math.floor(yearsCanLive),
+                    shortfall,
+                    recommendedSavings
+                };
+            },
+            drawCompoundChart() {
+                const ctx = document.getElementById('compoundChart').getContext('2d');
+
+                const years = [];
+                const amounts = [];
+                const invested = [];
+
+                const P = Number(this.compound.principal);
+                const r = Number(this.compound.rate) / 100;
+                const PMT = Number(this.compound.monthly);
+
+                for (let year = 0; year <= this.compound.years; year++) {
+                    years.push(year + '년');
+
+                    const futureValueInitial = P * Math.pow(1 + r, year);
+                    const futureValueMonthly = year > 0 ? PMT * 12 * (Math.pow(1 + r, year) - 1) / r : 0;
+                    const totalAmount = futureValueInitial + futureValueMonthly;
+                    const totalInvested = P + (PMT * 12 * year);
+
+                    amounts.push(totalAmount);
+                    invested.push(totalInvested);
+                }
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: [
+                            {
+                                label: '투자 원금',
+                                data: invested,
+                                borderColor: '#dc3545',
+                                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointBackgroundColor: '#dc3545',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5
+                            },
+                            {
+                                label: '복리 수익',
+                                data: amounts,
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointBackgroundColor: '#667eea',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f1f3f4'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('ko-KR', {
+                                            notation: 'compact'
+                                        }).format(value) + '원';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            drawLoanChart() {
+                const ctx = document.getElementById('loanChart').getContext('2d');
+
+                const years = [];
+                const principal = [];
+                const interest = [];
+
+                const P = Number(this.loan.principal);
+                const r = Number(this.loan.rate) / 100 / 12;
+                const n = Number(this.loan.years) * 12;
+                const monthlyPayment = this.loanResult.monthlyPayment;
+
+                let remainingPrincipal = P;
+                let totalInterestPaid = 0;
+
+                for (let year = 1; year <= this.loan.years; year++) {
+                    let yearlyInterest = 0;
+                    let yearlyPrincipal = 0;
+
+                    for (let month = 1; month <= 12; month++) {
+                        const interestPayment = remainingPrincipal * r;
+                        const principalPayment = monthlyPayment - interestPayment;
+
+                        yearlyInterest += interestPayment;
+                        yearlyPrincipal += principalPayment;
+                        remainingPrincipal -= principalPayment;
+                        totalInterestPaid += interestPayment;
+                    }
+
+                    years.push(year + '년');
+                    principal.push(yearlyPrincipal);
+                    interest.push(yearlyInterest);
+                }
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: years,
+                        datasets: [
+                            {
+                                label: '원금',
+                                data: principal,
+                                backgroundColor: '#667eea'
+                            },
+                            {
+                                label: '이자',
+                                data: interest,
+                                backgroundColor: '#dc3545'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                grid: {
+                                    color: '#f1f3f4'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('ko-KR', {
+                                            notation: 'compact'
+                                        }).format(value) + '원';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

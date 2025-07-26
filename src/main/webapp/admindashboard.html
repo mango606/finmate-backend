@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 관리자 대시보드</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .header {
+            background: #ffffff;
+            color: #333;
+            padding: 20px 0;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .admin-badge {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-item {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #f1f3f4;
+            color: #667eea;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .user-info:hover {
+            background: #f1f3f4;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .stat-card.users {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .stat-card.transactions {
+            background: white;
+            border-left: 4px solid #28a745;
+        }
+        .stat-card.revenue {
+            background: white;
+            border-left: 4px solid #ffc107;
+        }
+        .stat-card.active {
+            background: white;
+            border-left: 4px solid #764ba2;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.users .stat-value {
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-card.users .stat-label {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .stat-card.users .stat-change {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .change-positive { color: #28a745; }
+        .change-negative { color: #dc3545; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .action-button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .activity-icon.login { background: #28a745; }
+        .activity-icon.transaction { background: #667eea; }
+        .activity-icon.error { background: #dc3545; }
+        .activity-icon.system { background: #6c757d; }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .activity-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .activity-time {
+            color: #999;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .alert-panel {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .alert-list li {
+            padding: 8px 0;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .management-tools {
+            display: grid;
+            gap: 15px;
+        }
+
+        .tool-button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .tool-button:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        .tool-button:nth-child(4n+1):hover {
+            border-color: #764ba2;
+        }
+
+        .tool-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                🏦 FinMate
+                <span class="admin-badge">관리자</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="/admin/dashboard.html" class="nav-item active">대시보드</a>
+                <a href="/admin/users.html" class="nav-item">회원관리</a>
+                <a href="/admin/transactions.html" class="nav-item">거래관리</a>
+                <a href="/admin/content.html" class="nav-item">컨텐츠관리</a>
+                <a href="/admin/system.html" class="nav-item">시스템</a>
+                <a href="/" class="nav-item">사용자 사이트</a>
+            </nav>
+            <div class="user-menu" v-if="user">
+                <div class="user-info" @click="logout">
+                    <div class="avatar">{{ user.userName ? user.userName.charAt(0) : 'A' }}</div>
+                    <span>{{ user.userName }}님</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <div class="container">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <span>🛠️</span>
+                관리자 대시보드
+            </h1>
+            <p class="page-subtitle">FinMate 시스템 전반의 현황을 모니터링하고 관리하세요</p>
+
+            <!-- 빠른 통계 -->
+            <div class="quick-stats">
+                <div class="stat-card users">
+                    <div class="stat-value">{{ dashboardData.totalUsers.toLocaleString() }}</div>
+                    <div class="stat-label">총 회원수</div>
+                    <div class="stat-change">+{{ dashboardData.newUsersToday }} 오늘 가입</div>
+                </div>
+                <div class="stat-card transactions">
+                    <div class="stat-value">{{ dashboardData.totalTransactions.toLocaleString() }}</div>
+                    <div class="stat-label">총 거래건수</div>
+                    <div class="stat-change change-positive">+{{ dashboardData.transactionsToday }} 오늘</div>
+                </div>
+                <div class="stat-card revenue">
+                    <div class="stat-value">{{ formatCurrency(dashboardData.totalRevenue) }}</div>
+                    <div class="stat-label">총 수수료 수익</div>
+                    <div class="stat-change change-positive">+{{ formatPercent(dashboardData.revenueGrowth) }}</div>
+                </div>
+                <div class="stat-card active">
+                    <div class="stat-value">{{ dashboardData.activeUsers.toLocaleString() }}</div>
+                    <div class="stat-label">활성 사용자</div>
+                    <div class="stat-change change-positive">지난 30일</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div v-if="isLoading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- 메인 컨텐츠 -->
+        <div v-else class="dashboard-grid">
+            <!-- 좌측 메인 영역 -->
+            <div>
+                <!-- 사용자 증가 차트 -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <span>📈</span>
+                        사용자 증가 추이
+                    </h2>
+
+                    <div class="chart-container">
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 최근 가입 회원 -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <span>👥</span>
+                        최근 가입 회원
+                    </h2>
+
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>회원ID</th>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>가입일</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="member in recentMembers" :key="member.userId">
+                            <td>{{ member.userId }}</td>
+                            <td>{{ member.userName }}</td>
+                            <td>{{ member.userEmail }}</td>
+                            <td>{{ formatDate(member.regDate) }}</td>
+                            <td>
+                                    <span :class="['status-badge', member.isActive ? 'status-active' : 'status-inactive']">
+                                        {{ member.isActive ? '활성' : '비활성' }}
+                                    </span>
+                            </td>
+                            <td>
+                                <button @click="editMember(member.userId)" class="action-button btn-edit">수정</button>
+                                <button @click="toggleMemberStatus(member.userId)" class="action-button btn-delete">
+                                    {{ member.isActive ? '비활성화' : '활성화' }}
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 우측 사이드바 -->
+            <div>
+                <!-- 시스템 알림 -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <span>⚠️</span>
+                        시스템 알림
+                    </h2>
+
+                    <div class="alert-panel">
+                        <div class="alert-title">
+                            <span>🔴</span>
+                            중요 알림
+                        </div>
+                        <ul class="alert-list">
+                            <li v-for="alert in systemAlerts" :key="alert.id">
+                                <span>{{ alert.icon }}</span>
+                                <span>{{ alert.message }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 관리 도구 -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <span>🛠️</span>
+                        관리 도구
+                    </h2>
+
+                    <div class="management-tools">
+                        <a href="/admin/users.html" class="tool-button">
+                            <span class="tool-icon">👥</span>
+                            회원 관리
+                        </a>
+                        <button @click="goToPage('/admin/content.html')" class="tool-button">
+                            <span class="tool-icon">📝</span>
+                            컨텐츠 관리
+                        </button>
+                        <button @click="goToPage('/admin/system.html')" class="tool-button">
+                            <span class="tool-icon">⚙️</span>
+                            시스템 설정
+                        </button>
+                        <button @click="exportData" class="tool-button">
+                            <span class="tool-icon">📊</span>
+                            데이터 내보내기
+                        </button>
+                        <button @click="viewLogs" class="tool-button">
+                            <span class="tool-icon">📋</span>
+                            시스템 로그
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 최근 활동 -->
+                <div class="section">
+                    <h2 class="section-title">
+                        <span>📊</span>
+                        최근 활동
+                    </h2>
+
+                    <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
+                        <div :class="['activity-icon', activity.type]">
+                            {{ activity.icon }}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ activity.title }}</div>
+                            <div class="activity-details">{{ activity.details }}</div>
+                        </div>
+                        <div class="activity-time">{{ formatTime(activity.time) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, reactive, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const isLoading = ref(true);
+            const user = ref(null);
+
+            const dashboardData = reactive({
+                totalUsers: 15247,
+                newUsersToday: 23,
+                totalTransactions: 48392,
+                transactionsToday: 157,
+                totalRevenue: 12500000,
+                revenueGrowth: 8.5,
+                activeUsers: 8934
+            });
+
+            const recentMembers = reactive([
+                {
+                    userId: 'user001',
+                    userName: '김철수',
+                    userEmail: 'kim@example.com',
+                    regDate: new Date(Date.now() - 1000 * 60 * 30),
+                    isActive: true
+                },
+                {
+                    userId: 'user002',
+                    userName: '이영희',
+                    userEmail: 'lee@example.com',
+                    regDate: new Date(Date.now() - 1000 * 60 * 60 * 2),
+                    isActive: true
+                },
+                {
+                    userId: 'user003',
+                    userName: '박민수',
+                    userEmail: 'park@example.com',
+                    regDate: new Date(Date.now() - 1000 * 60 * 60 * 4),
+                    isActive: false
+                }
+            ]);
+
+            const systemAlerts = reactive([
+                { id: 1, icon: '🔴', message: 'DB 연결 지연 감지 (응답시간 증가)' },
+                { id: 2, icon: '🟡', message: '메모리 사용량 80% 초과' },
+                { id: 3, icon: '🟢', message: '백업 완료 (오늘 새벽 3시)' }
+            ]);
+
+            const recentActivities = reactive([
+                {
+                    id: 1,
+                    type: 'login',
+                    icon: '👤',
+                    title: '관리자 로그인',
+                    details: 'admin@finmate.com',
+                    time: new Date(Date.now() - 1000 * 60 * 5)
+                },
+                {
+                    id: 2,
+                    type: 'transaction',
+                    icon: '💳',
+                    title: '대량 거래 감지',
+                    details: '1억원 이상 거래 3건',
+                    time: new Date(Date.now() - 1000 * 60 * 15)
+                },
+                {
+                    id: 3,
+                    type: 'system',
+                    icon: '⚙️',
+                    title: '시스템 업데이트',
+                    details: '보안 패치 적용 완료',
+                    time: new Date(Date.now() - 1000 * 60 * 60 * 2)
+                }
+            ]);
+
+            let userGrowthChart = null;
+
+            // API 기본 설정
+            const API_BASE_URL = '/api';
+            axios.defaults.baseURL = API_BASE_URL;
+
+            // 토큰 설정 및 관리자 권한 확인
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            } else {
+                window.location.href = '/member.html';
+                return;
+            }
+
+            // 관리자 정보 로드
+            const loadAdminInfo = async () => {
+                try {
+                    const response = await axios.get('/auth/me');
+                    if (response.data.success) {
+                        const userData = response.data.data;
+                        // 관리자 권한 확인
+                        if (!userData.authorities || !userData.authorities.includes('ROLE_ADMIN')) {
+                            alert('관리자 권한이 필요합니다.');
+                            window.location.href = '/dashboard.html';
+                            return;
+                        }
+                        user.value = userData;
+                    }
+                } catch (error) {
+                    console.error('관리자 정보 로드 실패:', error);
+                    localStorage.removeItem('accessToken');
+                    window.location.href = '/member.html';
+                }
+            };
+
+            // 사용자 증가 차트 생성
+            const createUserGrowthChart = () => {
+                const ctx = document.getElementById('userGrowthChart');
+                if (!ctx) return;
+
+                // 모의 데이터 생성
+                const labels = [];
+                const data = [];
+
+                for (let i = 30; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }));
+
+                    // 성장 추세 데이터
+                    const baseUsers = 15000;
+                    const dailyGrowth = Math.floor(Math.random() * 50) + 10;
+                    data.push(baseUsers + (30 - i) * dailyGrowth);
+                }
+
+                userGrowthChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '총 회원수',
+                            data: data,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString('ko-KR');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            // 통화 포맷
+            const formatCurrency = (amount) => {
+                if (amount == null) return '₩0';
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            };
+
+            // 퍼센트 포맷
+            const formatPercent = (value, decimals = 1) => {
+                if (value == null) return '0%';
+                return `${Number(value).toFixed(decimals)}%`;
+            };
+
+            // 날짜 포맷
+            const formatDate = (date) => {
+                return new Date(date).toLocaleDateString('ko-KR');
+            };
+
+            // 시간 포맷
+            const formatTime = (date) => {
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / (1000 * 60));
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+
+                if (minutes < 60) {
+                    return `${minutes}분 전`;
+                } else if (hours < 24) {
+                    return `${hours}시간 전`;
+                } else {
+                    return formatDate(date);
+                }
+            };
+
+            // 회원 수정
+            const editMember = (userId) => {
+                alert(`회원 ${userId} 수정 페이지로 이동합니다.`);
+            };
+
+            // 회원 상태 토글
+            const toggleMemberStatus = async (userId) => {
+                try {
+                    const member = recentMembers.find(m => m.userId === userId);
+                    if (member) {
+                        const action = member.isActive ? '비활성화' : '활성화';
+                        if (confirm(`정말로 ${userId}를 ${action}하시겠습니까?`)) {
+                            member.isActive = !member.isActive;
+                            alert(`${userId}가 ${action}되었습니다.`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('회원 상태 변경 실패:', error);
+                    alert('회원 상태 변경에 실패했습니다.');
+                }
+            };
+
+            // 데이터 내보내기
+            const exportData = () => {
+                alert('데이터 내보내기 기능은 준비 중입니다.');
+            };
+
+            // 시스템 로그 보기
+            const viewLogs = () => {
+                alert('시스템 로그 뷰어로 이동합니다.');
+            };
+
+            // 로그아웃
+            const logout = async () => {
+                try {
+                    await axios.post('/auth/logout');
+                } catch (error) {
+                    console.warn('로그아웃 API 호출 실패:', error);
+                } finally {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    delete axios.defaults.headers.common['Authorization'];
+                    window.location.href = '/member.html';
+                }
+            };
+
+            // 페이지 이동
+            const goToPage = (url) => {
+                window.location.href = url;
+            };
+
+            // 초기화
+            const initialize = async () => {
+                isLoading.value = true;
+                try {
+                    await loadAdminInfo();
+                } finally {
+                    isLoading.value = false;
+                    setTimeout(createUserGrowthChart, 100);
+                }
+            };
+
+            onMounted(initialize);
+
+            return {
+                isLoading,
+                user,
+                dashboardData,
+                recentMembers,
+                systemAlerts,
+                recentActivities,
+                formatCurrency,
+                formatPercent,
+                formatDate,
+                formatTime,
+                editMember,
+                toggleMemberStatus,
+                exportData,
+                viewLogs,
+                logout,
+                goToPage
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

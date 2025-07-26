@@ -3,202 +3,697 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinMate - 제테크 금융 서비스</title>
+    <title>FinMate - 똑똑한 금융 관리</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
     <style>
-        body {
-            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+        * {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
         }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 700px;
-            width: 90%;
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
         }
-        .subtitle {
+
+        .nav-item {
             color: #666;
-            margin-bottom: 30px;
-            font-size: 18px;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
         }
-        .api-links {
-            margin: 30px 0;
+
+        .nav-item:hover {
+            color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .hero-section {
+            margin-top: 70px;
+            padding: 80px 20px 120px;
+            text-align: center;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 파란색 애니메이션 배경 요소들 */
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23667eea" fill-opacity="0.04"><circle cx="50" cy="50" r="3"/></g></svg>') repeat;
+            animation: floatPattern 20s linear infinite;
+            z-index: 1;
+        }
+
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(102, 126, 234, 0.08));
+            backdrop-filter: blur(3px);
+            animation: circleFloat 5s ease-in-out infinite;
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .floating-circle:nth-child(1) {
+            width: 140px;
+            height: 140px;
+            top: 15%;
+            left: 8%;
+            animation-delay: 0s;
+            animation-duration: 4s;
+        }
+
+        .floating-circle:nth-child(2) {
+            width: 250px;
+            height: 250px;
+            top: 55%;
+            right: 6%;
+            animation-delay: 1.5s;
+            animation-duration: 4.5s;
+        }
+
+        .floating-circle:nth-child(3) {
+            width: 90px;
+            height: 90px;
+            top: 75%;
+            left: 20%;
+            animation-delay: 3s;
+            animation-duration: 3.5s;
+        }
+
+        .floating-circle:nth-child(4) {
+            width: 70px;
+            height: 70px;
+            top: 20%;
+            right: 30%;
+            animation-delay: 1s;
+            animation-duration: 4.2s;
+        }
+
+        .floating-circle:nth-child(5) {
+            width: 110px;
+            height: 110px;
+            top: 35%;
+            left: 45%;
+            animation-delay: 4s;
+            animation-duration: 3.8s;
+            transform: translateX(-50%);
+        }
+
+        .floating-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .floating-icon {
+            position: absolute;
+            font-size: 2.4rem;
+            color: rgba(102, 126, 234, 0.25);
+            animation: iconFloat 6s ease-in-out infinite;
+            text-shadow: 0 3px 12px rgba(102, 126, 234, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .floating-icon:nth-child(1) {
+            top: 8%;
+            left: 88%;
+            animation-delay: 0s;
+            animation-duration: 4s;
+        }
+
+        .floating-icon:nth-child(2) {
+            top: 72%;
+            left: 3%;
+            animation-delay: 2s;
+            animation-duration: 4.5s;
+        }
+
+        .floating-icon:nth-child(3) {
+            top: 18%;
+            right: 8%;
+            animation-delay: 4s;
+            animation-duration: 3.5s;
+        }
+
+        .floating-icon:nth-child(4) {
+            top: 82%;
+            right: 30%;
+            animation-delay: 1s;
+            animation-duration: 4.2s;
+        }
+
+        .floating-icon:nth-child(5) {
+            top: 48%;
+            left: 2%;
+            animation-delay: 3s;
+            animation-duration: 3.8s;
+        }
+
+        .floating-icon:nth-child(6) {
+            top: 32%;
+            right: 45%;
+            animation-delay: 5s;
+            animation-duration: 4.8s;
+        }
+
+        .floating-icon:hover {
+            transform: scale(1.2);
+            color: rgba(102, 126, 234, 0.4);
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #333;
+            line-height: 1.2;
+            position: relative;
+            z-index: 3;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 48px;
+            color: #666;
+            font-weight: 400;
+            position: relative;
+            z-index: 3;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 80px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 1px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .features-section {
+            background: #f8f9fa;
+            padding: 100px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 60px;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-bottom: 80px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 40px 24px;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 24px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .stats-section {
+            background: #667eea;
+            color: white;
+            padding: 80px 20px;
+        }
+
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            gap: 40px;
+            text-align: center;
         }
-        .api-link {
-            display: block;
-            padding: 15px 25px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s;
-            font-weight: bold;
+
+        .stat-item {
+            padding: 20px;
         }
-        .api-link:hover {
-            background: #0056b3;
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .demo-section {
+            background: white;
+            padding: 100px 20px;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .demo-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
         }
-        .api-link.primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-        }
-        .api-link.primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        .info {
-            background: #e7f3ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border-left: 4px solid #007bff;
-            text-align: left;
-        }
-        .info h3 {
-            margin-top: 0;
-            color: #007bff;
-        }
-        .server-status {
-            color: #28a745;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .status {
+
+        .demo-image {
+            height: 180px;
+            background: #667eea;
             display: flex;
-            justify-content: space-around;
-            margin: 30px 0;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
         }
-        .status-item {
-            padding: 20px;
+
+        .demo-content {
+            padding: 24px;
+        }
+
+        .demo-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .demo-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .demo-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .demo-link:hover {
+            color: #764ba2;
+        }
+
+        .footer {
             background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 4px solid #007bff;
-            margin: 10px;
-            flex: 1;
-            min-width: 200px;
+            padding: 60px 20px 40px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
         }
-        .status-item h3 {
-            margin: 0 0 10px 0;
-            color: #007bff;
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .status-item p {
-            margin: 0;
-            font-weight: bold;
+
+        .footer .logo {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
         }
+
+        .footer p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
         @media (max-width: 768px) {
-            .status {
+            .hero-title {
+                font-size: 2.25rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.125rem;
+            }
+
+            .cta-buttons {
                 flex-direction: column;
+                align-items: center;
             }
-            .status-item {
-                margin: 5px 0;
+
+            .nav-menu {
+                display: none;
             }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @keyframes floatPattern {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
+        @keyframes circleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>🏦 FinMate</h1>
-    <p class="subtitle">제테크 금융 서비스 백엔드 API</p>
-    <p class="server-status">✅ 서버가 정상 동작 중입니다!</p>
-
-    <div class="api-links">
-        <a href="/member.html" class="api-link primary">👥 로그인</a>
-
-        <a href="/hello" class="api-link">👋 Hello 테스트</a>
-        <a href="/ping" class="api-link">🏓 서버 Ping</a>
-        <a href="/api/member/health" class="api-link">❤️ Health 체크</a>
-        <a href="/swagger-ui/index.html" class="api-link">📖 API 문서</a>
-    </div>
-
-    <div class="status">
-        <div class="status-item">
-            <h3>서버 상태</h3>
-            <p id="server-status">🟢 정상 운영</p>
+<div id="app">
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">FinMate</div>
+            <nav class="nav-menu">
+                <a href="#features" class="nav-item">기능</a>
+                <a href="#demo" class="nav-item">체험</a>
+                <a href="member.html" class="nav-item">시작하기</a>
+            </nav>
         </div>
-        <div class="status-item">
-            <h3>데이터베이스</h3>
-            <p id="db-status">🔵 연결 확인 중...</p>
+    </header>
+
+    <section class="hero-section">
+        <h1 class="hero-title">똑똑한 금융 관리의 시작</h1>
+        <p class="hero-subtitle">목표 설정부터 투자 추천까지, 당신의 재테크 파트너 FinMate</p>
+        <div class="cta-buttons">
+            <a href="member.html" class="btn btn-primary">무료로 시작하기</a>
+            <a href="#demo" class="btn btn-secondary">기능 둘러보기</a>
         </div>
-        <div class="status-item">
-            <h3>API 버전</h3>
-            <p>v1.0.0</p>
+        <div class="floating-elements">
+            <div class="floating-circle"></div>
+            <div class="floating-circle"></div>
+            <div class="floating-circle"></div>
+            <div class="floating-circle"></div>
+            <div class="floating-circle"></div>
         </div>
-    </div>
+        <div class="floating-icons">
+            <div class="floating-icon">🎯</div>
+            <div class="floating-icon">📊</div>
+            <div class="floating-icon">📈</div>
+            <div class="floating-icon">🎓</div>
+            <div class="floating-icon">🧮</div>
+            <div class="floating-icon">💡</div>
+        </div>
+    </section>
 
-    <div class="info">
-        <h3>📋 시스템 정보</h3>
-        <p><strong>프로젝트:</strong> FinMate Backend</p>
-        <p><strong>기술 스택:</strong> Spring Legacy 5.x, MyBatis, MySQL, JWT</p>
-        <p><strong>프론트엔드:</strong> Vue.js 3</p>
-        <p><strong>서버 포트:</strong> 8080 (Jetty)</p>
-        <p><strong>데이터베이스:</strong> MySQL (localhost:3306/finmate_db)</p>
-        <p><strong>현재 시간:</strong> <span id="current-time"></span></p>
-    </div>
+    <section id="features" class="features-section">
+        <div class="container">
+            <h2 class="section-title">핵심 기능</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🎯</span>
+                    <h3 class="feature-title">금융 목표 설정</h3>
+                    <p class="feature-description">적금, 투자, 내집마련, 은퇴준비 등 다양한 목표를 설정하고 자동으로 달성률을 추적하세요.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <h3 class="feature-title">투자 포트폴리오 추천</h3>
+                    <p class="feature-description">위험 성향 분석을 통해 나이와 성향에 맞는 최적의 자산 배분을 추천해드립니다.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📈</span>
+                    <h3 class="feature-title">거래 내역 관리</h3>
+                    <p class="feature-description">수입과 지출을 카테고리별로 분류하고 월별, 연별 통계를 한눈에 확인하세요.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🎓</span>
+                    <h3 class="feature-title">금융 교육</h3>
+                    <p class="feature-description">재테크 기초부터 고급 투자 전략까지, 체계적인 금융 교육 콘텐츠를 제공합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🧮</span>
+                    <h3 class="feature-title">금융 계산기</h3>
+                    <p class="feature-description">복리 계산기, 목표 달성 시뮬레이터, 대출 상환 계산기 등 유용한 도구들을 활용하세요.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">💡</span>
+                    <h3 class="feature-title">맞춤형 추천</h3>
+                    <p class="feature-description">개인의 재정 상황과 목표를 분석하여 최적의 월 투자 금액을 추천해드립니다.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="info">
-        <h3>🔧 개발 환경</h3>
-        <p><strong>빌드 도구:</strong> Gradle 8.x</p>
-        <p><strong>관리자 도구:</strong> <a href="http://localhost:8081" target="_blank">phpMyAdmin</a></p>
-        <p><strong>파일 업로드:</strong> c:/upload/</p>
-    </div>
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.users }}</div>
+                    <div class="stat-label">사용자</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.goals }}</div>
+                    <div class="stat-label">설정된 목표</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.transactions }}</div>
+                    <div class="stat-label">거래 내역</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.satisfaction }}%</div>
+                    <div class="stat-label">만족도</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="info">
-        <h3>🧪 테스트 엔드포인트</h3>
-        <p><strong>회원 페이지:</strong> <a href="/member.html" target="_blank">http://localhost:8080/member.html</a></p>
-        <p><strong>Hello:</strong> <a href="/hello" target="_blank">http://localhost:8080/hello</a></p>
-        <p><strong>Ping:</strong> <a href="/ping" target="_blank">http://localhost:8080/ping</a></p>
-        <p><strong>Health:</strong> <a href="/api/member/health" target="_blank">http://localhost:8080/api/health</a></p>
-        <p><strong>API 문서:</strong> <a href="/swagger-ui/index.html" target="_blank">http://localhost:8080/swagger-ui/index.html</a></p>
-    </div>
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <h2 class="section-title">기능 체험</h2>
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <div class="demo-image">🎯</div>
+                    <div class="demo-content">
+                        <h3 class="demo-title">목표 관리</h3>
+                        <p class="demo-description">나만의 금융 목표를 설정하고 진행 상황을 실시간으로 확인해보세요.</p>
+                        <a href="financial.html" class="demo-link">체험하기 →</a>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-image">📊</div>
+                    <div class="demo-content">
+                        <h3 class="demo-title">포트폴리오 추천</h3>
+                        <p class="demo-description">간단한 설문을 통해 나에게 맞는 투자 포트폴리오를 추천받아보세요.</p>
+                        <a href="portfolio.html" class="demo-link">체험하기 →</a>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-image">📈</div>
+                    <div class="demo-content">
+                        <h3 class="demo-title">거래 내역</h3>
+                        <p class="demo-description">수입과 지출을 기록하고 카테고리별 통계를 확인해보세요.</p>
+                        <a href="investment.html" class="demo-link">체험하기 →</a>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-image">🎓</div>
+                    <div class="demo-content">
+                        <h3 class="demo-title">금융 교육</h3>
+                        <p class="demo-description">재테크 기초 지식부터 퀴즈까지, 다양한 금융 교육 콘텐츠를 학습하세요.</p>
+                        <a href="education.html" class="demo-link">체험하기 →</a>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-image">🧮</div>
+                    <div class="demo-content">
+                        <h3 class="demo-title">금융 계산기</h3>
+                        <p class="demo-description">복리 계산기, 목표 달성 시뮬레이터 등 유용한 계산 도구를 사용해보세요.</p>
+                        <a href="calculator.html" class="demo-link">체험하기 →</a>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-image">📱</div>
+                    <div class="demo-content">
+                        <h3 class="demo-title">대시보드</h3>
+                        <p class="demo-description">모든 금융 정보를 한 화면에서 확인하고 관리해보세요.</p>
+                        <a href="dashboard.html" class="demo-link">체험하기 →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="logo">FinMate</div>
+            <p style="margin: 24px 0 16px; font-size: 0.875rem; line-height: 1.6; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
+                FinMate는 국내 금융기관들을 분석하여 누구나 유리한 금융상품을 선택하도록 돕습니다.<br>
+                단순한 금융 이상의 라이프스타일까지 FinMate
+            </p>
+            <p style="font-size: 0.75rem; color: #999; margin-top: 20px;">© 2024 FinMate Co., Ltd. All rights reserved.</p>
+        </div>
+    </footer>
 </div>
 
 <script>
-    // 현재 시간 업데이트
-    function updateTime() {
-        document.getElementById('current-time').textContent = new Date().toLocaleString('ko-KR');
-    }
-    updateTime();
-    setInterval(updateTime, 1000);
+    const { createApp } = Vue;
 
-    // 서버 연결 테스트
-    fetch('/ping')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('db-status').innerHTML = '🟢 연결됨';
-            console.log('✅ 서버 연결 성공:', data);
-        })
-        .catch(error => {
-            document.getElementById('db-status').innerHTML = '🔴 연결 실패';
-            console.error('❌ 서버 연결 실패:', error);
-        });
-
-    // Health 체크
-    fetch('/api/member/health')
-        .then(response => response.json())
-        .then(data => {
-            console.log('✅ Health 체크 성공:', data);
-        })
-        .catch(error => {
-            console.warn('⚠️ Health 체크 실패:', error);
-        });
+    createApp({
+        data() {
+            return {
+                stats: {
+                    users: '10K+',
+                    goals: '50K+',
+                    transactions: '1M+',
+                    satisfaction: 98
+                }
+            };
+        },
+        mounted() {
+            // 부드러운 스크롤 효과
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+    }).mount('#app');
 </script>
 </body>
 </html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 금융 교육</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .header {
+            background: #ffffff;
+            color: #333;
+            padding: 20px 0;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-item {
+            color: #666;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #f1f3f4;
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .education-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .nav-tab:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .nav-tab.active {
+            color: white;
+            border-color: #667eea;
+            background: #667eea;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .guides-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .guide-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+        }
+
+        .guide-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-color: #667eea;
+        }
+
+        .guide-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .guide-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .guide-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .guide-level {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .guide-level.beginner {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .guide-level.intermediate {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .quiz-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .quiz-score {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .option-btn:hover {
+            border-color: #667eea;
+        }
+
+        .option-btn.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .option-btn.correct {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .option-btn.incorrect {
+            border-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .resource-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .resource-type {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .resource-type.website {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .resource-type.article {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .resource-type.book {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .resource-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .resource-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .resource-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #f1f3f4;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-result {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .special-result {
+            background: #764ba2;
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .education-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .guides-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">FinMate</div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-item">대시보드</a>
+                <a href="financial.html" class="nav-item">목표 관리</a>
+                <a href="portfolio.html" class="nav-item">포트폴리오</a>
+                <a href="investment.html" class="nav-item">거래 내역</a>
+                <a href="education.html" class="nav-item active">금융 교육</a>
+                <a href="calculator.html" class="nav-item">계산기</a>
+                <a href="mypage.html" class="nav-item">마이페이지</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">금융 교육</h1>
+
+        <div class="education-nav">
+            <button class="nav-tab" :class="{active: activeTab === 'guides'}" @click="activeTab = 'guides'">
+                📚 가이드
+            </button>
+            <button class="nav-tab" :class="{active: activeTab === 'quiz'}" @click="activeTab = 'quiz'">
+                🧠 퀴즈
+            </button>
+            <button class="nav-tab" :class="{active: activeTab === 'resources'}" @click="activeTab = 'resources'">
+                🔗 외부 자료
+            </button>
+        </div>
+
+        <!-- 가이드 섹션 -->
+        <div class="content-section" :class="{active: activeTab === 'guides'}">
+            <div class="guides-grid">
+                <div v-for="guide in guides" :key="guide.id" class="guide-card" @click="openGuide(guide)">
+                    <div class="guide-icon">{{ guide.icon }}</div>
+                    <h3 class="guide-title">{{ guide.title }}</h3>
+                    <p class="guide-description">{{ guide.description }}</p>
+                    <span class="guide-level" :class="guide.level">{{ getLevelText(guide.level) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 퀴즈 섹션 -->
+        <div class="content-section" :class="{active: activeTab === 'quiz'}">
+            <div class="quiz-container">
+                <div class="quiz-header">
+                    <h3 class="quiz-title">금융 상식 퀴즈</h3>
+                    <div class="quiz-score">점수: {{ quizScore }}/{{ quizQuestions.length }}</div>
+                </div>
+
+                <div v-if="!quizCompleted">
+                    <div class="progress-bar">
+                        <div class="progress-fill" :style="{width: (currentQuestionIndex / quizQuestions.length) * 100 + '%'}"></div>
+                    </div>
+                    <p style="text-align: center; margin-bottom: 20px;">
+                        문제 {{ currentQuestionIndex + 1 }} / {{ quizQuestions.length }}
+                    </p>
+
+                    <div v-if="currentQuestion" class="question-card">
+                        <h4 class="question-text">{{ currentQuestion.question }}</h4>
+                        <div>
+                            <button v-for="(option, index) in currentQuestion.options"
+                                    :key="index"
+                                    class="option-btn"
+                                    :class="{
+                                            selected: selectedAnswer === index,
+                                            correct: showAnswer && index === currentQuestion.correct,
+                                            incorrect: showAnswer && selectedAnswer === index && index !== currentQuestion.correct
+                                        }"
+                                    @click="selectAnswer(index)"
+                                    :disabled="showAnswer">
+                                {{ option }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <button v-if="!showAnswer"
+                                class="btn"
+                                @click="checkAnswer"
+                                :disabled="selectedAnswer === null">
+                            정답 확인
+                        </button>
+                        <button v-else
+                                class="btn"
+                                @click="nextQuestion">
+                            {{ currentQuestionIndex < quizQuestions.length - 1 ? '다음 문제' : '결과 보기' }}
+                        </button>
+                    </div>
+
+                    <div v-if="showAnswer && currentQuestion.explanation"
+                         style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                        <strong>설명:</strong> {{ currentQuestion.explanation }}
+                    </div>
+                </div>
+
+                <div v-else class="quiz-result">
+                    <div class="result-icon">{{ getResultIcon() }}</div>
+                    <div style="font-size: 1.2rem; margin-bottom: 16px;">{{ getResultText() }}</div>
+                    <p style="margin-bottom: 20px;">{{ quizScore }}개 문제를 맞혔습니다!</p>
+                    <button class="btn" @click="resetQuiz">다시 도전하기</button>
+
+                    <div v-if="quizScore === quizQuestions.length" class="special-result">
+                        <h3>🎉 완벽한 점수!</h3>
+                        <p>모든 문제를 맞혔습니다. 금융 전문가 수준이네요!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 외부 자료 섹션 -->
+        <div class="content-section" :class="{active: activeTab === 'resources'}">
+            <div class="resources-grid">
+                <div v-for="resource in resources" :key="resource.id" class="resource-card">
+                    <span class="resource-type" :class="resource.type">{{ getResourceTypeText(resource.type) }}</span>
+                    <h3 class="resource-title">{{ resource.title }}</h3>
+                    <p class="resource-description">{{ resource.description }}</p>
+                    <a :href="resource.url" target="_blank" class="resource-link">자세히 보기 →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가이드 상세보기 모달 -->
+    <div v-if="showGuideModal" class="modal" @click.self="closeGuide">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>{{ selectedGuide.title }}</h2>
+                <button class="close-btn" @click="closeGuide">&times;</button>
+            </div>
+            <div v-html="selectedGuide.content"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                activeTab: 'guides',
+                showGuideModal: false,
+                selectedGuide: null,
+                currentQuestionIndex: 0,
+                selectedAnswer: null,
+                showAnswer: false,
+                quizScore: 0,
+                quizCompleted: false,
+                guides: [
+                    {
+                        id: 1,
+                        title: '재테크 기초',
+                        description: '재테크를 시작하는 사람들을 위한 기본 개념과 원칙',
+                        icon: '💰',
+                        level: 'beginner',
+                        content: '<h3>재테크란 무엇인가?</h3><p>재테크는 개인의 자산을 효율적으로 관리하고 늘려나가는 방법입니다.</p><h3>기본 원칙</h3><ul><li>수입과 지출 관리</li><li>비상금 마련</li><li>목표 설정</li><li>분산 투자</li></ul>'
+                    },
+                    {
+                        id: 2,
+                        title: '투자의 기초',
+                        description: '주식, 채권, 펀드 등 다양한 투자 상품의 특징과 위험성',
+                        icon: '📈',
+                        level: 'intermediate',
+                        content: '<h3>투자의 기본 개념</h3><p>투자는 미래의 수익을 위해 현재의 자금을 투입하는 것입니다.</p><h3>주요 투자 상품</h3><ul><li>주식: 높은 수익 가능성과 높은 위험</li><li>채권: 상대적으로 안전한 투자</li><li>펀드: 전문가가 운용하는 상품</li></ul>'
+                    },
+                    {
+                        id: 3,
+                        title: '복리의 마법',
+                        description: '시간의 힘과 복리 효과를 이용한 장기 투자 전략',
+                        icon: '🪄',
+                        level: 'beginner',
+                        content: '<h3>복리란?</h3><p>복리는 원금에 대한 이자뿐만 아니라 이자에 대한 이자까지 받는 것입니다.</p><h3>복리 투자의 핵심</h3><ul><li>일찍 시작하기</li><li>꾸준히 투자하기</li><li>장기간 유지하기</li><li>재투자하기</li></ul>'
+                    }
+                ],
+                quizQuestions: [
+                    {
+                        question: "재테크를 시작할 때 가장 먼저 해야 할 일은?",
+                        options: ["주식 투자", "비상금 마련", "부동산 구매", "적금 가입"],
+                        correct: 1,
+                        explanation: "비상금은 예상치 못한 상황에 대비하여 가장 먼저 마련해야 하는 자금입니다."
+                    },
+                    {
+                        question: "분산투자의 목적은?",
+                        options: ["수익률 극대화", "위험 감소", "거래 수수료 절약", "세금 절약"],
+                        correct: 1,
+                        explanation: "분산투자는 여러 자산에 투자하여 특정 자산의 손실 위험을 줄이는 것이 목적입니다."
+                    },
+                    {
+                        question: "복리 효과를 극대화하려면?",
+                        options: ["자주 매매하기", "높은 수수료 상품 선택", "장기간 투자하기", "단기 수익 추구"],
+                        correct: 2,
+                        explanation: "복리 효과는 시간이 지날수록 커지므로 장기간 투자할 때 극대화됩니다."
+                    }
+                ],
+                resources: [
+                    {
+                        id: 1,
+                        type: 'website',
+                        title: '한국은행 경제교육',
+                        description: '한국은행에서 제공하는 경제 기초 지식과 금융 상식',
+                        url: 'https://www.bok.or.kr/education/'
+                    },
+                    {
+                        id: 2,
+                        type: 'website',
+                        title: '금융감독원 금융교육센터',
+                        description: '금융 상품별 가이드와 투자자 보호 정보',
+                        url: 'https://www.fss.or.kr/edu/'
+                    },
+                    {
+                        id: 3,
+                        type: 'article',
+                        title: '네이버 증권',
+                        description: '실시간 주식 정보와 투자 뉴스, 종목 분석',
+                        url: 'https://finance.naver.com/'
+                    },
+                    {
+                        id: 4,
+                        type: 'book',
+                        title: '부의 추월차선',
+                        description: 'MJ 드마코의 부자 되는 방법론을 담은 베스트셀러',
+                        url: '#'
+                    }
+                ]
+            };
+        },
+        computed: {
+            currentQuestion() {
+                return this.quizQuestions[this.currentQuestionIndex] || null;
+            }
+        },
+        methods: {
+            getLevelText(level) {
+                const levels = {
+                    beginner: '초급',
+                    intermediate: '중급',
+                    advanced: '고급'
+                };
+                return levels[level] || level;
+            },
+            getResourceTypeText(type) {
+                const types = {
+                    video: '영상',
+                    article: '기사',
+                    book: '도서',
+                    website: '웹사이트'
+                };
+                return types[type] || type;
+            },
+            openGuide(guide) {
+                this.selectedGuide = guide;
+                this.showGuideModal = true;
+            },
+            closeGuide() {
+                this.showGuideModal = false;
+                this.selectedGuide = null;
+            },
+            selectAnswer(index) {
+                if (!this.showAnswer) {
+                    this.selectedAnswer = index;
+                }
+            },
+            checkAnswer() {
+                if (this.selectedAnswer === null) return;
+
+                this.showAnswer = true;
+                if (this.selectedAnswer === this.currentQuestion.correct) {
+                    this.quizScore++;
+                }
+            },
+            nextQuestion() {
+                if (this.currentQuestionIndex < this.quizQuestions.length - 1) {
+                    this.currentQuestionIndex++;
+                    this.selectedAnswer = null;
+                    this.showAnswer = false;
+                } else {
+                    this.quizCompleted = true;
+                }
+            },
+            resetQuiz() {
+                this.currentQuestionIndex = 0;
+                this.selectedAnswer = null;
+                this.showAnswer = false;
+                this.quizScore = 0;
+                this.quizCompleted = false;
+            },
+            getResultIcon() {
+                const percentage = (this.quizScore / this.quizQuestions.length) * 100;
+                if (percentage >= 80) return '🎉';
+                if (percentage >= 60) return '👍';
+                return '📚';
+            },
+            getResultText() {
+                const percentage = (this.quizScore / this.quizQuestions.length) * 100;
+                if (percentage >= 80) return '훌륭해요!';
+                if (percentage >= 60) return '잘했어요!';
+                return '더 공부해보세요!';
+            }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

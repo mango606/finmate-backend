@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinMate - 금융 목표 관리</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-item {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.08);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .goal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .goal-type {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .goal-type.savings { background: #28a745; }
+        .goal-type.investment { background: #fd7e14; }
+        .goal-type.house { background: #764ba2; }
+        .goal-type.retirement { background: #dc3545; }
+
+        .goal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .goal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .goal-amount {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 20px;
+        }
+
+        .current-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .target-amount {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .progress-container {
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #f1f3f4;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.5s ease;
+            border-radius: 6px;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .goal-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .goal-type-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            padding: 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .type-option:hover {
+            border-color: #667eea;
+        }
+
+        .type-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .type-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .type-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: #ccc;
+        }
+
+        .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .empty-text {
+            color: #666;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+
+            .goals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .goal-type-selector {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">FinMate</div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-item">대시보드</a>
+                <a href="financial.html" class="nav-item active">목표 관리</a>
+                <a href="portfolio.html" class="nav-item">포트폴리오</a>
+                <a href="investment.html" class="nav-item">거래 내역</a>
+                <a href="education.html" class="nav-item">금융 교육</a>
+                <a href="calculator.html" class="nav-item">계산기</a>
+                <a href="mypage.html" class="nav-item">마이페이지</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">금융 목표 관리</h1>
+            <button class="btn" @click="openGoalModal()">+ 새 목표 추가</button>
+        </div>
+
+        <div v-if="goals.length === 0" class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <h3 class="empty-title">아직 설정된 목표가 없습니다</h3>
+            <p class="empty-text">첫 번째 금융 목표를 설정해보세요!</p>
+        </div>
+
+        <div v-else class="goals-grid">
+            <div v-for="goal in goals" :key="goal.id" class="goal-card">
+                <div class="goal-header">
+                    <span class="goal-type" :class="goal.type">{{ getGoalTypeName(goal.type) }}</span>
+                    <div class="goal-actions">
+                        <button class="btn btn-sm btn-secondary" @click="editGoal(goal)">수정</button>
+                        <button class="btn btn-sm btn-danger" @click="deleteGoal(goal.id)">삭제</button>
+                    </div>
+                </div>
+
+                <h3 class="goal-title">{{ goal.title }}</h3>
+
+                <div class="goal-amount">
+                    <span class="current-amount">{{ formatCurrency(goal.currentAmount) }}</span>
+                    <span class="target-amount">목표: {{ formatCurrency(goal.targetAmount) }}</span>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" :style="{width: goal.progress + '%'}"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>{{ goal.progress }}% 달성</span>
+                        <span>{{ formatCurrency(goal.targetAmount - goal.currentAmount) }} 남음</span>
+                    </div>
+                </div>
+
+                <div class="goal-meta">
+                    <span>목표일: {{ formatDate(goal.targetDate) }}</span>
+                    <span>{{ getStatusText(goal) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 목표 추가/수정 모달 -->
+    <div v-if="showGoalModal" class="modal" @click.self="closeGoalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">{{ editingGoal ? '목표 수정' : '새 목표 추가' }}</h2>
+                <button class="close-btn" @click="closeGoalModal">&times;</button>
+            </div>
+
+            <form @submit.prevent="saveGoal">
+                <div class="form-group">
+                    <label class="form-label">목표 유형</label>
+                    <div class="goal-type-selector">
+                        <div class="type-option"
+                             :class="{selected: goalForm.type === 'savings'}"
+                             @click="goalForm.type = 'savings'">
+                            <div class="type-icon">💰</div>
+                            <div class="type-name">적금</div>
+                        </div>
+                        <div class="type-option"
+                             :class="{selected: goalForm.type === 'investment'}"
+                             @click="goalForm.type = 'investment'">
+                            <div class="type-icon">📈</div>
+                            <div class="type-name">투자</div>
+                        </div>
+                        <div class="type-option"
+                             :class="{selected: goalForm.type === 'house'}"
+                             @click="goalForm.type = 'house'">
+                            <div class="type-icon">🏠</div>
+                            <div class="type-name">내집마련</div>
+                        </div>
+                        <div class="type-option"
+                             :class="{selected: goalForm.type === 'retirement'}"
+                             @click="goalForm.type = 'retirement'">
+                            <div class="type-icon">🏖️</div>
+                            <div class="type-name">은퇴준비</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">목표 제목</label>
+                    <input type="text" class="form-input" v-model="goalForm.title" placeholder="목표 제목을 입력하세요" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">목표 금액</label>
+                    <input type="number" class="form-input" v-model="goalForm.targetAmount" placeholder="50,000,000" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">현재 금액</label>
+                    <input type="number" class="form-input" v-model="goalForm.currentAmount" placeholder="5,000,000" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">목표 달성일</label>
+                    <input type="date" class="form-input" v-model="goalForm.targetDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">설명 (선택사항)</label>
+                    <textarea class="form-textarea" v-model="goalForm.description" placeholder="목표에 대한 설명을 입력하세요"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" @click="closeGoalModal">취소</button>
+                    <button type="submit" class="btn">{{ editingGoal ? '수정' : '추가' }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                goals: [
+                    {
+                        id: 1,
+                        type: 'house',
+                        title: '내집마련 자금',
+                        targetAmount: 50000000,
+                        currentAmount: 25000000,
+                        targetDate: '2025-12-31',
+                        description: '아파트 구매를 위한 목돈 마련',
+                        progress: 50,
+                        status: 'active'
+                    },
+                    {
+                        id: 2,
+                        type: 'savings',
+                        title: '비상금 적금',
+                        targetAmount: 10000000,
+                        currentAmount: 8000000,
+                        targetDate: '2024-06-30',
+                        description: '비상시를 대비한 안전 자금',
+                        progress: 80,
+                        status: 'active'
+                    },
+                    {
+                        id: 3,
+                        type: 'retirement',
+                        title: '은퇴 준비 펀드',
+                        targetAmount: 200000000,
+                        currentAmount: 15000000,
+                        targetDate: '2040-12-31',
+                        description: '노후 생활비 준비',
+                        progress: 7.5,
+                        status: 'active'
+                    }
+                ],
+                showGoalModal: false,
+                editingGoal: null,
+                goalForm: {
+                    type: 'savings',
+                    title: '',
+                    targetAmount: 0,
+                    currentAmount: 0,
+                    targetDate: '',
+                    description: ''
+                }
+            };
+        },
+        methods: {
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW'
+                }).format(amount);
+            },
+            formatDate(dateString) {
+                return new Date(dateString).toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            },
+            getGoalTypeName(type) {
+                const types = {
+                    savings: '적금',
+                    investment: '투자',
+                    house: '내집마련',
+                    retirement: '은퇴준비'
+                };
+                return types[type] || type;
+            },
+            getStatusText(goal) {
+                const today = new Date();
+                const targetDate = new Date(goal.targetDate);
+                const diffTime = targetDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) {
+                    return '기한 초과';
+                } else if (diffDays < 30) {
+                    return `${diffDays}일 남음`;
+                } else if (diffDays < 365) {
+                    return `${Math.ceil(diffDays / 30)}개월 남음`;
+                } else {
+                    return `${Math.ceil(diffDays / 365)}년 남음`;
+                }
+            },
+            openGoalModal(goal = null) {
+                this.editingGoal = goal;
+                if (goal) {
+                    this.goalForm = { ...goal };
+                } else {
+                    this.goalForm = {
+                        type: 'savings',
+                        title: '',
+                        targetAmount: 0,
+                        currentAmount: 0,
+                        targetDate: '',
+                        description: ''
+                    };
+                }
+                this.showGoalModal = true;
+            },
+            closeGoalModal() {
+                this.showGoalModal = false;
+                this.editingGoal = null;
+            },
+            editGoal(goal) {
+                this.openGoalModal(goal);
+            },
+            async saveGoal() {
+                try {
+                    const progress = (this.goalForm.currentAmount / this.goalForm.targetAmount) * 100;
+
+                    if (this.editingGoal) {
+                        // 수정
+                        const index = this.goals.findIndex(g => g.id === this.editingGoal.id);
+                        this.goals[index] = {
+                            ...this.goalForm,
+                            progress: Math.min(progress, 100),
+                            status: 'active'
+                        };
+                    } else {
+                        // 새로 추가
+                        const newGoal = {
+                            ...this.goalForm,
+                            id: Date.now(),
+                            progress: Math.min(progress, 100),
+                            status: 'active'
+                        };
+                        this.goals.push(newGoal);
+                    }
+
+                    // API 호출
+                    // await axios.post('/api/goals', this.goalForm);
+
+                    this.closeGoalModal();
+                } catch (error) {
+                    console.error('목표 저장 실패:', error);
+                    alert('목표 저장에 실패했습니다.');
+                }
+            },
+            async deleteGoal(goalId) {
+                if (confirm('정말로 이 목표를 삭제하시겠습니까?')) {
+                    try {
+                        this.goals = this.goals.filter(g => g.id !== goalId);
+                        // await axios.delete(`/api/goals/${goalId}`);
+                    } catch (error) {
+                        console.error('목표 삭제 실패:', error);
+                        alert('목표 삭제에 실패했습니다.');
+                    }
+                }
+            },
+            async loadGoals() {
+                try {
+                    // const response = await axios.get('/api/goals');
+                    // this.goals = response.data;
+                } catch (error) {
+                    console.error('목표 로드 실패:', error);
+                }
+            }
+        },
+        mounted() {
+            this.loadGoals();
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
