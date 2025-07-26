@@ -21,14 +21,16 @@
         }
 
         .header {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
@@ -37,66 +39,73 @@
         }
 
         .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
         }
 
         .nav-menu {
             display: flex;
-            gap: 30px;
+            gap: 32px;
         }
 
         .nav-item {
-            color: white;
+            color: #666;
             text-decoration: none;
             font-weight: 500;
-            transition: all 0.3s;
-            padding: 10px 15px;
+            padding: 8px 16px;
             border-radius: 8px;
+            transition: all 0.2s;
         }
 
         .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
+            color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.08);
         }
 
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 30px 20px;
+            padding: 24px 20px;
         }
 
         .page-header {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid #e9ecef;
             text-align: center;
         }
 
         .page-title {
-            font-size: 2rem;
-            margin-bottom: 10px;
+            font-size: 1.75rem;
+            margin-bottom: 8px;
             color: #333;
+            font-weight: 700;
         }
 
         .page-subtitle {
             color: #666;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         .tab-container {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            border: 1px solid #e9ecef;
             overflow: hidden;
         }
 
         .tab-header {
             display: flex;
             background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
+            border-bottom: 1px solid #e9ecef;
         }
 
         .tab-btn {
@@ -108,7 +117,7 @@
             font-size: 1rem;
             font-weight: 600;
             color: #666;
-            transition: all 0.3s;
+            transition: all 0.2s;
             position: relative;
         }
 
@@ -120,7 +129,7 @@
         .tab-btn.active::after {
             content: '';
             position: absolute;
-            bottom: -2px;
+            bottom: -1px;
             left: 0;
             right: 0;
             height: 2px;
@@ -128,14 +137,14 @@
         }
 
         .tab-content {
-            padding: 40px;
+            padding: 32px;
         }
 
         .profile-section {
             display: grid;
             grid-template-columns: 200px 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
+            gap: 32px;
+            margin-bottom: 32px;
         }
 
         .avatar-section {
@@ -149,33 +158,37 @@
         }
 
         .avatar {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: #667eea;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: 2.5rem;
             color: white;
             margin: 0 auto;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .avatar-upload {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
+            bottom: 5px;
+            right: 5px;
+            width: 32px;
+            height: 32px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 0.875rem;
         }
 
         .avatar-upload:hover {
@@ -189,7 +202,7 @@
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            gap: 20px;
         }
 
         .info-item {
@@ -200,39 +213,41 @@
 
         .info-label {
             font-weight: 600;
-            color: #555;
-            font-size: 0.9rem;
+            color: #666;
+            font-size: 0.875rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .info-value {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #333;
-            padding: 12px 15px;
+            padding: 12px 16px;
             background: #f8f9fa;
             border-radius: 8px;
             border-left: 4px solid #667eea;
+            font-weight: 500;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #555;
+            color: #333;
+            font-size: 0.875rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
+            padding: 14px;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
             font-size: 1rem;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .form-control:focus {
@@ -248,27 +263,26 @@
         }
 
         .btn {
-            padding: 12px 25px;
+            padding: 12px 24px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             font-size: 1rem;
-            transition: all 0.3s;
+            transition: all 0.2s;
             text-decoration: none;
             display: inline-block;
             text-align: center;
         }
 
         .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: #667eea;
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: #5a6fd8;
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
@@ -278,7 +292,7 @@
 
         .btn-secondary:hover {
             background: #5a6268;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .btn-danger {
@@ -288,14 +302,14 @@
 
         .btn-danger:hover {
             background: #c82333;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .security-card {
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
             border-left: 4px solid #28a745;
         }
 
@@ -303,7 +317,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .security-title {
@@ -311,13 +325,14 @@
             color: #333;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-size: 1rem;
         }
 
         .security-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -333,12 +348,13 @@
         }
 
         .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 8px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-weight: 500;
         }
 
         .alert-success {
@@ -363,8 +379,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
+            padding: 16px 0;
+            border-bottom: 1px solid #e9ecef;
         }
 
         .activity-item:last-child {
@@ -374,7 +390,7 @@
         .activity-info {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
         }
 
         .activity-icon {
@@ -386,36 +402,38 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
         }
 
         .activity-details h4 {
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             color: #333;
+            font-weight: 600;
         }
 
         .activity-details p {
             color: #666;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
         }
 
         .activity-time {
             color: #999;
-            font-size: 0.8rem;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
         .loading {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 50px;
+            padding: 60px;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -425,10 +443,40 @@
             100% { transform: rotate(360deg); }
         }
 
+        .form-actions {
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .delete-account-section {
+            background: #fff;
+            border: 2px solid #dc3545;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .delete-title {
+            color: #dc3545;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .security-description {
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
-                gap: 20px;
+                gap: 16px;
             }
 
             .nav-menu {
@@ -456,7 +504,7 @@
     <!-- 헤더 -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">🏦 FinMate</div>
+            <div class="logo">FinMate</div>
             <nav class="nav-menu">
                 <a href="/" class="nav-item">홈</a>
                 <a href="/dashboard.html" class="nav-item">대시보드</a>
@@ -573,7 +621,7 @@
                             <input v-model="editForm.birthDate" type="date" class="form-control">
                         </div>
 
-                        <div style="text-align: center; margin-top: 30px;">
+                        <div class="form-actions">
                             <button type="submit" class="btn btn-primary">정보 업데이트</button>
                         </div>
                     </form>
@@ -594,6 +642,7 @@
                                 비밀번호 변경
                             </div>
                         </div>
+                        <p class="security-description">보안을 위해 정기적으로 비밀번호를 변경해주세요.</p>
                         <form @submit.prevent="changePassword">
                             <div class="form-group">
                                 <label class="form-label">현재 비밀번호</label>
@@ -624,7 +673,7 @@
                                 {{ securitySettings.twoFactorEnabled ? '활성화' : '비활성화' }}
                             </span>
                         </div>
-                        <p style="margin-bottom: 20px; color: #666;">
+                        <p class="security-description">
                             계정 보안을 강화하기 위해 2단계 인증을 설정하세요.
                         </p>
                         <button @click="toggleTwoFactor" class="btn btn-primary">
@@ -643,7 +692,7 @@
                                 {{ securitySettings.emailVerified ? '인증완료' : '인증대기' }}
                             </span>
                         </div>
-                        <p style="margin-bottom: 20px; color: #666;">
+                        <p class="security-description">
                             이메일 인증을 통해 계정의 신뢰성을 높이세요.
                         </p>
                         <button v-if="!securitySettings.emailVerified" @click="sendEmailVerification" class="btn btn-primary">
@@ -683,13 +732,14 @@
                         <span>계정 삭제는 복구할 수 없습니다. 신중하게 결정해주세요.</span>
                     </div>
 
-                    <div class="security-card">
-                        <div class="security-title">
+                    <div class="delete-account-section">
+                        <div class="delete-title">
                             <span>🗑️</span>
                             계정 삭제
                         </div>
-                        <p style="margin: 20px 0; color: #666;">
-                            계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.
+                        <p class="security-description">
+                            계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.<br>
+                            이 작업은 되돌릴 수 없으니 신중하게 결정해주세요.
                         </p>
                         <button @click="confirmDeleteAccount" class="btn btn-danger">
                             계정 삭제
